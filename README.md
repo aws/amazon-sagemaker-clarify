@@ -1,10 +1,12 @@
-## My Project
+# FAMLy
 
-TODO: Fill this README out!
+Fairness Aware Machine Learning
 
-Be sure to:
+Bias detection and mitigation for ML models.
 
-* Change the title in this README
-* Edit your repository description on GitHub
+## Development
+```
+pip install -e .[test]
+```
 
-
+Run `pre-commit install && pre-commit run --all-files` before commit.
