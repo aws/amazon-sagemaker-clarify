@@ -1,13 +1,13 @@
-## My Project
+# FAMLy
 
-TODO: Fill this README out!
+Fairness Aware Machine Learning
 
-Be sure to:
+Bias detection and mitigation for ML models.
 
-* Change the title in this README
-* Edit your repository description on GitHub
+## Development
 
-## License
+```
+pip install -e .[test]
+```
 
-This project is licensed under the Apache-2.0 License.
-
+Run `pre-commit install && pre-commit run --all-files` before commit.
