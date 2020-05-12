@@ -38,45 +38,38 @@ def class_imbalance(x: pd.Series, disadvantaged_index: pd.Series) -> float:
     nd = len(x[disadvantaged_index])
     q = na + nd
     if na == 0:
-        log.warning("class_imbalance: advantaged set is empty.")
-        return np.nan
+        raise ValueError("class_imbalance: facet set is empty.")
     if nd == 0:
-        log.warning("class_imbalance: disadvantaged set is empty.")
-        return np.nan
-    if q == 0:
-        log.warning("class_imbalance: set is empty.")
-        return np.nan
+        raise ValueError("class_imbalance: negated facet set is empty.")
+    q = na + nd
+    assert q != 0
     ci = float(na - nd) / q
     return ci
 
 
 def diff_positive_labels(
-    x: pd.Series, label: pd.Series, disadvantaged_index: pd.Series, positive_label_value: Any = 1
-) -> float:
+    x: pd.Series, label: pd.Series, facet_index: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in predicted labels
     :param x: pandas series of the target column
     :param label: pandas series of labels
-    :param disadvantaged_index:
-    :param positive_label_value: consider this label value as the positive value, default is 1.
+    :param facet_index:
+    :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    advantaged_positive_label_index = (label == positive_label_value) & ~disadvantaged_index
-    disadvantaged_positive_label_index = (label == positive_label_value) & disadvantaged_index
-    na = len(x[~disadvantaged_index])
-    nd = len(x[disadvantaged_index])
-    nap = len(x[advantaged_positive_label_index])
-    ndp = len(x[disadvantaged_positive_label_index])
-    if na == 0:
-        log.warning("diff_positive_labels: advantaged set is empty.")
-        return np.nan
-    if nd == 0:
-        log.warning("diff_positive_labels: disadvantaged set is empty.")
-        return np.nan
-    qa = nap / na
-    qd = ndp / nd
-    if (qa + qd) == 0:
-        log.warning("diff_positive_labels: set is empty.")
-        return np.nan
-    res = (qa - qd) / (qa + qd)
+    positive_label_index_neg_facet = (positive_label_index) & ~facet_index
+    positive_label_index_facet = (positive_label_index) & facet_index
+    n_neg_facet = len(x[~facet_index])
+    n_facet = len(x[facet_index])
+    n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
+    n_pos_label_facet = len(x[positive_label_index_facet])
+    if n_neg_facet == 0:
+        raise ValueError("diff_positive_labels: facet set is empty.")
+    if n_facet == 0:
+        raise ValueError("diff_positive_labels: negative facet set is empty.")
+    q_neg = n_pos_label_neg_facet / n_neg_facet
+    q_pos = n_pos_label_facet / n_facet
+    if (q_neg + q_pos) == 0:
+        raise ValueError("diff_positive_labels: label facet is empty.")
+    res = (q_neg - q_pos) / (q_neg + q_pos)
     return res
