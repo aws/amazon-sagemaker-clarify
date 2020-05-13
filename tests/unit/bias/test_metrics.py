@@ -29,8 +29,8 @@ def test_ci_one_vs_all():
 def test_dppt():
     dfl = df.copy()
     dfl["label"] = pd.Series([0, 1, 0])
-    assert diff_positive_labels(dfl[0], dfl["label"], dfl[0] == "a", dfl["label"] == 1) == -1.0
+    assert diff_positive_labels(dfl[0], dfl[0] == "a", dfl["label"] == 1) == -1.0
     dfl["label"] = pd.Series([0, 0, 1])
-    assert diff_positive_labels(dfl[0], dfl["label"], dfl[0] == "a", dfl["label"] == 1) == 1.0
+    assert diff_positive_labels(dfl[0], dfl[0] == "a", dfl["label"] == 1) == 1.0
     dfl["label"] = pd.Series([0, 1, 1])
-    assert diff_positive_labels(dfl[0], dfl["label"], dfl[0] == "a", dfl["label"] == 1) == approx(1 / 3)
+    assert diff_positive_labels(dfl[0], dfl[0] == "a", dfl["label"] == 1) == approx(1 / 3)
