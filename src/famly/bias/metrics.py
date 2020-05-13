@@ -8,6 +8,11 @@ log = logging.getLogger(__name__)
 
 
 def class_imbalance_one_vs_all(x: pd.Series) -> Dict:
+    """
+    Calculate class imbalance for a categorical series doing 1 vs all
+    :param x: pandas series
+    :return:
+    """
     categories = x.unique()
     res = dict()
     for cat in categories:
@@ -15,11 +20,11 @@ def class_imbalance_one_vs_all(x: pd.Series) -> Dict:
     return res
 
 
-def class_imbalance(x: pd.Series, disadvantaged_index: pd.Series) -> float:
+def class_imbalance(x: pd.Series, facet_index: pd.Series) -> float:
     """
     Class imbalance (CI)
     :param x: pandas series
-    :param disadvantaged_index: boolean index series selecting disadvantaged instances
+    :param facet_index: boolean index series selecting disadvantaged instances
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the disadvantaged class.
 
@@ -34,8 +39,8 @@ def class_imbalance(x: pd.Series, disadvantaged_index: pd.Series) -> float:
     We define CI = (na − nd)/(na+nd). Where na is the number of instances in the advantaged group
     and nd is number of instances in the disadvantaged group.
     """
-    na = len(x[~disadvantaged_index])
-    nd = len(x[disadvantaged_index])
+    na = len(x[~facet_index])
+    nd = len(x[facet_index])
     q = na + nd
     if na == 0:
         raise ValueError("class_imbalance: facet set is empty.")
