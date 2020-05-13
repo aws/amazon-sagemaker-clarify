@@ -52,8 +52,7 @@ def class_imbalance(x: pd.Series, facet_index: pd.Series) -> float:
     return ci
 
 
-def diff_positive_labels(
-    x: pd.Series, label: pd.Series, facet_index: pd.Series, positive_label_index: pd.Series) -> float:
+def diff_positive_labels(x: pd.Series, facet_index: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in predicted labels
     :param x: pandas series of the target column
