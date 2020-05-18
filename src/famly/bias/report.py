@@ -16,7 +16,7 @@ class FacetCategoricalColumn(FacetColumn):
     def __init__(self, name, protected_values: Optional[List[Any]] = None):
         """
         :param name: Name of the column
-        :param protected_values: list of protected values. For example, for ethnicity it could be Black, Asian, Latino,
+        :param protected_values: list of protected values.
             White, Native American, etc.
         """
         super().__init__(name)
