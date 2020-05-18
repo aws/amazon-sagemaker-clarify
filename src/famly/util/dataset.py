@@ -1,3 +1,4 @@
+"""Convenience facility to access datasets"""
 import os
 from abc import abstractmethod
 from typing import Tuple, List
