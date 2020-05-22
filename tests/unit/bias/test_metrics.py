@@ -1,6 +1,7 @@
 import pandas as pd
 from famly.bias.metrics import class_imbalance, class_imbalance_one_vs_all, diff_positive_labels
 from pytest import approx
+import pytest
 
 
 def dataframe():
@@ -18,6 +19,14 @@ def test_ci():
     assert class_imbalance(df[0], df[0] == "a") == approx(-1 / 3)
     # bias on b
     assert class_imbalance(df[0], df[0] == "b") == approx(1 / 3)
+    with pytest.raises(ValueError) as e:
+        class_imbalance(df[0], df[0] == "c")
+    assert e.type == ValueError
+    assert "class_imbalance: facet set is empty" in str(e.value)
+    with pytest.raises(ValueError) as e:
+        class_imbalance(df[0], df[0] != "c")
+    assert e.type == ValueError
+    assert "class_imbalance: negated facet set is empty" in str(e.value)
 
 
 def test_ci_one_vs_all():

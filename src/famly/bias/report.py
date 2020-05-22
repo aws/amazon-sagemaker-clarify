@@ -50,13 +50,13 @@ def problem_type(labels: pd.Series) -> ProblemType:
     # TODO: add other problem types
     labels = labels.dropna()
     n_rows = len(labels)
-    n_unique = labels.unique()
+    n_unique = labels.unique().size
     if n_unique == 2:
         return ProblemType.BINARY
     return ProblemType.OTHER
 
 
-def _metric_name_fmt(xs: List[Any]) -> str:
+def column_list_to_str(xs: List[Any]) -> str:
     """
     Format a metric name from multiple aggregated columns
     :returns: joint string separated by commas.
@@ -82,7 +82,7 @@ def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = N
         # create indexing series with boolean OR of values
 
         ci = metrics.class_imbalance(col, index_key(facet_values))
-        metric_name = _metric_name_fmt(facet_values)
+        metric_name = column_list_to_str(facet_values)
         ci_all = {metric_name: ci}
     else:
         # Do one vs all for every value
@@ -112,7 +112,7 @@ def bias_report(df: pd.DataFrame, restricted_column: FacetColumn, label_column: 
     result = dict()
     if issubclass(restricted_column.__class__, FacetCategoricalColumn):
         restricted_column: FacetCategoricalColumn
-        col_cat = col_series.astype("category")
+        col_cat = col.astype("category")
         result["CI"] = class_imbalance_values(col_cat, restricted_column.protected_values)
         return result
 
