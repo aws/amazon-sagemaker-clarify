@@ -57,7 +57,7 @@ class Dataset:
         """
         return pd.DataFrame()
 
-    def preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _preprocess(self, df: pd.DataFrame) -> pd.DataFrame:
         """Custom dataset preprocessing"""
         return df
 
@@ -139,7 +139,7 @@ class S3Dataset(S3CachedDatasetMixin, Dataset):
         return pd.read_parquet(self.local_path())
 
 
-class DataSetInventory:
+class Datasets:
     datasets = {
         "lending_club": S3Dataset(
             "lending_club",
@@ -153,11 +153,17 @@ class DataSetInventory:
         ),
         "german_lending": S3Dataset(
             "german_lending",
-            "s3://famly-datasets/statlog/german.parquet.gz",
+            "s3://famly-datasets/statlog/german.parquet",
             textwrap.dedent("""German Lending dataset"""),
         ),
     }
 
     @staticmethod
     def list() -> List[str]:
-        return DataSetInventory.datasets.keys()
+        return Datasets.datasets.keys()
+
+    def __call__(self, dataset_name: str) -> Dataset:
+        assert (
+            dataset_name in self.list()
+        ), f"Dataset {dataset_name} is not a known dataset. Use DataSetInventory.list() to get a list of datasets"
+        return self.datasets[dataset_name]
