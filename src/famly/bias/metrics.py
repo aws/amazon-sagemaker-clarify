@@ -39,9 +39,9 @@ def class_imbalance(x: pd.Series, facet_index: pd.Series) -> float:
     nd = len(x[facet_index])
     q = na + nd
     if na == 0:
-        raise ValueError("class_imbalance: facet set is empty. Check that x[facet_index] has non-zero length.")
-    if nd == 0:
         raise ValueError("class_imbalance: negated facet set is empty. Check that x[~facet_index] has non-zero length.")
+    if nd == 0:
+        raise ValueError("class_imbalance: facet set is empty. Check that x[facet_index] has non-zero length.")
     q = na + nd
     assert q != 0
     ci = float(na - nd) / q
@@ -64,9 +64,9 @@ def diff_positive_labels(x: pd.Series, facet_index: pd.Series, positive_label_in
     n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
     n_pos_label_facet = len(x[positive_label_index_facet])
     if n_neg_facet == 0:
-        raise ValueError("diff_positive_labels: facet set is empty.")
-    if n_facet == 0:
         raise ValueError("diff_positive_labels: negative facet set is empty.")
+    if n_facet == 0:
+        raise ValueError("diff_positive_labels: facet set is empty.")
     q_neg = n_pos_label_neg_facet / n_neg_facet
     q_pos = n_pos_label_facet / n_facet
     if (q_neg + q_pos) == 0:
