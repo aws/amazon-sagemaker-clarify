@@ -90,35 +90,35 @@ def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = N
     return ci_all
 
 
-def bias_report(df: pd.DataFrame, restricted_column: FacetColumn, label_column: str) -> Dict:
+def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) -> Dict:
     """
     Run Full bias report on a dataset.
 
     :param df: Dataset as a pandas.DataFrame
-    :param restricted_column: marks which column to consider for Bias analysis
+    :param facet_column: marks which column to consider for Bias analysis
     :param label_column: column name which has the labels.
     :return:
     """
-    if restricted_column:
-        assert restricted_column.name in df.columns, "Restricted column {} is not present in the dataset".format(
-            restricted_column.name
+    if facet_column:
+        assert facet_column.name in df.columns, "Restricted column {} is not present in the dataset".format(
+            facet_column.name
         )
 
     if problem_type(df[label_column]) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
-    col: pd.Series = df[restricted_column.name].dropna()
+    col: pd.Series = df[facet_column.name].dropna()
     col_cat: pd.Series  # Category series
     result = dict()
-    if issubclass(restricted_column.__class__, FacetCategoricalColumn):
-        restricted_column: FacetCategoricalColumn
+    if issubclass(facet_column.__class__, FacetCategoricalColumn):
+        facet_column: FacetCategoricalColumn
         col_cat = col.astype("category")
-        result["CI"] = class_imbalance_values(col_cat, restricted_column.protected_values)
+        result["CI"] = class_imbalance_values(col_cat, facet_column.protected_values)
         return result
 
-    elif issubclass(restricted_column.__class__, FacetContinuousColumn):
-        restricted_column: FacetContinuousColumn
-        col_cat = pd.cut(col, restricted_column.interval_indices)
+    elif issubclass(facet_column.__class__, FacetContinuousColumn):
+        facet_column: FacetContinuousColumn
+        col_cat = pd.cut(col, facet_column.interval_indices)
         # TODO: finish impl
         # In [44]: df=pd.DataFrame({'age': [5,25,10,80]})
         # In [50]: df
@@ -147,6 +147,4 @@ def bias_report(df: pd.DataFrame, restricted_column: FacetColumn, label_column: 
         # Name: age, dtype: category
         raise RuntimeError("Continous case to be finished")
     else:
-        raise RuntimeError(
-            "restricted_column should be an instance of RestrictedCategoricalColumn or " "RestrictedContinuousColumn"
-        )
+        raise RuntimeError("facet_column should be an instance of FacetCategoricalColumn or FacetContinuousColumn")
