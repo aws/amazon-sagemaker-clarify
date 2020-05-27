@@ -100,7 +100,7 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) 
     :return:
     """
     if facet_column:
-        assert facet_column.name in df.columns, "Restricted column {} is not present in the dataset".format(
+        assert facet_column.name in df.columns, "Facet column {} is not present in the dataset".format(
             facet_column.name
         )
 
