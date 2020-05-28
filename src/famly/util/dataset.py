@@ -8,6 +8,7 @@ import pandas as pd
 import pandas.io.common
 import urllib.parse
 import boto3
+import botocore
 import textwrap
 
 log = logging.getLogger(__name__)
