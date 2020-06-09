@@ -200,7 +200,8 @@ def german_lending_readable_values(df: pd.DataFrame) -> pd.DataFrame:
         ],
     )
     df["SavingsAC"] = df["SavingsAC"].replace(
-        ["A61", "A62", "A63", "A64", "A65"], ["x < 100 DM", "100 <= x < 500 DM", "500 <= x < 1000 DM", "x >= 1000 DM"]
+        ["A61", "A62", "A63", "A64", "A65"],
+        ["x < 100 DM", "100 <= x < 500 DM", "500 <= x < 1000 DM", "x >= 1000 DM", "unknown"],
     )
     df["Employment"] = df["Employment"].replace(
         ["A71", "A72", "A73", "A74", "A75"],
@@ -217,3 +218,22 @@ def german_lending_readable_values(df: pd.DataFrame) -> pd.DataFrame:
         ],
     )
     df["OtherDebts"] = df["OtherDebts"].replace(["A101", "A102", "A103"], ["none", "co-applicant", "guarantor"])
+    df["Property"] = df["Property"].replace(
+        ["A121", "A122", "A123", "A124"], ["real estate", "soc. savings / life insurance", "car or other", "unknown"]
+    )
+    df["OtherInstalmentPlans"] = df["OtherInstalmentPlans"].replace(
+        ["A141", "A142", "A143"], ["bank", "stores", "none"]
+    )
+    df["Housing"] = df["Housing"].replace(["A151", "A152", "A153"], ["rent", "own", "for free"])
+    df["Job"] = df["Job"].replace(
+        ["A171", "A172", "A173", "A174"],
+        [
+            "unemployed / unskilled-non-resident",
+            "unskilled-resident",
+            "skilled employee / official",
+            "management / self-employed / highly qualified employee / officer",
+        ],
+    )
+    df["Telephone"] = df["Telephone"].replace(["A191", "A192"], ["none", "yes"])
+    df["ForeignWorker"] = df["ForeignWorker"].replace(["A201", "A202"], ["yes", "no"])
+    return df
