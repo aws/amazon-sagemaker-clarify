@@ -7,7 +7,7 @@ Bias detection and mitigation for datasets and models.
 ## Terminology
 
 ### Facet
-A facet is column or feature that will be used to measure bias against. A facet can have value(s) that designates that sample as "***protected***".
+A facet is a set of sensitive column or feature values that will be used to measure bias against. A facet can have value(s) that designates that sample as "***sensitive***".
 
 ### Label
 The label is a column or feature which is the target for training a machine learning model. The label can have value(s) that designates that sample as having a "***positive***" outcome.

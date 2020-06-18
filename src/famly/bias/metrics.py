@@ -23,28 +23,27 @@ def class_imbalance(x: pd.Series, facet_index: pd.Series) -> float:
     """
     Class imbalance (CI)
     :param x: pandas series
-    :param facet_index: boolean index series selecting protected instances
+    :param facet_index: boolean index series selecting faceted instances
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
-    of the protected class.
+    of the faceted class.
 
     Bias is often generated from an under-representation of
-    the protected class in the dataset, especially if the desired “golden truth”
+    the faceted class in the dataset, especially if the desired “golden truth”
     is equality across classes. Imbalance carries over into model predictions.
     We will report all measures in differences and normalized differences. Since
     the measures are often probabilities or proportions, the differences will lie in
-    We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group
-    and p is number of instances in the protected group.
+    We define CI = (nf − f)/(nf + f). Where nf is the number of instances in the not faceted group
+    and f is number of instances in the faceted group.
     """
-    np = len(x[~facet_index])
-    p = len(x[facet_index])
-    q = np + p
-    if np == 0:
+    n_neg_facet = len(x[~facet_index])
+    n_pos_facet = len(x[facet_index])
+    sum = n_neg_facet + n_pos_facet
+    if n_neg_facet == 0:
         raise ValueError("class_imbalance: negated facet set is empty. Check that x[~facet_index] has non-zero length.")
-    if p == 0:
+    if n_pos_facet == 0:
         raise ValueError("class_imbalance: facet set is empty. Check that x[facet_index] has non-zero length.")
-    q = np + p
-    assert q != 0
-    ci = float(np - p) / q
+    assert sum != 0
+    ci = float(n_neg_facet - n_pos_facet) / sum
     return ci
 
 
@@ -59,16 +58,16 @@ def diff_positive_labels(x: pd.Series, facet_index: pd.Series, positive_label_in
     """
     positive_label_index_neg_facet = (positive_label_index) & ~facet_index
     positive_label_index_facet = (positive_label_index) & facet_index
-    np = len(x[~facet_index])
-    p = len(x[facet_index])
+    n_neg_facet = len(x[~facet_index])
+    n_pos_facet = len(x[facet_index])
     n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
     n_pos_label_facet = len(x[positive_label_index_facet])
-    if np == 0:
+    if n_neg_facet == 0:
         raise ValueError("diff_positive_labels: negative facet set is empty.")
-    if p == 0:
+    if n_pos_facet == 0:
         raise ValueError("diff_positive_labels: facet set is empty.")
-    q_neg = n_pos_label_neg_facet / np
-    q_pos = n_pos_label_facet / p
+    q_neg = n_pos_label_neg_facet / n_neg_facet
+    q_pos = n_pos_label_facet / n_pos_facet
     if (q_neg + q_pos) == 0:
         raise ValueError("diff_positive_labels: label facet is empty.")
     res = (q_neg - q_pos) / (q_neg + q_pos)
