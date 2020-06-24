@@ -22,11 +22,11 @@ def test_ci():
     with pytest.raises(ValueError) as e:
         class_imbalance(df[0], df[0] == "c")
     assert e.type == ValueError
-    assert "class_imbalance: facet set is empty" in str(e.value)
+    assert "class_imbalance: sensitive set is empty" in str(e.value)
     with pytest.raises(ValueError) as e:
         class_imbalance(df[0], df[0] != "c")
     assert e.type == ValueError
-    assert "class_imbalance: negated facet set is empty" in str(e.value)
+    assert "class_imbalance: negated sensitive set is empty" in str(e.value)
 
 
 def test_ci_one_vs_all():

@@ -7,12 +7,12 @@ import pandas as pd
 from . import metrics
 
 
-class FacetColumn:
+class SensitiveColumn:
     def __init__(self, name):
         self.name = name
 
 
-class FacetCategoricalColumn(FacetColumn):
+class SensitiveCategoricalColumn(SensitiveColumn):
     def __init__(self, name, protected_values: Optional[List[Any]] = None):
         """
         :param name: Name of the column
@@ -22,7 +22,7 @@ class FacetCategoricalColumn(FacetColumn):
         self.protected_values = protected_values
 
 
-class FacetContinuousColumn(FacetColumn):
+class SensitiveContinuousColumn(SensitiveColumn):
     def __init__(self, name, interval_indices: pd.IntervalIndex, intervals: List[pd.Interval]):
         """
         :param name: Name of the column
@@ -65,24 +65,24 @@ def column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = None) -> Dict:
+def class_imbalance_values(col: pd.Series, sensitive_values: Optional[List[Any]] = None) -> Dict:
     """
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(facet_values: List[Any]) -> pd.Series:
-        index_key_series: pd.Series = (col == facet_values[0])
-        for val in facet_values[1:]:
+    def index_key(sensitive_values: List[Any]) -> pd.Series:
+        index_key_series: pd.Series = (col == sensitive_values[0])
+        for val in sensitive_values[1:]:
             index_key_series = index_key_series | (col == val)
         return index_key_series
 
-    if facet_values:
+    if sensitive_values:
         # A list of protected values
         # Build index series selecting protected values
         # create indexing series with boolean OR of values
 
-        ci = metrics.class_imbalance(col, index_key(facet_values))
-        metric_name = column_list_to_str(facet_values)
+        ci = metrics.class_imbalance(col, index_key(sensitive_values))
+        metric_name = column_list_to_str(sensitive_values)
         ci_all = {metric_name: ci}
     else:
         # Do one vs all for every value
@@ -90,35 +90,35 @@ def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = N
     return ci_all
 
 
-def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) -> Dict:
+def bias_report(df: pd.DataFrame, sensitive_column: SensitiveColumn, label_column: str) -> Dict:
     """
     Run Full bias report on a dataset.
 
     :param df: Dataset as a pandas.DataFrame
-    :param facet_column: marks which column to consider for Bias analysis
+    :param sensitive_column: marks which column to consider for Bias analysis
     :param label_column: column name which has the labels.
     :return:
     """
-    if facet_column:
-        assert facet_column.name in df.columns, "Facet column {} is not present in the dataset".format(
-            facet_column.name
+    if sensitive_column:
+        assert sensitive_column.name in df.columns, "Sensitive column {} is not present in the dataset".format(
+            sensitive_column.name
         )
 
     if problem_type(df[label_column]) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
-    col: pd.Series = df[facet_column.name].dropna()
+    col: pd.Series = df[sensitive_column.name].dropna()
     col_cat: pd.Series  # Category series
     result = dict()
-    if issubclass(facet_column.__class__, FacetCategoricalColumn):
-        facet_column: FacetCategoricalColumn
+    if issubclass(sensitive_column.__class__, SensitiveCategoricalColumn):
+        sensitive_column: SensitiveCategoricalColumn
         col_cat = col.astype("category")
-        result["CI"] = class_imbalance_values(col_cat, facet_column.protected_values)
+        result["CI"] = class_imbalance_values(col_cat, sensitive_column.protected_values)
         return result
 
-    elif issubclass(facet_column.__class__, FacetContinuousColumn):
-        facet_column: FacetContinuousColumn
-        col_cat = pd.cut(col, facet_column.interval_indices)
+    elif issubclass(sensitive_column.__class__, SensitiveContinuousColumn):
+        sensitive_column: SensitiveContinuousColumn
+        col_cat = pd.cut(col, sensitive_column.interval_indices)
         # TODO: finish impl
         # In [44]: df=pd.DataFrame({'age': [5,25,10,80]})
         # In [50]: df
@@ -147,4 +147,6 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) 
         # Name: age, dtype: category
         raise RuntimeError("Continous case to be finished")
     else:
-        raise RuntimeError("facet_column should be an instance of FacetCategoricalColumn or FacetContinuousColumn")
+        raise RuntimeError(
+            "sensitive_column should be an instance of SensitiveCategoricalColumn or SensitiveContinuousColumn"
+        )

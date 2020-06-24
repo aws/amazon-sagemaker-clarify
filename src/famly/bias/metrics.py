@@ -19,56 +19,58 @@ def class_imbalance_one_vs_all(x: pd.Series) -> Dict:
     return res
 
 
-def class_imbalance(x: pd.Series, facet_index: pd.Series) -> float:
+def class_imbalance(x: pd.Series, sensitive_index: pd.Series) -> float:
     """
     Class imbalance (CI)
     :param x: pandas series
-    :param facet_index: boolean index series selecting faceted instances
+    :param sensitive_index: boolean index series selecting sensitive instances on the series given as x argument.
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
-    of the faceted class.
+    of the sensitive class.
 
     Bias is often generated from an under-representation of
-    the faceted class in the dataset, especially if the desired “golden truth”
+    the sensitive class in the dataset, especially if the desired “golden truth”
     is equality across classes. Imbalance carries over into model predictions.
     We will report all measures in differences and normalized differences. Since
     the measures are often probabilities or proportions, the differences will lie in
-    We define CI = (nf − f)/(nf + f). Where nf is the number of instances in the not faceted group
-    and f is number of instances in the faceted group.
+    We define CI = (ns − s)/(ns + s). Where ns is the number of instances in the non sensitive group
+    and s is number of instances in the sensitive group.
     """
-    n_neg_facet = len(x[~facet_index])
-    n_pos_facet = len(x[facet_index])
-    sum = n_neg_facet + n_pos_facet
-    if n_neg_facet == 0:
-        raise ValueError("class_imbalance: negated facet set is empty. Check that x[~facet_index] has non-zero length.")
-    if n_pos_facet == 0:
-        raise ValueError("class_imbalance: facet set is empty. Check that x[facet_index] has non-zero length.")
+    ns = len(x[~sensitive_index])
+    s = len(x[sensitive_index])
+    sum = ns + s
+    if ns == 0:
+        raise ValueError(
+            "class_imbalance: negated sensitive set is empty. Check that x[~sensitive_index] has non-zero length."
+        )
+    if s == 0:
+        raise ValueError("class_imbalance: sensitive set is empty. Check that x[sensitive_index] has non-zero length.")
     assert sum != 0
-    ci = float(n_neg_facet - n_pos_facet) / sum
+    ci = float(ns - s) / sum
     return ci
 
 
-def diff_positive_labels(x: pd.Series, facet_index: pd.Series, positive_label_index: pd.Series) -> float:
+def diff_positive_labels(x: pd.Series, sensitive_index: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in predicted labels
     :param x: pandas series of the target column
     :param label: pandas series of labels
-    :param facet_index:
+    :param sensitive_index:
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    positive_label_index_neg_facet = (positive_label_index) & ~facet_index
-    positive_label_index_facet = (positive_label_index) & facet_index
-    n_neg_facet = len(x[~facet_index])
-    n_pos_facet = len(x[facet_index])
-    n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
-    n_pos_label_facet = len(x[positive_label_index_facet])
-    if n_neg_facet == 0:
-        raise ValueError("diff_positive_labels: negative facet set is empty.")
-    if n_pos_facet == 0:
-        raise ValueError("diff_positive_labels: facet set is empty.")
-    q_neg = n_pos_label_neg_facet / n_neg_facet
-    q_pos = n_pos_label_facet / n_pos_facet
+    positive_label_index_not_sensitive = (positive_label_index) & ~sensitive_index
+    positive_label_index_sensitive = (positive_label_index) & sensitive_index
+    ns = len(x[~sensitive_index])
+    s = len(x[sensitive_index])
+    n_pos_label_not_sensitive = len(x[positive_label_index_not_sensitive])
+    n_pos_label_sensitive = len(x[positive_label_index_sensitive])
+    if ns == 0:
+        raise ValueError("diff_positive_labels: negative sensitive set is empty.")
+    if s == 0:
+        raise ValueError("diff_positive_labels: sensitive set is empty.")
+    q_neg = n_pos_label_not_sensitive / ns
+    q_pos = n_pos_label_sensitive / s
     if (q_neg + q_pos) == 0:
-        raise ValueError("diff_positive_labels: label facet is empty.")
+        raise ValueError("diff_positive_labels: label sensitive is empty.")
     res = (q_neg - q_pos) / (q_neg + q_pos)
     return res
