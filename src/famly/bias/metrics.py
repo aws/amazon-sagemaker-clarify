@@ -3,7 +3,7 @@ from typing import Dict
 
 import pandas as pd
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.neighbors import KNeighborsClassifier
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def PDF(x: np.array) -> (np.array, np.array):
 
 def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_index: pd.Series=None, predicted_labels: pd.Series=None, labels: pd.Series=None, group_variable: pd.Series=None, dataset: pd.DataFrame=None) -> Dict:
     """
-    Calculate any metric for a categorical series doing 1 vs all
+    Calculate any metric for a categorical facet and/or label using 1 vs all
     :param metric: a function defined in this file which computes a metric
     :param x: pandas series
     :param facet: facet containing multicategory values for each element in x
@@ -74,12 +74,12 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
     categories = facet.unique()
     res = {}
     for cat in categories:
-        if len(np.unique(labels)) <= 2:
+        if not labels or len(np.unique(labels)) <= 2:
             if metric.__name__ in pretraining_metrics:
                 if metric != CDD:
-                    res[cat] = metric(x, facet == cat, positive_label_index)[1]
+                    res[cat] = metric(x, facet == cat, positive_label_index)
                 else:
-                    res[cat] = metric(x, facet == cat, positive_label_index, group_variable)[1]
+                    res[cat] = metric(x, facet == cat, positive_label_index, group_variable)
             else:
                 if metric in [DPPL, DI]:
                     res[cat] = metric(x, facet == cat, predicted_labels)
@@ -109,14 +109,14 @@ def label_one_vs_all(metric, x: pd.Series, facet: pd.Series, labels: pd.Series, 
     for label in label_unique:
         if metric.__name__ in pretraining_metrics:
             if metric != CDD:
-                values[label] = metric(x, facet, labels == label)[1]
+                values[label] = metric(x, facet, labels == label)
             else:
-                values[label] = metric(x, facet, labels == label, group_variable)[1]
+                values[label] = metric(x, facet, labels == label, group_variable)
         else:
             if metric in [DPPL, DI]:
-                values[label] = metric(x, facet, predicted_labels == label)[1]
+                values[label] = metric(x, facet, predicted_labels == label)
             else:
-                values[label] = metric(x, facet, labels == label, predicted_labels == label)[1]
+                values[label] = metric(x, facet, labels == label, predicted_labels == label)
 
     return values
 
@@ -141,10 +141,9 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     """
 
 
-    pos = np.sum(facet)
-    q = len(facet)
-    neg = q - pos
-
+    pos = len(x[facet])
+    neg = len(x[~facet])
+    q = pos + neg
 
     if neg == 0:
         raise ValueError("CI: negated facet set is empty. Check that x[~facet] has non-zero length.")
@@ -167,14 +166,16 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
 
+
     positive_label_index_neg_facet = (positive_label_index) & ~facet
     positive_label_index_facet = (positive_label_index) & facet
 
     np = len(x[~facet])
     p = len(x[facet])
 
-    n_pos_label_neg_facet = sum(positive_label_index_neg_facet)
-    n_pos_label_facet = sum(positive_label_index_facet)
+    n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
+    n_pos_label_facet = len(x[positive_label_index_facet])
+
 
     if np == 0:
         raise ValueError("DPL: negative facet set is empty.")
@@ -223,7 +224,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
     if len(Pa) == len(Pd):
         P = PDF(positive_label_index)
-        js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))  # note log is base e, measured in nats
+        js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
     else:
         js_divergence = -1.0
 
@@ -551,6 +552,15 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 
 def FT(dataset: np.ndarray, facet: np.array, labels: np.array, predicted_labels: np.array, verbose=0) -> float:
+    """
+    :param dataset: array of data points
+    :param facet: boolean column indicating sensitive vales
+    :param labels: boolean column of positive values for target column
+    :param predicted_labels: boolean column of predicted positive values for target column
+    :param verbose: optional boolean value
+    :return: FT difference metric
+    """
+
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
 
