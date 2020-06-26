@@ -49,9 +49,8 @@ def PDF(x: np.array) -> (np.array, np.array):
     """
     y = np.unique(x)
 
-    p, bins_edges = np.histogram(x)
+    p, bins_edges = np.histogram(x, range=(0, 1))
 
-    p = p[p > 0]
     p = p / np.sum(p)
     return p
 
@@ -66,9 +65,9 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
     :param positive_label_index: series of boolean values indicating positive target labels (optional)
     :param predicted_labels: series of model predictions of target column (optional)
     :param labels: series of true labels (optional)
-    :param group_variable: series indicating strata each point belongs to (used for CDD metric)
-    :param dataset: full dataset (used only for FlipTest metric)
-    :return: A dictionary in which each key is one of the sensitive attributes in the facet column, and each key is its corresponding value according the metric requested
+    :param group_variable: series indicating strata each point belongs to (used for CDD metric) (optional)
+    :param dataset: full dataset (used only for FlipTest metric) (optional)
+    :return: A dictionary in which each key is one of the sensitive attributes in the facet column, and each value is its corresponding metric according to the requested bias measure
     """
     #Ensure correct parameter types
     x = pd.Series(x)
@@ -94,9 +93,7 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
                 else:
                     res[cat] = metric(x, facet == cat, positive_label_index, group_variable)
             else:
-                if metric in [DPPL, DI]:
-                    res[cat] = metric(x, facet == cat, predicted_labels)
-                elif metric == FT:
+                if metric == FT:
                     res[cat] = metric(dataset, facet == cat, labels, predicted_labels)
                 else:
                     res[cat] = metric(x, facet == cat, labels, predicted_labels)
@@ -126,10 +123,7 @@ def label_one_vs_all(metric, x: pd.Series, facet: pd.Series, labels: pd.Series, 
             else:
                 values[label] = metric(x, facet, labels == label, group_variable)
         else:
-            if metric in [DPPL, DI]:
-                values[label] = metric(x, facet, predicted_labels == label)
-            else:
-                values[label] = metric(x, facet, labels == label, predicted_labels == label)
+            values[label] = metric(x, facet, labels == label, predicted_labels == label)
 
     return values
 
@@ -329,10 +323,10 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     # Global demographic disparity (DD)
     numA = len(positive_label_index[(positive_label_index) & (facet)])
     denomA = len(facet[positive_label_index])
-    A = numA / denomA
+    A = numA / denomA if denomA != 0 else 0
     numD = len(positive_label_index[(~positive_label_index) & (facet)])
     denomD = len(positive_label_index[~positive_label_index])
-    D = numD / denomD
+    D = numD / denomD if denomD != 0 else 0
     DD = D - A
 
     # Conditional demographic disparity (CDD)
@@ -354,38 +348,40 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
 ############################################ Post Training Metrics ###############################################
 
 
-def DPPL(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series) -> float:
+def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
     :param facet: boolean column indicating sensitive values
+    :param labels: boolean column indicating true values of target column
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns Difference in Positive Proportions, based on predictions rather than true labels
     """
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
-    qa = na1hat / na
+    qa = na1hat / na if na != 0 else 0
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
-    qd = nd1hat / nd
+    qd = nd1hat / nd if nd != 0 else 0
 
     return qa - qd
 
 
-def DI(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series) -> float:
+def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     # Disparate impact
     """
     :param x: input feature
     :param facet: boolean column indicating sensitive values
+    :param labels: boolean column indicating true values of target column
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
 
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
-    qa = na1hat / na
+    qa = na1hat / na if na != 0 else 0
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
-    qd = nd1hat / nd
+    qd = nd1hat / nd if nd != 0 else 0
 
     if qa != 0:
         return qd / qa
@@ -529,12 +525,12 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
-    acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a)
+    acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a) if (TP_a + TN_a + FP_a + FN_a) != 0 else 0
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
     TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
-    acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d)
+    acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d) if (TP_d + TN_d + FP_d + FN_d) != 0 else 0
 
     return acc_a - acc_d
 
