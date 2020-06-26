@@ -61,7 +61,7 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
     """
     Calculate any metric for a categorical facet and/or label using 1 vs all
     :param metric: a function defined in this file which computes a metric
-    :param x: pandas series
+    :param x: pandas series containing categorical values
     :param facet: facet containing multicategory values for each element in x
     :param positive_label_index: series of boolean values indicating positive target labels (optional)
     :param predicted_labels: series of model predictions of target column (optional)
@@ -70,11 +70,24 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
     :param dataset: full dataset (used only for FlipTest metric)
     :return: A dictionary in which each key is one of the sensitive attributes in the facet column, and each key is its corresponding value according the metric requested
     """
+    #Ensure correct parameter types
+    x = pd.Series(x)
+    facet = pd.Series(facet)
+    if not positive_label_index is None:
+        positive_label_index = pd.Series(positive_label_index)
+    if not predicted_labels is None:
+        predicted_labels = pd.Series(predicted_labels)
+    if not labels is None:
+        labels = pd.Series(labels)
+    if not group_variable is None:
+        group_variable = pd.Series(group_variable)
+    if dataset:
+        dataset = pd.DataFrame(dataset)
 
     categories = facet.unique()
     res = {}
     for cat in categories:
-        if not labels or len(np.unique(labels)) <= 2:
+        if labels is None or len(np.unique(labels)) <= 2:
             if metric.__name__ in pretraining_metrics:
                 if metric != CDD:
                     res[cat] = metric(x, facet == cat, positive_label_index)
@@ -139,6 +152,8 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group_variable
     and p is number of instances in the protected group_variable.
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
 
     pos = len(x[facet])
@@ -165,6 +180,8 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
 
     positive_label_index_neg_facet = (positive_label_index) & ~facet
@@ -196,6 +213,10 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
+
+    facet = np.array(facet)
     x_a = positive_label_index[~facet]
     x_d = positive_label_index[facet]
     Pa = PDF(x_a)  # x: raw values of the variable (column of data)
@@ -215,6 +236,8 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     :param positive_label_index: boolean column indicating positive labels
     :return: Jenson-Shannon (JS) divergence metric
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
     x_a = positive_label_index[~facet]
     x_d = positive_label_index[facet]
@@ -238,6 +261,8 @@ def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: i
     :param q: the order of norm desired
     :return: Lp-norm metric
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
     x_a = positive_label_index[~facet]
     x_d = positive_label_index[facet]
@@ -277,6 +302,8 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     :param positive_label_index: boolean column indicating positive labels
     :return: Kolmogorov-Smirnov metric
     """
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
     x_a = positive_label_index[~facet]
     x_d = positive_label_index[facet]
@@ -296,6 +323,8 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     :return: the weighted average of demographic disparity on all subgroups
     """
     all_group_variable = np.unique(group_variable)
+    positive_label_index = positive_label_index.astype(bool)
+    facet = facet.astype(bool)
 
     # Global demographic disparity (DD)
     numA = len(positive_label_index[(positive_label_index) & (facet)])
