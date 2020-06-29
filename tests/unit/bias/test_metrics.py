@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from famly.bias.metrics import CI, DPL, KL, JS, LPnorm, TVD, KS, CDD, DPPL, DI, DCA, DCR, RD, DRR, PD, AD, TE, FT, metric_one_vs_all
+from ....src.famly.bias.metrics import CI, DPL, KL, JS, LPnorm, TVD, KS, CDD, DPPL, DI, DCA, DCR, RD, DRR, PD, AD, TE, FT, metric_one_vs_all
 import pytest
 from pytest import approx
 
@@ -248,8 +248,8 @@ def test_CDD():
     group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 
     response = metric_one_vs_all(CDD, x, x, positive_label_index, group_variable=group_variable)
-    assert response['F'] == approx(0.322619047)
-    assert response['M'] == approx(-0.3226190476)
+    assert response['F'] == approx(0.3982142857)
+    assert response['M'] == approx(-0.3982142857)
 
     # Multicategory Facet, Binary Label
     facet = dfM[0]
