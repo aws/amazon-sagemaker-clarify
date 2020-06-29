@@ -30,12 +30,69 @@ def dfContinuous():
     data = pd.Series([1.55255404, 1.87128923, 1.82640675, 0.48706083, 0.21833644,
                       0.45007763, 0.47457823, 1.5346789 , 1.61042132, 1.87130261,
                       1.97768247, 1.05499183])
+
     df = pd.DataFrame(data)
     return df
+
+def datasetFT():
+    X = np.array([[0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1]])
+
+    return pd.DataFrame(X)
+
+def datasetFTMult():
+    X = np.array([[0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [1, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1],
+                  [2, 0, 0, 0, 1, 1, 1],
+                  [0, 0, 0, 0, 1, 1, 1]])
+    return pd.DataFrame(X)
 
 dfB = dfBinary()
 dfM = dfMulticategory()
 dfC = dfContinuous()
+dfFT = datasetFT()
 
 def test_ci():
     """test class imbalance"""
@@ -462,14 +519,19 @@ def test_TE():
     assert TE(dfB[0], facet, labels, predicted) == approx(1 / 2)
 
     # Multicategory Facet, Binary Label
-    facet = dfM[0]
-    predicted = [1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
-    labels = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0]
-    response = metric_one_vs_all(TE, dfM[0], facet=dfM[0], predicted_labels=predicted, labels=labels)
+    predicted  = [1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
+    labels     = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0]
 
-    assert response['M'] != -1.0
-    assert response['F'] != -1.0
-    assert response['O'] != -1.0
+    # For Reference: M   F   O
+    # FP_a =       | 3 | 3 | 2
+    # FN_a =       | 4 | 3 | 3
+    # FP_d =       | 1 | 1 | 2
+    # FN_d =       | 1 | 2 | 2
+
+    response = metric_one_vs_all(TE, dfM[0], facet=dfM[0], predicted_labels=predicted, labels=labels)
+    assert response['M'] == approx(-1 / 3)
+    assert response['F'] == approx(1)
+    assert response['O'] == approx(-1 / 2)
 
     # Multicategory Facet, Multicategory Label
     predicted = [0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1]
@@ -477,7 +539,26 @@ def test_TE():
               1, 2]
 
     response = metric_one_vs_all(TE, dfM[0], facet=dfM[0], predicted_labels=predicted, labels=labels)
-    for cat in facet.unique():
-        assert response[cat][0] != -1.0
-        assert response[cat][1] != -1.0
-        assert response[cat][2] != -1.0
+
+def test_FT():
+    dfFT = datasetFT()
+    facet = dfFT[0]
+
+    predicted = pd.Series([1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0])
+    labels = pd.Series([0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0])
+
+    assert FT(dfFT, facet, labels, predicted) == approx(0.4615384615)
+
+    # Multicategory Facet, Binary Label
+    multDF = datasetFTMult()
+    predicted = [1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1]
+    labels = [1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0]
+
+    response = metric_one_vs_all(FT, multDF[0], facet=multDF[0], predicted_labels=predicted, labels=labels, dataset=multDF)
+
+    assert response[0] == approx(5 / 8)
+    assert response[1] == approx(-3 / 5)
+    assert response[2] == approx(1 / 2)
+
+
+

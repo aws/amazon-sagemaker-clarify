@@ -80,7 +80,7 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
         labels = pd.Series(labels)
     if not group_variable is None:
         group_variable = pd.Series(group_variable)
-    if dataset:
+    if not dataset is None:
         dataset = pd.DataFrame(dataset)
 
     categories = facet.unique()
@@ -483,7 +483,7 @@ def DRR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     else:
         rr_d = 1e10 # TODO : handle the infinity value
 
-    return (rr_a - rr_d)
+    return (rr_d - rr_a)
 
 def PD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> dict:
     """
@@ -576,7 +576,7 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
-def FT(dataset: np.ndarray, facet: np.array, labels: np.array, predicted_labels: np.array, verbose=0) -> float:
+def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series, verbose=0) -> float:
     """
     :param dataset: array of data points
     :param facet: boolean column indicating sensitive vales
@@ -585,9 +585,9 @@ def FT(dataset: np.ndarray, facet: np.array, labels: np.array, predicted_labels:
     :param verbose: optional boolean value
     :return: FT difference metric
     """
-
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
+    dataset = np.array(dataset)
 
     data_a = ([el for idx, el in enumerate(dataset) if ~facet[idx]],
               [el for idx, el in enumerate(predicted_labels) if ~facet[idx]],
