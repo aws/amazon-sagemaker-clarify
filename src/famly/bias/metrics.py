@@ -1,6 +1,6 @@
 import logging
-from typing import Dict
-
+from typing import Dict, Callable
+from famly.bias.util import PDF
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
@@ -10,53 +10,9 @@ log = logging.getLogger(__name__)
 pretraining_metrics = ['CI', 'DPL', 'KL', 'JS', 'LPnorm', 'TVD', 'KS', 'CDD']
 posttraining_metrics = ['DPPL', 'DI', 'DCA', 'DCR', 'RD', 'DRR', 'PD', 'AD', 'TE']
 
-#Helper Functions
-def collapse_to_binary(values, pivot=0.0):
-    # Collapsing to binary categorical and continuous attributes
-    # values = attribute values (e.g. labels or sensitive attribute)
-    # pivot = if single float number -> continuous case;
-    # otherwise categorical case with pivot as list of positive categories
-    if np.isscalar(pivot):  # continuous case: 0 if the attribute is < pivot value, otherwise 1
-        nvalues = [1 if el >= pivot else 0 for el in values]
-    else:  # categorical case
-        nvalues = [1 if el in pivot else 0 for el in values]
-    return np.array(nvalues)
-
-def GaussianFilter(input_array: np.array, sigma: int=1) -> np.array:
-    """
-    :param input_array: array which Gaussian Filter is applied to
-    :param sigma: integer which indicates standard deviation of the desired Gaussian distribution
-    :return: smoothed array
-    """
-
-    if len(input_array) == 0:
-        raise ValueError("input array is empty")
-
-    def GaussianKernel(x: float, sigma: int) -> float:
-
-        return np.exp(-((x ** 2) / (2 * (sigma ** 2)))) * 1 / (np.sqrt(2 * np.pi) * sigma)
-
-    x = np.linspace(1, len(input_array), len(input_array))
-    centered_x = x - np.mean(x)
-
-    gauss_filter = GaussianKernel(centered_x, sigma)
-    return np.convolve(input_array, gauss_filter, 'same')
-
-def PDF(x: np.array) -> (np.array, np.array):
-    """
-    :param x: input array
-    :return: probability distribution of the input array
-    """
-    y = np.unique(x)
-
-    p, bins_edges = np.histogram(x, range=(0, 1))
-
-    p = p / np.sum(p)
-    return p
-
 #Methods to handle multicategory cases
 
-def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_index: pd.Series=None, predicted_labels: pd.Series=None, labels: pd.Series=None, group_variable: pd.Series=None, dataset: pd.DataFrame=None) -> Dict:
+def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Series, positive_label_index: pd.Series=None, predicted_labels: pd.Series=None, labels: pd.Series=None, group_variable: pd.Series=None, dataset: pd.DataFrame=None) -> Dict:
     """
     Calculate any metric for a categorical facet and/or label using 1 vs all
     :param metric: a function defined in this file which computes a metric
@@ -67,11 +23,14 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
     :param labels: series of true labels (optional)
     :param group_variable: series indicating strata each point belongs to (used for CDD metric) (optional)
     :param dataset: full dataset (used only for FlipTest metric) (optional)
-    :return: A dictionary in which each key is one of the sensitive attributes in the facet column, and each value is its corresponding metric according to the requested bias measure
+    :return: A dictionary in which each key is one of the sensitive attributes in the facet column, and each value is
+            its corresponding metric according to the requested bias measure
     """
     #Ensure correct parameter types
     x = pd.Series(x)
     facet = pd.Series(facet)
+    if metric.__name__ not in pretraining_metrics and metric.__name__ not in posttraining_metrics:
+        raise ValueError("Metric passed in is invalid - not an implemented bias metric")
     if not positive_label_index is None:
         positive_label_index = pd.Series(positive_label_index)
     if not predicted_labels is None:
@@ -102,7 +61,7 @@ def metric_one_vs_all(metric, x: pd.Series, facet: pd.Series, positive_label_ind
 
     return res
 
-def label_one_vs_all(metric, x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series=None, group_variable: pd.Series=None) -> Dict:
+def label_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series=None, group_variable: pd.Series=None) -> Dict:
     """
     :param metric: one of the bias measures defined in this file
     :param x: data from the feature of interest
@@ -143,8 +102,8 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     is equality across classes. Imbalance carries over into model predictions.
     We will report all measures in differences and normalized differences. Since
     the measures are often probabilities or proportions, the differences will lie in
-    We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group_variable
-    and p is number of instances in the protected group_variable.
+    We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group
+    and p is number of instances in the sensitive group.
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
@@ -316,7 +275,7 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    all_group_variable = np.unique(group_variable)
+    unique_groups = np.unique(group_variable)
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
 
@@ -332,7 +291,7 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     # Conditional demographic disparity (CDD)
     CDD = []
     counts = []
-    for subgroup_variable in group_variable:
+    for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
         numA = len(positive_label_index[(positive_label_index) & (facet) & (group_variable == subgroup_variable)])
         denomA = len(facet[(positive_label_index) & (group_variable == subgroup_variable)])
