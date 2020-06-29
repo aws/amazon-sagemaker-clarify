@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from ....src.famly.bias.metrics import CI, DPL, KL, JS, LPnorm, TVD, KS, CDD, DPPL, DI, DCA, DCR, RD, DRR, PD, AD, TE, FT, metric_one_vs_all
+from famly.bias.metrics import CI, DPL, KL, JS, LPnorm, TVD, KS, CDD, DPPL, DI, DCA, DCR, RD, DRR, PD, AD, TE, FT, metric_one_vs_all
 import pytest
 from pytest import approx
 
@@ -118,9 +118,9 @@ def test_ci():
 
     response = metric_one_vs_all(CI, dfM[0], facet=dfM[0], positive_label_index = positive_label_index)
 
-    assert response['M'] == approx(1 / 3) #6 / 8
-    assert response['F'] == approx(1 / 4)  #2 / 9
-    assert response['O'] == approx(5 / 12) #4 / 7
+    assert response['M'] == approx(1 / 3)
+    assert response['F'] == approx(1 / 4)
+    assert response['O'] == approx(5 / 12)
 
 def test_dpl():
 
