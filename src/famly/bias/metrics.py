@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Callable
-from famly.bias.util import PDF
+from famly.util.util import PDF
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 log = logging.getLogger(__name__)
 
 pretraining_metrics = ['CI', 'DPL', 'KL', 'JS', 'LPnorm', 'TVD', 'KS', 'CDD']
-posttraining_metrics = ['DPPL', 'DI', 'DCA', 'DCR', 'RD', 'DRR', 'PD', 'AD', 'TE']
+posttraining_metrics = ['DPPL', 'DI', 'DCO', 'RD', 'DLR', 'AD', 'TE']
 
 #Methods to handle multicategory cases
 
@@ -64,12 +64,12 @@ def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Seri
 def label_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series=None, group_variable: pd.Series=None) -> Dict:
     """
     :param metric: one of the bias measures defined in this file
-    :param x: data from the feature of interest
-    :param facet: boolean column with true values indicate a sensitive value
+    :param x: input feature
+    :param facet: boolean column with true values indigroupa sensitive value
     :param predicted_labels: predictions for labels made by model
     :param labels: True values of the target column
     :param group_variable: column of values indicating the subgroup each data point belongs to (used for calculating CDD metric only)
-    :return:
+    :return: value returned by the specified bias measure
     """
 
     values = {}
@@ -91,8 +91,8 @@ def label_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Serie
 def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Class imbalance (CI)
-    :param x: pandas series
-    :param facet: boolean index series selecting protected instances
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: series of boolean values indicating positive target labels
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the protected class.
@@ -127,8 +127,8 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in predicted labels
-    :param x: pandas series of the target column
-    :param facet: boolean series indicating protected class
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
     :param label: pandas series of labels (binary, multicategory, or continuous)
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
@@ -162,7 +162,7 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
 def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
@@ -185,7 +185,7 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Jenson-Shannon (JS) divergence metric
     """
@@ -209,7 +209,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int=2) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param q: the order of norm desired
     :return: Lp-norm metric
@@ -234,7 +234,7 @@ def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: i
 def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
    :param x: input feature
-   :param facet: boolean column indicating sensitive values
+   :param facet: boolean column indicating sensitive group
    :param positive_label_index: boolean column indicating positive labels
    :return: 1/2 * L-1 norm
    """
@@ -251,7 +251,7 @@ def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
 def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kolmogorov-Smirnov metric
     """
@@ -270,7 +270,7 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
@@ -310,11 +310,15 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
 def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: boolean column indicating true values of target column
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns Difference in Positive Proportions, based on predictions rather than true labels
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
+
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
     qa = na1hat / na if na != 0 else 0
@@ -329,11 +333,14 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     # Disparate impact
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: boolean column indicating true values of target column
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
@@ -344,67 +351,66 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     if qa != 0:
         return qd / qa
-    return 1e10 # TODO : handle the infinity value
+    return 1e10
 
-def DCA(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+
+
+
+def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
-    :param labels: true values of the target column for the data
-    :param predicted_labels: boolean column indicating predictions made by model
-    :return: Difference in Conditional Acceptance between advantaged and disadvantaged classes
-    """
-    na1 = len(labels[(labels) & (~facet)])
-    na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
-    nd1 = len(labels[(labels) & (facet)])
-    nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
-
-    if na1hat != 0:
-        ca = na1 / na1hat
-    else:
-        ca = 1e10  # TODO : handle the infinity value
-
-    if nd1hat != 0:
-        cd = nd1 / nd1hat
-    else:
-        cd = 1e10 # TODO : handle the infinity value
-
-    return (ca - cd)
-
-def DCR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
-    """
-    :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Difference in Conditional Rejection between advantaged and disadvantaged classes
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
     na0hat = len(predicted_labels[(~predicted_labels) & (~facet)])
     TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
     nd0hat = len(predicted_labels[(~predicted_labels) & (facet)])
 
+    na1 = len(labels[(labels) & (~facet)])
+    na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
+    nd1 = len(labels[(labels) & (facet)])
+    nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
+
     if na0hat != 0:
         rr_a = TN_a / na0hat
     else:
-        rr_a = 1e10 # TODO : handle the infinity value
+        rr_a = 1e10
 
     if nd0hat != 0:
         rr_d = TN_d / nd0hat
     else:
-        rr_d = 1e10 # TODO : handle the infinity value
+        rr_d = 1e10
 
-    return rr_a - rr_d
+    if na1hat != 0:
+        ca = na1 / na1hat
+    else:
+        ca = 1e10
+
+    if nd1hat != 0:
+        cd = nd1 / nd1hat
+    else:
+        cd = 1e10
+
+    return ca - cd, rr_d - rr_a
 
 def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Recall Difference between advantaged and disadvantaged classes
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
@@ -418,67 +424,62 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     return rec_a - rec_d
 
 
-def DRR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
-    :return: Difference in Rejection Rates between advantaged and disadvantaged classes
+    :return: Precision Difference (aka Difference in Acceptance Rates), AND Difference in Rejected Rates
     """
-
-    TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
-    na0hat = len(predicted_labels[(~predicted_labels) & (~facet)])
-    TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
-    nd0hat = len(predicted_labels[(~predicted_labels) & (facet)])
-
-    if na0hat != 0:
-        rr_a = TN_a / na0hat
-    else:
-        rr_a = 1e10 # TODO : handle the infinity value
-
-    if nd0hat != 0:
-        rr_d = TN_d / nd0hat
-    else:
-        rr_d = 1e10 # TODO : handle the infinity value
-
-    return (rr_d - rr_a)
-
-def PD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> dict:
-    """
-    :param x: input feature
-    :param facet: boolean column indicating sensitive values
-    :param labels: true values of the target column for the data
-    :param predicted_labels: boolean column indicating predictions made by model
-    :return: Precision Difference (aka Difference in Acceptance Rates)
-    """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
 
+    TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
+    na0hat = len(predicted_labels[(~predicted_labels) & (~facet)])
+    TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
+    nd0hat = len(predicted_labels[(~predicted_labels) & (facet)])
+
     if na1hat != 0:
         ar_a = TP_a / na1hat
     else:
-        ar_a = 1e10 # TODO : handle the infinity value
+        ar_a = 1e10
 
     if nd1hat != 0:
         ar_d = TP_d / nd1hat
     else:
-        ar_d = 1e10 # TODO : handle the infinity value
+        ar_d = 1e10
 
-    return ar_a - ar_d
+    if na0hat != 0:
+        rr_a = TN_a / na0hat
+    else:
+        rr_a = 1e10
+
+    if nd0hat != 0:
+        rr_d = TN_d / nd0hat
+    else:
+        rr_d = 1e10
+
+    return ar_a - ar_d, rr_a - rr_d
 
 
 def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Accuracy Difference between advantaged and disadvantaged classes
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
@@ -496,12 +497,15 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns the difference in ratios between false negatives and false positives for the advantaged
     and disadvantaged classes
     """
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
 
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
@@ -538,7 +542,7 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series, verbose=0) -> float:
     """
     :param dataset: array of data points
-    :param facet: boolean column indicating sensitive vales
+    :param facet: boolean column indicating sensitive group
     :param labels: boolean column of positive values for target column
     :param predicted_labels: boolean column of predicted positive values for target column
     :param verbose: optional boolean value
@@ -546,6 +550,10 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_lab
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
+    predicted_labels = predicted_labels.astype(bool)
+    labels = labels.astype(bool)
+    facet = facet.astype(bool)
+
     dataset = np.array(dataset)
 
     data_a = ([el for idx, el in enumerate(dataset) if ~facet[idx]],
