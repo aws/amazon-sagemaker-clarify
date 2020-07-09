@@ -14,6 +14,9 @@ def public_functions(module):
     return [x[1] for x in inspect.getmembers(module) if inspect.isfunction(x[1]) and not x[0].startswith("_")]
 
 
+# FIXME
+# Use a decorator or a more robust mechanism to register the metrics.
+# See https://github.com/aws/famly/pull/16
 PRETRAINING_METRICS = public_functions(pretraining)
 POSTTRAINING_METRICS = public_functions(posttraining)
 

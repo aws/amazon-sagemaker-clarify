@@ -13,6 +13,9 @@ df.columns = ["x", "y"]
 
 
 def test_report():
+    # FIXME:
+    # once the report is refactored, fill the test
+    #
     pass
 
 
