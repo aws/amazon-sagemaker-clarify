@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Callable
-from famly.util.util import PDF
+from ...famly.util.util import PDF
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 INFINITE = float('inf') #Default return value for all metrics to avoid division by zero errors
 
 pretraining_metrics = ['CI', 'DPL', 'KL', 'JS', 'LP', 'TVD', 'KS', 'CDD']
-posttraining_metrics = ['DPPL', 'DI', 'DCO', 'RD', 'DLR', 'AD', 'TE']
+posttraining_metrics = ['DPPL', 'DI', 'DCO', 'RD', 'DLR', 'AD', 'TE', 'FT']
 
 #Methods to handle multicategory cases
 
