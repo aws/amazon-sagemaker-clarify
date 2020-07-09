@@ -7,7 +7,9 @@ from sklearn.neighbors import KNeighborsClassifier
 
 log = logging.getLogger(__name__)
 
-pretraining_metrics = ['CI', 'DPL', 'KL', 'JS', 'LPnorm', 'TVD', 'KS', 'CDD']
+INFINITE = float('inf') #Default return value for all metrics to avoid division by zero errors
+
+pretraining_metrics = ['CI', 'DPL', 'KL', 'JS', 'LP', 'TVD', 'KS', 'CDD']
 posttraining_metrics = ['DPPL', 'DI', 'DCO', 'RD', 'DLR', 'AD', 'TE']
 
 #Methods to handle multicategory cases
@@ -31,15 +33,15 @@ def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Seri
     facet = pd.Series(facet)
     if metric.__name__ not in pretraining_metrics and metric.__name__ not in posttraining_metrics:
         raise ValueError("Metric passed in is invalid - not an implemented bias metric")
-    if not positive_label_index is None:
+    if positive_label_index is not None:
         positive_label_index = pd.Series(positive_label_index)
-    if not predicted_labels is None:
+    if predicted_labels is not None:
         predicted_labels = pd.Series(predicted_labels)
-    if not labels is None:
+    if labels is not None:
         labels = pd.Series(labels)
-    if not group_variable is None:
+    if group_variable is not None:
         group_variable = pd.Series(group_variable)
-    if not dataset is None:
+    if dataset is not None:
         dataset = pd.DataFrame(dataset)
 
     categories = facet.unique()
@@ -65,7 +67,7 @@ def label_one_vs_all(metric: Callable[..., float], x: pd.Series, facet: pd.Serie
     """
     :param metric: one of the bias measures defined in this file
     :param x: input feature
-    :param facet: boolean column with true values indigroupa sensitive value
+    :param facet: boolean column with true values indicating sensitive value
     :param predicted_labels: predictions for labels made by model
     :param labels: True values of the target column
     :param group_variable: column of values indicating the subgroup each data point belongs to (used for calculating CDD metric only)
@@ -151,6 +153,7 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
         raise ValueError("DPL: negative facet set is empty.")
     if p == 0:
         raise ValueError("DPL: facet set is empty.")
+
     q_neg = n_pos_label_neg_facet / np
     q_pos = n_pos_label_facet / p
     if (q_neg + q_pos) == 0:
@@ -178,7 +181,7 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     if len(Pa) == len(Pd):
         kl = np.sum(Pa * np.log(Pa / Pd))  # note log is base e, measured in nats
     else:
-        kl = -1.0
+        raise ValueError('KL: Either facet set or negated facet set is empty')
     return kl
 
 
@@ -202,11 +205,11 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
         P = PDF(positive_label_index)
         js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
     else:
-        js_divergence = -1.0
+        raise ValueError('JS: Either facet set or negated facet set is empty')
 
     return js_divergence
 
-def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int=2) -> float:
+def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int=2) -> float:
     """
     :param x: input feature
     :param facet: boolean column indicating sensitive group
@@ -226,7 +229,7 @@ def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: i
     if len(Pa) == len(Pd):
         lp_norm = np.linalg.norm(Pa - Pd, p)
     else:
-        lp_norm = -1.0
+        raise ValueError('LP: Either facet set or negated facet set is empty')
 
     return lp_norm
 
@@ -239,10 +242,7 @@ def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
    :return: 1/2 * L-1 norm
    """
 
-    Lp_res = LPnorm(x, facet, positive_label_index, p=1)
-
-    if Lp_res == -1.0:
-        return -1.0
+    Lp_res = LP(x, facet, positive_label_index, p=1)
 
     tvd = 0.5 * Lp_res
 
@@ -263,7 +263,11 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
     Pa = PDF(x_a)  # x: raw values of the variable (column of data)
     Pd = PDF(x_d)
-    max_distance = np.max(np.abs(Pa - Pd))
+
+    if len(Pa) == len(Pd):
+        max_distance = np.max(np.abs(Pa - Pd))
+    else:
+        raise ValueError('KS: Either facet set or negated facet set is empty')
 
     return max_distance
 
@@ -282,10 +286,18 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     # Global demographic disparity (DD)
     numA = len(positive_label_index[(positive_label_index) & (facet)])
     denomA = len(facet[positive_label_index])
-    A = numA / denomA if denomA != 0 else 0
+
+    if denomA == 0:
+        raise ValueError('CDD: No positive labels in set')
+
+    A = numA / denomA
     numD = len(positive_label_index[(~positive_label_index) & (facet)])
-    denomD = len(positive_label_index[~positive_label_index])
-    D = numD / denomD if denomD != 0 else 0
+    denomD = len(facet[~positive_label_index])
+
+    if denomD == 0:
+        raise ValueError('CDD: No negative labels in set')
+
+    D = numD / denomD
     DD = D - A
 
     # Conditional demographic disparity (CDD)
@@ -300,6 +312,7 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
         denomD = len(facet[(~positive_label_index) & (group_variable == subgroup_variable)])
         D = numD / denomD if denomD != 0 else 0
         CDD = np.append(CDD, D - A)
+
     wtd_mean_CDD = np.sum(counts * CDD) / np.sum(counts)
 
     return wtd_mean_CDD
@@ -321,10 +334,18 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
 
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
-    qa = na1hat / na if na != 0 else 0
+
+    if na == 0:
+        raise ValueError('DPPL: Negated facet set is empty')
+
+    qa = na1hat / na
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
-    qd = nd1hat / nd if nd != 0 else 0
+
+    if nd == 0:
+        raise ValueError('DPPL: facet set is empty')
+
+    qd = nd1hat / nd
 
     return qa - qd
 
@@ -344,16 +365,21 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
     na = len(facet[~facet])
-    qa = na1hat / na if na != 0 else 0
+
+    qa = na1hat / na
+
+    if na == 0:
+        raise ValueError('DI: Negated facet set is empty')
+
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
-    qd = nd1hat / nd if nd != 0 else 0
 
-    if qa != 0:
-        return qd / qa
-    return 1e10
+    if nd == 0:
+        raise ValueError('DI: Facet set is empty')
 
+    qd = nd1hat / nd
 
+    return qd / qa
 
 
 def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
@@ -362,11 +388,16 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
-    :return: Difference in Conditional Rejection between advantaged and disadvantaged classes
+    :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
     """
     predicted_labels = predicted_labels.astype(bool)
     labels = labels.astype(bool)
     facet = facet.astype(bool)
+
+    if len(facet[facet]) == 0:
+        raise ValueError('DCO: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('DCO: Negated Facet set is empty')
 
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
     na0hat = len(predicted_labels[(~predicted_labels) & (~facet)])
@@ -381,24 +412,32 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     if na0hat != 0:
         rr_a = TN_a / na0hat
     else:
-        rr_a = 1e10
+        rr_a = INFINITE
 
     if nd0hat != 0:
         rr_d = TN_d / nd0hat
     else:
-        rr_d = 1e10
+        rr_d = INFINITE
 
     if na1hat != 0:
         ca = na1 / na1hat
     else:
-        ca = 1e10
+        ca = INFINITE
 
     if nd1hat != 0:
         cd = nd1 / nd1hat
     else:
-        cd = 1e10
+        cd = INFINITE
 
-    return ca - cd, rr_d - rr_a
+    dca = ca - cd
+    dcr = rr_a - rr_d
+
+    if ca == cd and ca == float('inf'):
+        dca = 0
+    if rr_a == rr_d and rr_a == float('inf'):
+        dcr = 0
+
+    return dca, dcr
 
 def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
@@ -412,16 +451,26 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
+    if len(facet[facet]) == 0:
+        raise ValueError('RD: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('RD: Negated Facet set is empty')
+
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
-    rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else 0
+
+    rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else INFINITE
 
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
 
-    rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else 0
+    rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else INFINITE
 
-    return rec_a - rec_d
+    rd = rec_a - rec_d
+
+    if rec_a == rec_d and rec_a == float('inf'):
+        rd = 0
+    return rd
 
 
 def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
@@ -430,11 +479,16 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     :param facet: boolean column indicating sensitive group
     :param labels: true values of the target column for the data
     :param predicted_labels: boolean column indicating predictions made by model
-    :return: Precision Difference (aka Difference in Acceptance Rates), AND Difference in Rejected Rates
+    :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
     """
     predicted_labels = predicted_labels.astype(bool)
     labels = labels.astype(bool)
     facet = facet.astype(bool)
+
+    if len(facet[facet]) == 0:
+        raise ValueError('DLR: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('DLR: Negated Facet set is empty')
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
@@ -449,24 +503,32 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     if na1hat != 0:
         ar_a = TP_a / na1hat
     else:
-        ar_a = 1e10
+        ar_a = INFINITE
 
     if nd1hat != 0:
         ar_d = TP_d / nd1hat
     else:
-        ar_d = 1e10
+        ar_d = INFINITE
 
     if na0hat != 0:
         rr_a = TN_a / na0hat
     else:
-        rr_a = 1e10
+        rr_a = INFINITE
 
     if nd0hat != 0:
         rr_d = TN_d / nd0hat
     else:
-        rr_d = 1e10
+        rr_d = INFINITE
 
-    return ar_a - ar_d, rr_a - rr_d
+    dar = ar_a - ar_d
+    drr = rr_a - rr_d
+
+    if ar_a == ar_d and ar_a == float('inf'):
+        dar = 0
+    if rr_a == rr_d and rr_a == float('inf'):
+        drr = 0
+
+    return dar, drr
 
 
 def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
@@ -481,18 +543,34 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
+    if len(facet[facet]) == 0:
+        raise ValueError('AD: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('AD: Negated Facet set is empty')
+
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
-    acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a) if (TP_a + TN_a + FP_a + FN_a) != 0 else 0
+
+
+    acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a) if (TP_a + TN_a + FP_a + FN_a) != 0 else INFINITE
+
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
     TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
-    acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d) if (TP_d + TN_d + FP_d + FN_d) != 0 else 0
 
-    return acc_a - acc_d
+
+
+    acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d) if (TP_d + TN_d + FP_d + FN_d) != 0 else INFINITE
+
+    ad = acc_a - acc_d
+
+    if acc_a == acc_d and acc_a == float('inf'):
+        ad = 0
+
+    return ad
 
 def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
@@ -507,24 +585,25 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
+    if len(facet[facet]) == 0:
+        raise ValueError('TE: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('TE: Negated Facet set is empty')
+
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
 
-    if FP_a != 0:
-        tau_a = FN_a / FP_a
-        if FP_d != 0:
-            tau_d = FN_d / FP_d
-        else:
-            return -1.0
-    else:
-        if FP_d == 0:
-            return 0.0
-        else:
-            return 1.0
+    tau_a = FN_a / FP_a if FP_a != 0 else INFINITE
+    tau_d = FN_d / FP_d if FP_d != 0 else INFINITE
 
-    return tau_d - tau_a
+    te = tau_d - tau_a
+
+    if tau_a == tau_d and tau_a == float('inf'):
+        te = 0
+
+    return te
 
 
 def FlipSet_pos(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
@@ -553,6 +632,11 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_lab
     predicted_labels = predicted_labels.astype(bool)
     labels = labels.astype(bool)
     facet = facet.astype(bool)
+
+    if len(facet[facet]) == 0:
+        raise ValueError('FT: Facet set is empty')
+    if len(facet[~facet]) == 0:
+        raise ValueError('FT: Negated Facet set is empty')
 
     dataset = np.array(dataset)
 
