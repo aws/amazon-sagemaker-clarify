@@ -1,10 +1,11 @@
 import logging
-from famly.util import PDF
+from ....famly.util import PDF
 import pandas as pd
 import numpy as np
 
 log = logging.getLogger(__name__)
 
+INFINITE = float('inf') #Default return value for all metrics to avoid division by zero errors
 
 ######################################### Pre-training Bias Measures ###################################################
 
@@ -12,8 +13,8 @@ log = logging.getLogger(__name__)
 def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Class imbalance (CI)
-    :param x: pandas series
-    :param facet: boolean index series selecting protected instances
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: series of boolean values indicating positive target labels
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the protected class.
@@ -28,6 +29,7 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
+
 
     pos = len(x[facet])
     neg = len(x[~facet])
@@ -47,14 +49,15 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in predicted labels
-    :param x: pandas series of the target column
-    :param facet: boolean series indicating protected class
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
     :param label: pandas series of labels (binary, multicategory, or continuous)
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
+
 
     positive_label_index_neg_facet = (positive_label_index) & ~facet
     positive_label_index_facet = (positive_label_index) & facet
@@ -65,10 +68,12 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
     n_pos_label_facet = len(x[positive_label_index_facet])
 
+
     if np == 0:
         raise ValueError("DPL: negative facet set is empty.")
     if p == 0:
         raise ValueError("DPL: facet set is empty.")
+
     q_neg = n_pos_label_neg_facet / np
     q_pos = n_pos_label_facet / p
     if (q_neg + q_pos) == 0:
@@ -77,11 +82,10 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
 
     return dpl
 
-
 def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
@@ -97,14 +101,14 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     if len(Pa) == len(Pd):
         kl = np.sum(Pa * np.log(Pa / Pd))  # note log is base e, measured in nats
     else:
-        kl = -1.0
+        raise ValueError('KL: Either facet set or negated facet set is empty')
     return kl
 
 
 def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Jenson-Shannon (JS) divergence metric
     """
@@ -121,15 +125,14 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
         P = PDF(positive_label_index)
         js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
     else:
-        js_divergence = -1.0
+        raise ValueError('JS: Either facet set or negated facet set is empty')
 
     return js_divergence
 
-
-def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int = 2) -> float:
+def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int=2) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param q: the order of norm desired
     :return: Lp-norm metric
@@ -146,7 +149,7 @@ def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: i
     if len(Pa) == len(Pd):
         lp_norm = np.linalg.norm(Pa - Pd, p)
     else:
-        lp_norm = -1.0
+        raise ValueError('LP: Either facet set or negated facet set is empty')
 
     return lp_norm
 
@@ -154,25 +157,21 @@ def LPnorm(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: i
 def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
    :param x: input feature
-   :param facet: boolean column indicating sensitive values
+   :param facet: boolean column indicating sensitive group
    :param positive_label_index: boolean column indicating positive labels
    :return: 1/2 * L-1 norm
    """
 
-    Lp_res = LPnorm(x, facet, positive_label_index, p=1)
-
-    if Lp_res == -1.0:
-        return -1.0
+    Lp_res = LP(x, facet, positive_label_index, p=1)
 
     tvd = 0.5 * Lp_res
 
     return tvd
 
-
 def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kolmogorov-Smirnov metric
     """
@@ -184,15 +183,18 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
     Pa = PDF(x_a)  # x: raw values of the variable (column of data)
     Pd = PDF(x_d)
-    max_distance = np.max(np.abs(Pa - Pd))
+
+    if len(Pa) == len(Pd):
+        max_distance = np.max(np.abs(Pa - Pd))
+    else:
+        raise ValueError('KS: Either facet set or negated facet set is empty')
 
     return max_distance
-
 
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature
-    :param facet: boolean column indicating sensitive values
+    :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
@@ -204,10 +206,18 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     # Global demographic disparity (DD)
     numA = len(positive_label_index[(positive_label_index) & (facet)])
     denomA = len(facet[positive_label_index])
-    A = numA / denomA if denomA != 0 else 0
+
+    if denomA == 0:
+        raise ValueError('CDD: No positive labels in set')
+
+    A = numA / denomA
     numD = len(positive_label_index[(~positive_label_index) & (facet)])
-    denomD = len(positive_label_index[~positive_label_index])
-    D = numD / denomD if denomD != 0 else 0
+    denomD = len(facet[~positive_label_index])
+
+    if denomD == 0:
+        raise ValueError('CDD: No negative labels in set')
+
+    D = numD / denomD
     DD = D - A
 
     # Conditional demographic disparity (CDD)
@@ -222,6 +232,7 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
         denomD = len(facet[(~positive_label_index) & (group_variable == subgroup_variable)])
         D = numD / denomD if denomD != 0 else 0
         CDD = np.append(CDD, D - A)
+
     wtd_mean_CDD = np.sum(counts * CDD) / np.sum(counts)
 
     return wtd_mean_CDD
