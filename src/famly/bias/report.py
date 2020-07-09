@@ -1,10 +1,11 @@
 """Bias detection in datasets"""
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable
 
 import pandas as pd
 
-from . import metrics
+import famly.bias
+import famly.bias.metrics
 
 
 class FacetColumn:
@@ -65,12 +66,15 @@ def column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = None) -> Dict:
+def call_metric_facet_values(metric: Callable, col: pd.Series, facet_values: Optional[List[Any]] = None) -> Dict:
     """
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(facet_values: List[Any]) -> pd.Series:
+    def index_key(col, facet_values: List[Any]) -> pd.Series:
+        """
+        :returns: a boolean series where facet_values are present in col
+        """
         index_key_series: pd.Series = (col == facet_values[0])
         for val in facet_values[1:]:
             index_key_series = index_key_series | (col == val)
@@ -81,12 +85,13 @@ def class_imbalance_values(col: pd.Series, facet_values: Optional[List[Any]] = N
         # Build index series selecting protected values
         # create indexing series with boolean OR of values
 
-        ci = metrics.class_imbalance(col, index_key(facet_values))
-        metric_name = column_list_to_str(facet_values)
-        ci_all = {metric_name: ci}
+        metric_result = metric(col, index_key(col, facet_values))
+        ci_all = {metric.__name__: metric_result}
     else:
+        # FIXME
+        assert False
         # Do one vs all for every value
-        ci_all = metrics.class_imbalance_one_vs_all(col)
+        # ci_all = famly.bias.metrics.metric_one_vs_all(col)
     return ci_all
 
 
@@ -113,7 +118,8 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) 
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
         col_cat = col.astype("category")
-        result["CI"] = class_imbalance_values(col_cat, facet_column.protected_values)
+        for metric in famly.bias.metrics.PRETRAINING_METRICS:
+            result[metric.__name__] = call_metric_facet_values(metric, col_cat, facet_column.protected_values)
         return result
 
     elif issubclass(facet_column.__class__, FacetContinuousColumn):

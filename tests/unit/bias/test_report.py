@@ -1,20 +1,22 @@
 import pandas as pd
-from famly.bias.report import ProblemType, class_imbalance_values, column_list_to_str, problem_type
+from famly.bias.report import ProblemType, problem_type
 
 
 def dataframe():
-    data = [["a"], ["a"], ["b"], ["c"]]
+    data = [["a", 1], ["a", 1], ["b", 0], ["c", 0]]
     df = pd.DataFrame(data)
     return df
 
 
 df = dataframe()
+df.columns = ["x", "y"]
 
 
-def test_class_imbalance():
-    assert class_imbalance_values(df[0]) == {"a": 0.0, "b": 0.5, "c": 0.5}
-    protected = ["b", "c"]
-    assert class_imbalance_values(df[0], protected) == {column_list_to_str(protected): 0.0}
+def test_report():
+    # FIXME:
+    # once the report is refactored, fill the test
+    #
+    pass
 
 
 def test_problem_type():
