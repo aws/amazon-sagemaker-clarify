@@ -45,6 +45,22 @@ def metric_one_vs_all(
     :return: A dictionary in which each key is one of the unique values in x and each value is
             its corresponding metric according to the requested metric
     """
+    x = pd.Series(x)
+
+    if metric not in PRETRAINING_METRICS and metric not in POSTTRAINING_METRICS:
+        raise ValueError("Metric: " + metric.__name__ + " passed in is invalid - not an implemented bias metric")
+
+    if positive_label_index is not None:
+        positive_label_index = pd.Series(positive_label_index)
+    if predicted_labels is not None:
+        predicted_labels = pd.Series(predicted_labels)
+    if labels is not None:
+        labels = pd.Series(labels)
+    if group_variable is not None:
+        group_variable = pd.Series(group_variable)
+    if dataset is not None:
+        dataset = pd.DataFrame(dataset)
+
     categories = x.unique()
     res = {}
     for cat in categories:
@@ -60,12 +76,9 @@ def metric_one_vs_all(
                 else:
                     res[cat] = metric(x, x == cat, labels, predicted_labels)
         else:
-            res[cat] = label_one_vs_all(
-                metric, x, x == cat, predicted_labels=predicted_labels, labels=labels, group_variable=group_variable
-            )
-
+            res[cat] = label_one_vs_all(metric, x, x == cat, predicted_labels=predicted_labels, labels=labels,
+                                        group_variable=group_variable)
     return res
-
 
 def label_one_vs_all(
     metric: Callable[..., float],

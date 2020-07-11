@@ -611,4 +611,3 @@ def test_FT():
     assert response[0] == approx(5 / 8)
     assert response[1] == approx(-3 / 5)
     assert response[2] == approx(1 / 2)
-
