@@ -119,9 +119,9 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     dca = ca - cd
     dcr = rr_a - rr_d
 
-    if ca == cd and ca == float('inf'):
+    if ca == cd and ca == INFINITE:
         dca = 0
-    if rr_a == rr_d and rr_a == float('inf'):
+    if rr_a == rr_d and rr_a == INFINITE:
         dcr = 0
 
     return dca, dcr
@@ -155,7 +155,7 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     rd = rec_a - rec_d
 
-    if rec_a == rec_d and rec_a == float('inf'):
+    if rec_a == rec_d and rec_a == INFINITE:
         rd = 0
     return rd
 
@@ -210,9 +210,9 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     dar = ar_a - ar_d
     drr = rr_a - rr_d
 
-    if ar_a == ar_d and ar_a == float('inf'):
+    if ar_a == ar_d and ar_a == INFINITE:
         dar = 0
-    if rr_a == rr_d and rr_a == float('inf'):
+    if rr_a == rr_d and rr_a == INFINITE:
         drr = 0
 
     return dar, drr
@@ -254,7 +254,7 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     ad = acc_a - acc_d
 
-    if acc_a == acc_d and acc_a == float('inf'):
+    if acc_a == acc_d and acc_a == INFINITE:
         ad = 0
 
     return ad
@@ -287,7 +287,7 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     te = tau_d - tau_a
 
-    if tau_a == tau_d and tau_a == float('inf'):
+    if tau_a == tau_d and tau_a == INFINITE:
         te = 0
 
     return te
