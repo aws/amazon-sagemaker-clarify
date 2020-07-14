@@ -1,9 +1,9 @@
-.. famly documentation master file, created by
+.. FAMLy documentation master file, created by
    sphinx-quickstart on Fri Jul 10 19:05:16 2020.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to famly's documentation!
+Welcome to FAMLy's documentation!
 =================================
 
 .. toctree::

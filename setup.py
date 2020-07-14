@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "s3fs", "numpy", "sklearn"]
 
-EXTRAS_REQUIRE = {"test": ["tox", "flake8", "black", "mock", "pre-commit", "pytest"]}
+EXTRAS_REQUIRE = {"test": ["tox", "flake8", "black", "mock", "pre-commit", "pytest", "sphinx"]}
 
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
