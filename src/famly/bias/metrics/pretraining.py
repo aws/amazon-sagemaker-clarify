@@ -1,5 +1,5 @@
 import logging
-from ....famly.util import PDF
+from famly.util import PDF
 import pandas as pd
 import numpy as np
 
@@ -135,7 +135,7 @@ def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int=2
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param q: the order of norm desired
-    :return: Lp-norm metric
+    :return: Returns the LP norm of the difference between class distributions
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
