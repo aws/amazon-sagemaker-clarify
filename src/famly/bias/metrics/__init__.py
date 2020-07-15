@@ -63,7 +63,6 @@ def metric_one_vs_all(
             res[cat] = label_one_vs_all(
                 metric, x, x == cat, predicted_labels=predicted_labels, labels=labels, group_variable=group_variable
             )
-
     return res
 
 

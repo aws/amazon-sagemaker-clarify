@@ -43,6 +43,7 @@ def PDF(x: np.array) -> np.array:
     y = np.unique(x)
 
     p, bins_edges = np.histogram(x, range=(0, 1))
+    filtered_zeros = p[p > 0]
+    normalized = filtered_zeros / np.sum(filtered_zeros)
 
-    p = p / np.sum(p)
-    return p
+    return normalized
