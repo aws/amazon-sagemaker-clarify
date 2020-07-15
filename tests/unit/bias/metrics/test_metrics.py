@@ -1,5 +1,5 @@
-from .....src.famly.bias.metrics import AD, CDD, CI, DCO, DI, DPL, DPPL, DLR, FT, JS, KL, KS, LP, RD, TE
-from .....src.famly.bias.metrics import metric_one_vs_all
+from famly.bias.metrics import AD, CDD, CI, DCO, DI, DPL, DPPL, DLR, FT, JS, KL, KS, LP, RD, TE
+from famly.bias.metrics import metric_one_vs_all
 from pytest import approx
 import pandas as pd
 import numpy as np
