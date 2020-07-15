@@ -30,7 +30,7 @@ jobs:
         flake8 . --count --show-source --statistics
     - name: Unit tests
       run: |
-        pytest
+        pytest --pspec
     - name: Documentation
       run: |
         cd docs
