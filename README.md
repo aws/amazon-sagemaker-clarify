@@ -24,10 +24,16 @@ A collection of bias metrics for a given dataset or a combination of a dataset a
 ## Development
 
 ```
+virtualenv -p(which python3) venv
+source venv/bin/activate.fish
 pip install -e .[test]
+pytest --pspec
+pre-commit install && pre-commit run --all-files
 ```
 
 Run `pre-commit install && pre-commit run --all-files` before commit.
 
 
 .
+
+

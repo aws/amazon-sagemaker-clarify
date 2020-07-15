@@ -128,7 +128,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return js_divergence
 
 
-def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int = 2) -> float:
+def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
     """
     Difference of norms of the distributions defined by the facet selection and its complement.
 
@@ -138,7 +138,7 @@ def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int =
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
-    :param ord: the order of norm desired (2 by default).
+    :param norm_order: the order of norm desired (2 by default).
     :return: Returns the LP norm of the difference between class distributions
     """
     positive_label_index = positive_label_index.astype(bool)
@@ -151,7 +151,7 @@ def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int =
     Pd = PDF(x_d)
 
     if len(Pa) == len(Pd):
-        lp_norm = np.linalg.norm(Pa - Pd, ord)
+        lp_norm = np.linalg.norm(Pa - Pd, norm_order)
     else:
         raise ValueError("LP: Either facet set or negated facet set is empty")
 
