@@ -31,3 +31,7 @@ jobs:
     - name: Unit tests
       run: |
         pytest
+    - name: Documentation
+      run: |
+        cd docs
+        make html
