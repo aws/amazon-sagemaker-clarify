@@ -130,7 +130,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
 def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, p: int = 2) -> float:
     """
-    Difference of norms of the distributions defined by the facet selection and it's complement.
+    Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
         Lp(Pa, Pd) = [\sum_{y} |Pa(y)-Pd(y)|^p]^{1/p}
