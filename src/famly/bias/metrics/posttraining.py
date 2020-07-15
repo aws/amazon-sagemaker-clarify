@@ -242,14 +242,18 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
 
-    acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a) if (TP_a + TN_a + FP_a + FN_a) != 0 else INFINITE
+    total_a = TP_a + TN_a + FP_a + FN_a
+
+    acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITE
 
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
     TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
 
-    acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d) if (TP_d + TN_d + FP_d + FN_d) != 0 else INFINITE
+    total_d = TP_d + TN_d + FP_d + FN_d
+
+    acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITE
 
     ad = acc_a - acc_d
 
