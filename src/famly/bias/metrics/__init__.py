@@ -60,9 +60,11 @@ def metric_one_vs_all(
                 else:
                     res[cat] = metric(x, x == cat, labels, predicted_labels)
         else:
-            res[cat] = label_one_vs_all(metric, x, x == cat, predicted_labels=predicted_labels, labels=labels,
-                                        group_variable=group_variable)
+            res[cat] = label_one_vs_all(
+                metric, x, x == cat, predicted_labels=predicted_labels, labels=labels, group_variable=group_variable
+            )
     return res
+
 
 def label_one_vs_all(
     metric: Callable[..., float],

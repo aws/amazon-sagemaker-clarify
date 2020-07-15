@@ -1,5 +1,5 @@
-from famly.bias.metrics import AD, CDD, CI, DCO, DI, DPL, DPPL, DLR, FT, JS, KL, KS, LP, RD, TE
-from famly.bias.metrics import metric_one_vs_all
+from .....src.famly.bias.metrics import AD, CDD, CI, DCO, DI, DPL, DPPL, DLR, FT, JS, KL, KS, LP, RD, TE
+from .....src.famly.bias.metrics import metric_one_vs_all
 from pytest import approx
 import pandas as pd
 import numpy as np
@@ -149,7 +149,7 @@ dfFT = datasetFT()
 def test_ci():
     """test class imbalance"""
 
-    #Binary Facet, Binary Label
+    # Binary Facet, Binary Label
 
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
@@ -158,25 +158,26 @@ def test_ci():
     facet = dfB[0] == "M"
     assert CI(dfB[0], facet, positive_label_index) == approx(1 / 6)
 
-    #Continuous Facet, Binary Label
+    # Continuous Facet, Binary Label
     facet = dfC[0] > 1.0
     assert CI(dfC[0], facet, positive_label_index) == approx(-1 / 3)
 
     facet = dfC[0] < 1.0
     assert CI(dfC[0], facet, positive_label_index) == approx(1 / 3)
 
-    #Multicategory Facet, Binary Label
+    # Multicategory Facet, Binary Label
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
 
-    response = metric_one_vs_all(CI, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(CI, dfM[0], positive_label_index=positive_label_index)
 
     assert response["M"] == approx(1 / 3)
     assert response["F"] == approx(1 / 4)
     assert response["O"] == approx(5 / 12)
 
+
 def test_dpl():
 
-    #Binary Facet, Binary Label
+    # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     assert DPL(dfB[0], facet, positive_label_index) == approx((2 / 5 - 4 / 7) / (4 / 7 + 2 / 5))
@@ -184,17 +185,18 @@ def test_dpl():
     facet = dfB[0] == "M"
     assert DPL(dfB[0], facet, positive_label_index) == approx((4 / 7 - 2 / 5) / (4 / 7 + 2 / 5))
 
-    #Multicategory Facet, Binary Label
+    # Multicategory Facet, Binary Label
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
 
-    response = metric_one_vs_all(DPL, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(DPL, dfM[0], positive_label_index=positive_label_index)
     assert response["M"] == approx((6 / 16 - 6 / 8) / (6 / 16 + 6 / 8))
     assert response["F"] == approx((10 / 15 - 2 / 9) / (10 / 15 + 2 / 9))
     assert response["O"] == approx((8 / 17 - 4 / 7) / (8 / 17 + 4 / 7))
 
+
 def test_KL():
 
-    #Binary Facet, Binary Label
+    # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     assert KL(dfB[0], facet, positive_label_index) == approx(0.059213364)
@@ -202,21 +204,22 @@ def test_KL():
     facet = dfB[0] == "M"
     assert KL(dfB[0], facet, positive_label_index) == approx(0.059611866)
 
-    #Multicategory Facet, Binary Label
+    # Multicategory Facet, Binary Label
     facet = dfM[0]
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    response = metric_one_vs_all(KL, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(KL, dfM[0], positive_label_index=positive_label_index)
     assert response["M"] < 1.0 and response["M"] > -1.0
     assert response["F"] < 1.0 and response["F"] > -1.0
     assert response["O"] < 1.0 and response["O"] > -1.0
 
-    #Multicategory Facet, Multicategory Label
+    # Multicategory Facet, Multicategory Label
     labels = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
     response = metric_one_vs_all(KL, dfM[0], labels=labels)
     for cat in facet.unique():
         assert response[cat][0] < 1.0 and response[cat][0] > -1.0
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
+
 
 def test_JS():
     # Binary Facet, Binary Label
@@ -230,7 +233,7 @@ def test_JS():
     # Multicategory Facet, Binary Label
     facet = dfM[0]
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    response = metric_one_vs_all(JS, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(JS, dfM[0], positive_label_index=positive_label_index)
     assert response["M"] < 1.0 and response["M"] > -1.0
     assert response["F"] < 1.0 and response["F"] > -1.0
     assert response["O"] < 1.0 and response["O"] > -1.0
@@ -242,6 +245,7 @@ def test_JS():
         assert response[cat][0] < 1.0 and response[cat][0] > -1.0
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
+
 
 def test_LPnorm():
     # Binary Facet, Binary Label
@@ -255,7 +259,7 @@ def test_LPnorm():
     # Multicategory Facet, Binary Label
     facet = dfM[0]
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    response = metric_one_vs_all(LP, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(LP, dfM[0], positive_label_index=positive_label_index)
     assert response["M"] < 1.0 and response["M"] > -1.0
     assert response["F"] < 1.0 and response["F"] > -1.0
     assert response["O"] < 1.0 and response["O"] > -1.0
@@ -268,19 +272,20 @@ def test_LPnorm():
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
 
+
 def test_KS():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    assert metric_one_vs_all(KS, dfB[0], positive_label_index = positive_label_index)["F"] == approx(0.171428571)
+    assert metric_one_vs_all(KS, dfB[0], positive_label_index=positive_label_index)["F"] == approx(0.171428571)
 
     facet = dfB[0] == "M"
-    assert metric_one_vs_all(KS, dfB[0], positive_label_index = positive_label_index)["M"] == approx(0.171428571)
+    assert metric_one_vs_all(KS, dfB[0], positive_label_index=positive_label_index)["M"] == approx(0.171428571)
 
     # Multicategory Facet, Binary Label
     facet = dfM[0]
     positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    response = metric_one_vs_all(KS, dfM[0], positive_label_index = positive_label_index)
+    response = metric_one_vs_all(KS, dfM[0], positive_label_index=positive_label_index)
     assert response["M"] < 1.0 and response["M"] > -1.0
     assert response["F"] < 1.0 and response["F"] > -1.0
     assert response["O"] < 1.0 and response["O"] > -1.0
@@ -293,13 +298,41 @@ def test_KS():
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
 
+
 def test_CDD():
 
-    x = pd.Series(["M", "M", "M", "F", "F", "F", "F", "M", "M", "M", "M", "F", "M", "M", "F", "M", "F", "F", "M", "M", "F", "M", "M", "F"])
+    x = pd.Series(
+        [
+            "M",
+            "M",
+            "M",
+            "F",
+            "F",
+            "F",
+            "F",
+            "M",
+            "M",
+            "M",
+            "M",
+            "F",
+            "M",
+            "M",
+            "F",
+            "M",
+            "F",
+            "F",
+            "M",
+            "M",
+            "F",
+            "M",
+            "M",
+            "F",
+        ]
+    )
     positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
     group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 
-    response = metric_one_vs_all(CDD, x, positive_label_index= positive_label_index, group_variable=group_variable)
+    response = metric_one_vs_all(CDD, x, positive_label_index=positive_label_index, group_variable=group_variable)
     assert response["F"] == approx(0.3982142857)
     assert response["M"] == approx(-0.3982142857)
 
@@ -323,6 +356,7 @@ def test_CDD():
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
 
+
 def test_DPPL():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
@@ -344,13 +378,13 @@ def test_DPPL():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-       1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
     response = metric_one_vs_all(DPPL, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
         assert response[cat][0] < 1.0 and response[cat][0] > -1.0
         assert response[cat][1] < 1.0 and response[cat][1] > -1.0
         assert response[cat][2] < 1.0 and response[cat][2] > -1.0
+
 
 def test_DI():
     # Binary Facet, Binary Label
@@ -373,23 +407,23 @@ def test_DI():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
     response = metric_one_vs_all(DI, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
         assert response[cat][0] != 1e10
         assert response[cat][1] != 1e10
         assert response[cat][2] != 1e10
 
+
 def test_DCA():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(1/ 4)
+    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(1 / 4)
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(-1/4)
+    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(-1 / 4)
 
     # Multicategory Facet, Binary Label
     facet = dfM[0]
@@ -402,13 +436,13 @@ def test_DCA():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
     response = metric_one_vs_all(DCO, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
         assert abs(response[cat][0][0]) != 1e10
         assert abs(response[cat][1][0]) != 1e10
         assert abs(response[cat][2][0]) != 1e10
+
 
 def test_DCR():
     # Binary Facet, Binary Label
@@ -431,8 +465,7 @@ def test_DCR():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(DCO, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
@@ -440,12 +473,13 @@ def test_DCR():
         assert abs(response[cat][1][1]) != 1e10
         assert abs(response[cat][2][1]) != 1e10
 
+
 def test_RD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert RD(dfB[0], facet, labels, predicted) == approx(- 2 / 3)
+    assert RD(dfB[0], facet, labels, predicted) == approx(-2 / 3)
 
     facet = dfB[0] == "M"
     assert RD(dfB[0], facet, labels, predicted) == approx(2 / 3)
@@ -461,8 +495,7 @@ def test_RD():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(RD, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
@@ -470,12 +503,13 @@ def test_RD():
         assert abs(response[cat][1]) != 1e10
         assert abs(response[cat][2]) != 1e10
 
+
 def test_DRR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, labels, predicted)[1] == approx(- 1 / 3)
+    assert DLR(dfB[0], facet, labels, predicted)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
     assert DLR(dfB[0], facet, labels, predicted)[1] == approx(1 / 3)
@@ -491,14 +525,14 @@ def test_DRR():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(DLR, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
         assert abs(response[cat][0][1]) != 1e10
         assert abs(response[cat][1][1]) != 1e10
         assert abs(response[cat][2][1]) != 1e10
+
 
 def test_AD():
     # Binary Facet, Binary Label
@@ -521,8 +555,7 @@ def test_AD():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(AD, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
@@ -530,12 +563,13 @@ def test_AD():
         assert abs(response[cat][1]) != 1e10
         assert abs(response[cat][2]) != 1e10
 
+
 def test_PD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, labels, predicted)[0] == approx(- 1 / 2)
+    assert DLR(dfB[0], facet, labels, predicted)[0] == approx(-1 / 2)
 
     facet = dfB[0] == "M"
     assert DLR(dfB[0], facet, labels, predicted)[0] == approx(1 / 2)
@@ -551,8 +585,7 @@ def test_PD():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(DLR, dfM[0], predicted_labels=predicted, labels=labels)
     for cat in facet.unique():
@@ -560,19 +593,20 @@ def test_PD():
         assert abs(response[cat][1][0]) != 1e10
         assert abs(response[cat][2][0]) != 1e10
 
+
 def test_TE():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert TE(dfB[0], facet, labels, predicted) == approx(- 1 / 2)
+    assert TE(dfB[0], facet, labels, predicted) == approx(-1 / 2)
 
     facet = dfB[0] == "M"
     assert TE(dfB[0], facet, labels, predicted) == approx(1 / 2)
 
     # Multicategory Facet, Binary Label
-    predicted  = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    labels     = pd.Series([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0])
+    predicted = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
+    labels = pd.Series([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0])
 
     # For Reference: M   F   O
     # FP_a =       | 3 | 3 | 2
@@ -587,10 +621,10 @@ def test_TE():
 
     # Multicategory Facet, Multicategory Label
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2,
-              1, 2])
+    labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
     response = metric_one_vs_all(TE, dfM[0], predicted_labels=predicted, labels=labels)
+
 
 def test_FT():
     dfFT = datasetFT()
