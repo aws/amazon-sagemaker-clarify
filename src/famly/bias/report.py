@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Callable
 
 import pandas as pd
 
-from ....src.famly.bias import *
-from ....src.famly.bias.metrics import *
+from famly.bias import *
+from famly.bias.metrics import *
 
 
 class FacetColumn:
