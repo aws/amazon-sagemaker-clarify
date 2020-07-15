@@ -1,2 +1,3 @@
 #!/usr/bin/env bash
-pytest --pspec
+coverage run -m pytest --pspec
+coverage report -m --fail-under=72

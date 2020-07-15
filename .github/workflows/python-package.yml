@@ -6,8 +6,7 @@ name: Python package
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  build-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -35,3 +34,15 @@ jobs:
       run: |
         cd docs
         make html
+  code_coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Code coverage
+      run: |
+        coverage run -m pytest --pspec
+        coverage report -m --fail-under=72
