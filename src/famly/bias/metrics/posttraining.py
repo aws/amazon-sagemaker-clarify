@@ -5,7 +5,8 @@ from sklearn.neighbors import KNeighborsClassifier
 
 log = logging.getLogger(__name__)
 
-INFINITE = float('inf') #Default return value for all metrics to avoid division by zero errors
+INFINITE = float("inf")  # Default return value for all metrics to avoid division by zero errors
+
 
 def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
@@ -23,14 +24,14 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
     na = len(facet[~facet])
 
     if na == 0:
-        raise ValueError('DPPL: Negated facet set is empty')
+        raise ValueError("DPPL: Negated facet set is empty")
 
     qa = na1hat / na
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
 
     if nd == 0:
-        raise ValueError('DPPL: facet set is empty')
+        raise ValueError("DPPL: facet set is empty")
 
     qd = nd1hat / nd
 
@@ -56,13 +57,13 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     qa = na1hat / na
 
     if na == 0:
-        raise ValueError('DI: Negated facet set is empty')
+        raise ValueError("DI: Negated facet set is empty")
 
     nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
     nd = len(facet[facet])
 
     if nd == 0:
-        raise ValueError('DI: Facet set is empty')
+        raise ValueError("DI: Facet set is empty")
 
     qd = nd1hat / nd
 
@@ -82,9 +83,9 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('DCO: Facet set is empty')
+        raise ValueError("DCO: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('DCO: Negated Facet set is empty')
+        raise ValueError("DCO: Negated Facet set is empty")
 
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
     na0hat = len(predicted_labels[(~predicted_labels) & (~facet)])
@@ -126,6 +127,7 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
 
     return dca, dcr
 
+
 def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
@@ -139,9 +141,9 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('RD: Facet set is empty')
+        raise ValueError("RD: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('RD: Negated Facet set is empty')
+        raise ValueError("RD: Negated Facet set is empty")
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
@@ -173,9 +175,9 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('DLR: Facet set is empty')
+        raise ValueError("DLR: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('DLR: Negated Facet set is empty')
+        raise ValueError("DLR: Negated Facet set is empty")
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
@@ -231,15 +233,14 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('AD: Facet set is empty')
+        raise ValueError("AD: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('AD: Negated Facet set is empty')
+        raise ValueError("AD: Negated Facet set is empty")
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
-
 
     acc_a = (TP_a + TN_a) / (TP_a + TN_a + FP_a + FN_a) if (TP_a + TN_a + FP_a + FN_a) != 0 else INFINITE
 
@@ -247,8 +248,6 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
     TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
-
-
 
     acc_d = (TP_d + TN_d) / (TP_d + TN_d + FP_d + FN_d) if (TP_d + TN_d + FP_d + FN_d) != 0 else INFINITE
 
@@ -258,6 +257,7 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
         ad = 0
 
     return ad
+
 
 def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
@@ -273,9 +273,9 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('TE: Facet set is empty')
+        raise ValueError("TE: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('TE: Negated Facet set is empty')
+        raise ValueError("TE: Negated Facet set is empty")
 
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
@@ -321,21 +321,33 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_lab
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
-        raise ValueError('FT: Facet set is empty')
+        raise ValueError("FT: Facet set is empty")
     if len(facet[~facet]) == 0:
-        raise ValueError('FT: Negated Facet set is empty')
+        raise ValueError("FT: Negated Facet set is empty")
 
     dataset = np.array(dataset)
 
-    data_a = ([el for idx, el in enumerate(dataset) if ~facet[idx]],
-              [el for idx, el in enumerate(predicted_labels) if ~facet[idx]],
-              [el for idx, el in enumerate(facet) if ~facet[idx]])
-    data_d = ([el for idx, el in enumerate(dataset) if facet[idx]],
-              [el for idx, el in enumerate(predicted_labels) if facet[idx]],
-              [el for idx, el in enumerate(facet) if facet[idx]])
+    data_a = (
+        [el for idx, el in enumerate(dataset) if ~facet[idx]],
+        [el for idx, el in enumerate(predicted_labels) if ~facet[idx]],
+        [el for idx, el in enumerate(facet) if ~facet[idx]],
+    )
+    data_d = (
+        [el for idx, el in enumerate(dataset) if facet[idx]],
+        [el for idx, el in enumerate(predicted_labels) if facet[idx]],
+        [el for idx, el in enumerate(facet) if facet[idx]],
+    )
 
-    knn = KNeighborsClassifier(n_neighbors=5, weights='uniform', algorithm='auto', leaf_size=30, p=2,
-                               metric='minkowski', metric_params=None, n_jobs=None)
+    knn = KNeighborsClassifier(
+        n_neighbors=5,
+        weights="uniform",
+        algorithm="auto",
+        leaf_size=30,
+        p=2,
+        metric="minkowski",
+        metric_params=None,
+        n_jobs=None,
+    )
 
     # kNN method over a with Labels from the model
     knn.fit(np.array(data_a[0]), np.array(data_a[1]))
