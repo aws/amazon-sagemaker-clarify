@@ -24,7 +24,7 @@ jobs:
         pip install -e .[test]
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Unit tests
+    - name: Test
       run: |
         pytest --pspec
 
@@ -48,12 +48,12 @@ jobs:
         pre-commit run -v -a
         flake8 . --count --show-source --statistics
 
-    - name: Code coverage
+    - name: Test with code coverage
       run: |
         coverage run -m pytest --pspec
         coverage report -m --fail-under=72
 
-    - name: Documentation
+    - name: Generate documentation
       run: |
         cd docs
         make html
