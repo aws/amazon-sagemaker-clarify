@@ -26,6 +26,12 @@ docs() {
     make html
 }
 
+all() {
+    lint
+    test_with_coverage
+    docs
+}
+
 
 ##############################################################
 # MAIN
