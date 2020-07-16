@@ -1,3 +1,6 @@
+![Python package](https://github.com/aws/famly/workflows/Python%20package/badge.svg)
+![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat)
+
 # FAMLy
 
 Fairness Aware Machine Learning
