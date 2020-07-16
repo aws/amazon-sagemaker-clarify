@@ -20,11 +20,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./tool install_dependencies_dev
+        ./devtool install_dependencies_dev
 
     - name: Test
       run: |
-        ./tool unit_tests
+        ./devtool unit_tests
 
   test_coverage-python-38:
     runs-on: ubuntu-latest
@@ -37,16 +37,16 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./tool install_dependencies_dev
+        ./devtool install_dependencies_dev
 
     - name: Run pre-commit checks and lint
       run: |
-        ./tool lint
+        ./devtool lint
 
     - name: Test with code coverage
       run: |
-        ./tool test_with_coverage
+        ./devtool test_with_coverage
 
     - name: Generate documentation
       run: |
-        ./tool docs
+        ./devtool docs
