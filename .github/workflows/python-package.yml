@@ -28,7 +28,7 @@ jobs:
       run: |
         pytest --pspec
 
-  test_coverage-python-3.8:
+  test_coverage-python-38:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
