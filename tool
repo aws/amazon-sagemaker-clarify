@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 install_dependencies_dev() {
     python -m pip install --upgrade pip
