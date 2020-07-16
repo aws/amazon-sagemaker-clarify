@@ -6,32 +6,47 @@ name: Python package
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-
+        python-version: [3.6, 3.7]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -e .[test]
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        ./devtool install_dependencies_dev
+
+    - name: Test
+      run: |
+        ./devtool unit_tests
+
+  test_coverage-python-38:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        ./devtool install_dependencies_dev
+
     - name: Run pre-commit checks and lint
       run: |
-        pre-commit run -v -a
-        flake8 . --count --show-source --statistics
-    - name: Unit tests
+        ./devtool lint
+
+    - name: Test with code coverage
       run: |
-        pytest --pspec
-    - name: Documentation
+        ./devtool test_with_coverage
+
+    - name: Generate documentation
       run: |
-        cd docs
-        make html
+        ./devtool docs
