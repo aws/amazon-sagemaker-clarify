@@ -1,8 +1,11 @@
 from famly.bias.metrics import AD, CDD, CI, DCO, DI, DPL, DPPL, DLR, FT, JS, KL, KS, LP, RD, TE
 from famly.bias.metrics import metric_one_vs_all
+from famly.bias.metrics.constants import INFINITY
 from pytest import approx
 import pandas as pd
+from pandas import Series
 import numpy as np
+import pytest
 
 
 def dfBinary():
@@ -176,7 +179,6 @@ def test_ci():
 
 
 def test_dpl():
-
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
@@ -195,7 +197,6 @@ def test_dpl():
 
 
 def test_KL():
-
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
@@ -300,7 +301,6 @@ def test_KS():
 
 
 def test_CDD():
-
     x = pd.Series(
         [
             "M",
@@ -395,6 +395,21 @@ def test_DI():
 
     facet = dfB[0] == "M"
     assert DI(dfB[0], facet, labels, predicted) == approx(0.700000000)
+
+    pred_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
+    assert DI(dfB[0], dfB[0] == "F", labels, pred_labels_zero_for_M) == INFINITY
+    # Check empty facet selection
+    with pytest.raises(ValueError) as e:
+        DI(dfB[0], dfB[0] == None, labels, predicted)
+    assert str(e.value) == "DI: Facet set is empty"
+
+    # Check empty facet selection
+    with pytest.raises(ValueError) as e:
+        x = Series(["A", "A"])
+        labels = Series([0, 1])
+        pred = Series([0, 1])
+        DI(x, x == "A", labels, pred)
+    assert str(e.value) == "DI: Negated facet set is empty"
 
     # Multicategory Facet, Binary Label
     facet = dfM[0]
