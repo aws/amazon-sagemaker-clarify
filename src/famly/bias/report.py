@@ -4,8 +4,8 @@ from typing import Any, Dict, List, Optional, Callable
 
 import pandas as pd
 
-from famly.bias import *
-from famly.bias.metrics import *
+
+import famly
 
 
 class FacetColumn:
@@ -33,6 +33,12 @@ class FacetContinuousColumn(FacetColumn):
         super().__init__(name)
         self.interval_indices = interval_indices
         self.intervals = intervals
+
+
+class LabelColumn:
+    def __init__(self, name, positive_label_value: Optional[Any]):
+        self.name = name
+        self.positive_label_value = positive_label_value
 
 
 class ProblemType(Enum):
@@ -66,17 +72,19 @@ def column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def call_metric_facet_values(metric: Callable, col: pd.Series, facet_values: Optional[List[Any]] = None) -> Dict:
+def call_metric_facet_values(
+    metric: Callable, col: pd.Series, facet_values: Optional[List[Any]], positive_label_index: pd.Series
+) -> Dict:
     """
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(col, facet_values: List[Any]) -> pd.Series:
+    def index_key(col, _facet_values: List[Any]) -> pd.Series:
         """
         :returns: a boolean series where facet_values are present in col
         """
-        index_key_series: pd.Series = (col == facet_values[0])
-        for val in facet_values[1:]:
+        index_key_series: pd.Series = (col == _facet_values[0])
+        for val in _facet_values[1:]:
             index_key_series = index_key_series | (col == val)
         return index_key_series
 
@@ -84,24 +92,21 @@ def call_metric_facet_values(metric: Callable, col: pd.Series, facet_values: Opt
         # A list of protected values
         # Build index series selecting protected values
         # create indexing series with boolean OR of values
-
         metric_result = metric(col, index_key(col, facet_values))
-        ci_all = {metric.__name__: metric_result}
+        metric_values = {metric.__name__: metric_result}
     else:
-        # FIXME
-        assert False
         # Do one vs all for every value
-        # ci_all = famly.bias.metrics.metric_one_vs_all(col)
-    return ci_all
+        metric_values = famly.bias.metrics.metric_one_vs_all(metric, col, positive_label_index)
+    return metric_values
 
 
-def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) -> Dict:
+def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn) -> Dict:
     """
     Run Full bias report on a dataset.
 
     :param df: Dataset as a pandas.DataFrame
-    :param facet_column: marks which column to consider for Bias analysis
-    :param label_column: column name which has the labels.
+    :param facet_column: description of column to consider for Bias analysis
+    :param label_column: description of column which has the labels.
     :return:
     """
     if facet_column:
@@ -109,22 +114,33 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) 
             facet_column.name
         )
 
-    if problem_type(df[label_column]) != ProblemType.BINARY:
+    if problem_type(df[label_column.name]) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
-    col: pd.Series = df[facet_column.name].dropna()
-    col_cat: pd.Series  # Category series
+    data_series: pd.Series = df[facet_column.name]
+    label_series: pd.Series = df[label_column.name]
+    positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
+    data_series_cat: pd.Series  # Category series
     result = dict()
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
-        col_cat = col.astype("category")
+        data_series_cat = data_series.astype("category")
         for metric in famly.bias.metrics.PRETRAINING_METRICS:
-            result[metric.__name__] = call_metric_facet_values(metric, col_cat, facet_column.protected_values)
+            if (
+                metric == famly.bias.CDD
+                or metric == famly.bias.JS
+                or metric == famly.bias.KL
+                or metric == famly.bias.KS
+            ):
+                continue
+            result[metric.__name__] = call_metric_facet_values(
+                metric, data_series_cat, facet_column.protected_values, positive_label_index
+            )
         return result
 
     elif issubclass(facet_column.__class__, FacetContinuousColumn):
         facet_column: FacetContinuousColumn
-        col_cat = pd.cut(col, facet_column.interval_indices)
+        data_series_cat = pd.cut(data_series, facet_column.interval_indices)
         # TODO: finish impl
         # In [44]: df=pd.DataFrame({'age': [5,25,10,80]})
         # In [50]: df

@@ -1,5 +1,5 @@
 import pandas as pd
-from famly.bias.report import ProblemType, problem_type
+from famly.bias.report import ProblemType, problem_type, bias_report, FacetCategoricalColumn, LabelColumn
 
 
 def dataframe():
@@ -9,14 +9,13 @@ def dataframe():
 
 
 df = dataframe()
-df.columns = ["x", "y"]
+df.columns = ["data", "label"]
 
 
 def test_report():
-    # FIXME:
     # once the report is refactored, fill the test
     #
-    pass
+    bias_report(df, FacetCategoricalColumn("data"), LabelColumn("label", 1))
 
 
 def test_problem_type():
