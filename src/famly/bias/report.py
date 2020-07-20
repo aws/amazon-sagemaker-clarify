@@ -6,6 +6,7 @@ import pandas as pd
 
 
 import famly
+import famly.bias.metrics
 
 
 class FacetColumn:
@@ -63,7 +64,7 @@ def problem_type(labels: pd.Series) -> ProblemType:
     return ProblemType.OTHER
 
 
-def column_list_to_str(xs: List[Any]) -> str:
+def _column_list_to_str(xs: List[Any]) -> str:
     """
     Format a metric name from multiple aggregated columns
     :returns: joint string separated by commas.
@@ -72,26 +73,27 @@ def column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def call_metric_facet_values(
+def _metric_call_wrapper(
     metric: Callable, col: pd.Series, facet_values: Optional[List[Any]], positive_label_index: pd.Series
 ) -> Dict:
     """
+    Dispatch calling of different metric functions with the correct arguments
+
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(col, _facet_values: List[Any]) -> pd.Series:
+    def index_key(col: pd.Series, _facet_values: List[Any]) -> pd.Series:
         """
         :returns: a boolean series where facet_values are present in col
         """
+        # create indexing series with boolean OR of facet values
         index_key_series: pd.Series = (col == _facet_values[0])
         for val in _facet_values[1:]:
             index_key_series = index_key_series | (col == val)
         return index_key_series
 
     if facet_values:
-        # A list of protected values
-        # Build index series selecting protected values
-        # create indexing series with boolean OR of values
+        # Build index series from facet
         metric_result = metric(col, index_key(col, facet_values))
         metric_values = {metric.__name__: metric_result}
     else:
@@ -126,14 +128,7 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: Label
         facet_column: FacetCategoricalColumn
         data_series_cat = data_series.astype("category")
         for metric in famly.bias.metrics.PRETRAINING_METRICS:
-            if (
-                metric == famly.bias.CDD
-                or metric == famly.bias.JS
-                or metric == famly.bias.KL
-                or metric == famly.bias.KS
-            ):
-                continue
-            result[metric.__name__] = call_metric_facet_values(
+            result[metric.__name__] = _metric_call_wrapper(
                 metric, data_series_cat, facet_column.protected_values, positive_label_index
             )
         return result

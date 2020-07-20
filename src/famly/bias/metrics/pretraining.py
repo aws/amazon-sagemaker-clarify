@@ -9,12 +9,11 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 
-def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def CI(x: pd.Series, facet: pd.Series) -> float:
     """
     Class imbalance (CI)
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: series of boolean values indicating positive target labels
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the protected class.
 
@@ -26,7 +25,6 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group
     and p is number of instances in the sensitive group.
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
     pos = len(x[facet])
     neg = len(x[~facet])
