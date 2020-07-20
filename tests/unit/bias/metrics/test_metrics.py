@@ -563,7 +563,7 @@ def test_AD():
     facet = dfM[0]
     predicted = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
     labels = pd.Series([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0])
-    response = metric_one_vs_all(AD, dfM[0], predicted_labels=predicted, labels=labels)
+    response = metric_one_vs_all(AD, dfM[0], labels, predicted, None, None)
     assert abs(response["M"]) != 1e10
     assert abs(response["F"]) != 1e10
     assert abs(response["O"]) != 1e10
@@ -572,11 +572,11 @@ def test_AD():
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
     labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
-    response = metric_one_vs_all(AD, dfM[0], predicted_labels=predicted, labels=labels)
+    response = metric_one_vs_all(AD, dfM[0], labels, predicted, None, None)
     for cat in facet.unique():
-        assert abs(response[cat][0]) != 1e10
-        assert abs(response[cat][1]) != 1e10
-        assert abs(response[cat][2]) != 1e10
+        assert abs(response[cat]) != 1e10
+        assert abs(response[cat]) != 1e10
+        assert abs(response[cat]) != 1e10
 
 
 def test_PD():
