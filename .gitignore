@@ -14,9 +14,7 @@ scratch*.py
 .eggs
 *.egg
 *.iml
-doc/_build
-doc/_static
-doc/_templates
+docs/build
 **/.DS_Store
 venv/
 *~
