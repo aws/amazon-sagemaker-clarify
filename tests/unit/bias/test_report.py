@@ -3,19 +3,18 @@ from famly.bias.report import ProblemType, problem_type, bias_report, FacetCateg
 
 
 def dataframe():
-    data = [["a", 1], ["a", 1], ["b", 0], ["c", 0]]
-    df = pd.DataFrame(data)
+    data = [["a", 1, 1], ["a", 1, 0], ["b", 0, 0], ["c", 0, 1]]
+    df = pd.DataFrame(data, columns=["x", "y", "yhat"])
     return df
 
 
 df = dataframe()
-df.columns = ["data", "label"]
 
 
 def test_report():
     # once the report is refactored, fill the test
     #
-    bias_report(df, FacetCategoricalColumn("data"), LabelColumn("label", 1))
+    print(bias_report(df, FacetCategoricalColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1)))
 
 
 def test_problem_type():

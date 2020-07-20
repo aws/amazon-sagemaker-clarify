@@ -74,7 +74,13 @@ def _column_list_to_str(xs: List[Any]) -> str:
 
 
 def _metric_call_wrapper(
-    metric: Callable, col: pd.Series, facet_values: Optional[List[Any]], positive_label_index: pd.Series
+    metric: Callable,
+    x: pd.Series,
+    facet_values: Optional[List[Any]],
+    label: pd.Series,
+    positive_label_index: pd.Series,
+    predicted_label: pd.Series,
+    positive_predicted_label_index: pd.Series,
 ) -> Dict:
     """
     Dispatch calling of different metric functions with the correct arguments
@@ -82,7 +88,7 @@ def _metric_call_wrapper(
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(col: pd.Series, _facet_values: List[Any]) -> pd.Series:
+    def facet_idx(col: pd.Series, _facet_values: List[Any]) -> pd.Series:
         """
         :returns: a boolean series where facet_values are present in col
         """
@@ -94,21 +100,29 @@ def _metric_call_wrapper(
 
     if facet_values:
         # Build index series from facet
-        metric_result = metric(col, index_key(col, facet_values))
-        metric_values = {metric.__name__: metric_result}
+        facet = facet_idx(x, facet_values)
+        f = famly.bias.metrics.metric_partial_nulary_x_facet(
+            metric, x, facet, label, positive_label_index, predicted_label, positive_predicted_label_index
+        )
+        metric_values = {metric.__name__: f()}
     else:
         # Do one vs all for every value
-        metric_values = famly.bias.metrics.metric_one_vs_all(metric, col, positive_label_index)
+        metric_values = famly.bias.metrics.metric_one_vs_all(
+            metric, x, label, positive_label_index, predicted_label, positive_predicted_label_index
+        )
     return metric_values
 
 
-def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn) -> Dict:
+def bias_report(
+    df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn, predicted_label_column: LabelColumn
+) -> Dict:
     """
     Run Full bias report on a dataset.
 
     :param df: Dataset as a pandas.DataFrame
     :param facet_column: description of column to consider for Bias analysis
     :param label_column: description of column which has the labels.
+    :param predicted_label_column: description of column with predicted labels
     :return:
     """
     if facet_column:
@@ -122,14 +136,29 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: Label
     data_series: pd.Series = df[facet_column.name]
     label_series: pd.Series = df[label_column.name]
     positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
+    predicted_label_series = df[predicted_label_column.name]
+    positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
+
     data_series_cat: pd.Series  # Category series
+
+    metrics_to_run = []
+    if predicted_label_column:
+        metrics_to_run.extend(famly.bias.metrics.POSTTRAINING_METRICS)
+    metrics_to_run.extend(famly.bias.metrics.PRETRAINING_METRICS)
+
     result = dict()
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
         data_series_cat = data_series.astype("category")
         for metric in famly.bias.metrics.PRETRAINING_METRICS:
             result[metric.__name__] = _metric_call_wrapper(
-                metric, data_series_cat, facet_column.protected_values, positive_label_index
+                metric,
+                data_series_cat,
+                facet_column.protected_values,
+                label_series,
+                positive_label_index,
+                predicted_label_series,
+                positive_predicted_label_index,
             )
         return result
 

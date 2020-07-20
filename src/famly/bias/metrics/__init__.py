@@ -24,9 +24,98 @@ POSTTRAINING_METRICS = public_functions(posttraining)
 __all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
 
 
-def metric_one_vs_all(
-    metric: Callable[[pd.Series, pd.Series, ...], float], x: pd.Series, *args, **kwargs
-) -> Dict[Any, float]:
+def metric_partial_nullary(
+    metric: Callable,
+    x: pd.Series,
+    facet: pd.Series,
+    labels: pd.Series,
+    positive_label_index: pd.Series,
+    predicted_labels: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    if metric == pretraining.CI:
+        return lambda: pretraining.CI(x, facet)
+    elif metric == pretraining.DPL:
+        return lambda: pretraining.DPL(x, facet, positive_label_index)
+    elif metric == pretraining.KL:
+        # return lambda: pretraining.KL(x, facet, positive_label_index)
+        # FIXME
+        return lambda: 0
+    elif metric == pretraining.JS:
+        # return lambda: pretraining.JS(x, facet, positive_label_index)
+        # FIXME
+        return lambda: 0
+    elif metric == pretraining.LP:
+        # return lambda: pretraining.LP(x, facet, positive_label_index)
+        # FIXME
+        return lambda: 0
+    elif metric == pretraining.TVD:
+        # return lambda: pretraining.TVD(x, facet, positive_label_index)
+        # FIXME
+        return lambda: 0
+    elif metric == pretraining.KS:
+        return lambda: 0
+    elif metric == pretraining.CDD:
+        # FIXME
+        # return pretraining.CDD(x, facet, positive_label_index)
+        return lambda: 0
+    else:
+        # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
+        log.warning("unregistered metric: %s, FIXME", metric.__name__)
+        return lambda: 0
+
+
+def metric_partial_binary_x_facet(
+    metric: Callable,
+    labels: pd.Series,
+    positive_label_index: pd.Series,
+    predicted_labels: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    if metric == pretraining.CI:
+        return lambda x, facet: pretraining.CI(x, facet)
+    elif metric == pretraining.DPL:
+        return lambda x, facet: pretraining.DPL(x, facet, positive_label_index)
+    elif metric == pretraining.KL:
+        return lambda x, facet: pretraining.KL(x, facet, positive_label_index)
+    elif metric == pretraining.JS:
+        return lambda x, facet: pretraining.JS(x, facet, positive_label_index)
+    elif metric == pretraining.JS:
+        return lambda x, facet: pretraining.JS(x, facet, positive_label_index)
+    elif metric == pretraining.LP:
+        return lambda x, facet: pretraining.LP(x, facet, positive_label_index)
+    elif metric == pretraining.TVD:
+        return lambda x, facet: pretraining.TVD(x, facet, positive_label_index)
+    elif metric == pretraining.CDD:
+        # FIXME
+        # return pretraining.CDD(x, facet, positive_label_index)
+        return lambda x, facet: 0
+    elif metric == posttraining.DPPL:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.DI:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.DCO:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.RD:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.DLR:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.AD:
+        # FIXME
+        return lambda x, facet: 0
+    elif metric == posttraining.FT:
+        # FIXME
+        return lambda x, facet: 0
+    else:
+        raise RuntimeError("metric_partial_binary_x_facet: Unregistered metric")
+
+
+def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, *args, **kwargs) -> Dict[Any, float]:
     """
     Calculate any metric for a categorical facet and/or label using 1 vs all
     :param metric: a callable for a bias metric
@@ -39,38 +128,6 @@ def metric_one_vs_all(
     categories = x.unique()
     res = {}
     for cat in categories:
-        res[cat] = metric(x, facet=(x == cat), *args, **kwargs)
+        f = metric_partial_nullary(metric, x, (x == cat), *args, **kwargs)
+        res[cat] = f()
     return res
-
-
-def label_one_vs_all(
-    metric: Callable[..., float],
-    x: pd.Series,
-    facet: pd.Series,
-    labels: pd.Series,
-    predicted_labels: pd.Series = None,
-    group_variable: pd.Series = None,
-) -> Dict:
-    """
-    :param metric: one of the bias measures defined in this file
-    :param x: data from the feature of interest
-    :param facet: boolean column with true values indicate a sensitive value
-    :param predicted_labels: predictions for labels made by model
-    :param labels: True values of the target column
-    :param group_variable: column of values indicating the subgroup each data point belongs to (used for calculating CDD metric only)
-    :return:
-    """
-
-    values = {}
-    label_unique = np.unique(labels)
-
-    for label in label_unique:
-        if metric in PRETRAINING_METRICS:
-            if metric != CDD:
-                values[label] = metric(x, facet, labels == label)
-            else:
-                values[label] = metric(x, facet, labels == label, group_variable)
-        else:
-            values[label] = metric(x, facet, labels == label, predicted_labels == label)
-
-    return values

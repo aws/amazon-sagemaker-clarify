@@ -49,8 +49,8 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-    positive_label_index_neg_facet = (positive_label_index) & ~facet
-    positive_label_index_facet = (positive_label_index) & facet
+    positive_label_index_neg_facet = positive_label_index & ~facet
+    positive_label_index_facet = positive_label_index & facet
     np = len(x[~facet])
     p = len(x[facet])
     n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
@@ -64,7 +64,6 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     if (q_neg + q_pos) == 0:
         raise ValueError("DPL: label facet is empty.")
     dpl = (q_neg - q_pos) / (q_neg + q_pos)
-
     return dpl
 
 
