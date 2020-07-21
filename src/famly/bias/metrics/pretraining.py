@@ -2,7 +2,7 @@
 Pre training metrics
 """
 import logging
-from famly.util import PDF
+from famly.util import pdf
 import pandas as pd
 import numpy as np
 from typing import Any
@@ -79,8 +79,8 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     facet = np.array(facet)
     x_a = positive_label_index[~facet]
     x_d = positive_label_index[facet]
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
+    Pa = pdf(x_a)  # x: raw values of the variable (column of data)
+    Pd = pdf(x_d)
 
     if len(Pa) == len(Pd):
         kl = np.sum(Pa * np.log(Pa / Pd))  # note log is base e, measured in nats

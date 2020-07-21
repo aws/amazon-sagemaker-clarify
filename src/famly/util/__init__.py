@@ -1,4 +1,6 @@
 import numpy as np
+from collections import defaultdict
+from functional import seq
 
 
 def collapse_to_binary(values, pivot=0.0):
@@ -34,16 +36,13 @@ def GaussianFilter(input_array: np.array, sigma: int = 1) -> np.array:
     return np.convolve(input_array, gauss_filter, "same")
 
 
-def PDF(x: np.array) -> np.array:
+def pdf(xs) -> dict:
     """
-    #Calculates the estimated probability distribution based on input sample
-    :param x: input array
-    :return: probability distribution of the input array
+    Probability distribution function
+    :param xs: input sequence
+    :return: sequence of tuples as (value, frequency)
     """
-    y = np.unique(x)
-
-    p, bins_edges = np.histogram(x, range=(0, 1))
-    filtered_zeros = p[p > 0]
-    normalized = filtered_zeros / np.sum(filtered_zeros)
-
-    return normalized
+    counts = seq(xs).map(lambda x: (x, 1)).reduce_by_key(lambda x, y: x + y)
+    total = counts.map(lambda x: x[1]).sum()
+    result_pdf = counts.map(lambda x: (x[0], x[1] / total))
+    return result_pdf
