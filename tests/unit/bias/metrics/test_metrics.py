@@ -554,16 +554,16 @@ def test_AD():
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert AD(dfB[0], facet, labels, predicted) == approx(-0.3714285714)
+    assert AD(dfB[0], facet, labels, 1, predicted, 1) == approx(-0.3714285714)
 
     facet = dfB[0] == "M"
-    assert AD(dfB[0], facet, labels, predicted) == approx(0.3714285714)
+    assert AD(dfB[0], facet, labels, 1, predicted, 1) == approx(0.3714285714)
 
     # Multicategory Facet, Binary Label
     facet = dfM[0]
     predicted = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
     labels = pd.Series([1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0])
-    response = metric_one_vs_all(AD, dfM[0], labels, predicted, None, None)
+    response = metric_one_vs_all(AD, dfM[0], labels, 1, predicted, 1)
     assert abs(response["M"]) != 1e10
     assert abs(response["F"]) != 1e10
     assert abs(response["O"]) != 1e10
@@ -572,7 +572,7 @@ def test_AD():
     predicted = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
     labels = pd.Series([2, 0, 1, 2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 2, 2, 0, 2, 0, 2, 2, 1, 2])
 
-    response = metric_one_vs_all(AD, dfM[0], labels, predicted, None, None)
+    response = metric_one_vs_all(AD, dfM[0], labels, 1, predicted, 1)
     for cat in facet.unique():
         assert abs(response[cat]) != 1e10
         assert abs(response[cat]) != 1e10

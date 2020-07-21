@@ -23,96 +23,30 @@ POSTTRAINING_METRICS = public_functions(posttraining)
 
 __all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
 
+PRETRAINING_METRICS_BINARY = set([CI])
+PRETRAINING_METRICS_TERNARY = set([DPPL, KL, JS, LP, TVD, KS])
+POSTTRAINING_METRICS_QUATERNARY = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT])
+
 
 def metric_partial_nullary(
     metric: Callable,
     x: pd.Series,
     facet: pd.Series,
     labels: pd.Series,
-    positive_label_index: pd.Series,
+    positive_label: Any,
     predicted_labels: pd.Series,
-    positive_predicted_label_index: pd.Series,
+    positive_predicted_label: Any,
 ) -> float:
-    if metric == pretraining.CI:
-        return lambda: pretraining.CI(x, facet)
-    elif metric == pretraining.DPL:
-        return lambda: pretraining.DPL(x, facet, positive_label_index)
-    elif metric == pretraining.KL:
-        # return lambda: pretraining.KL(x, facet, positive_label_index)
-        # FIXME
-        return lambda: 0
-    elif metric == pretraining.JS:
-        # return lambda: pretraining.JS(x, facet, positive_label_index)
-        # FIXME
-        return lambda: 0
-    elif metric == pretraining.LP:
-        # return lambda: pretraining.LP(x, facet, positive_label_index)
-        # FIXME
-        return lambda: 0
-    elif metric == pretraining.TVD:
-        # return lambda: pretraining.TVD(x, facet, positive_label_index)
-        # FIXME
-        return lambda: 0
-    elif metric == pretraining.KS:
-        return lambda: 0
-    elif metric == pretraining.CDD:
-        # FIXME
-        # return pretraining.CDD(x, facet, positive_label_index)
-        return lambda: 0
+    if metric == PRETRAINING_METRICS_BINARY:
+        return lambda: metric(x, facet)
+    elif metric == PRETRAINING_METRICS_TERNARY:
+        return lambda: metric(x, facet, positive_label_index)
+    elif metric in POSTTRAINING_METRICS_QUATERNARY:
+        return lambda: metric(x, facet, labels, positive_label, predicted_labels, positive_predicted_label)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
         log.warning("unregistered metric: %s, FIXME", metric.__name__)
         return lambda: 0
-
-
-def metric_partial_binary_x_facet(
-    metric: Callable,
-    labels: pd.Series,
-    positive_label_index: pd.Series,
-    predicted_labels: pd.Series,
-    positive_predicted_label_index: pd.Series,
-) -> float:
-    if metric == pretraining.CI:
-        return lambda x, facet: pretraining.CI(x, facet)
-    elif metric == pretraining.DPL:
-        return lambda x, facet: pretraining.DPL(x, facet, positive_label_index)
-    elif metric == pretraining.KL:
-        return lambda x, facet: pretraining.KL(x, facet, positive_label_index)
-    elif metric == pretraining.JS:
-        return lambda x, facet: pretraining.JS(x, facet, positive_label_index)
-    elif metric == pretraining.JS:
-        return lambda x, facet: pretraining.JS(x, facet, positive_label_index)
-    elif metric == pretraining.LP:
-        return lambda x, facet: pretraining.LP(x, facet, positive_label_index)
-    elif metric == pretraining.TVD:
-        return lambda x, facet: pretraining.TVD(x, facet, positive_label_index)
-    elif metric == pretraining.CDD:
-        # FIXME
-        # return pretraining.CDD(x, facet, positive_label_index)
-        return lambda x, facet: 0
-    elif metric == posttraining.DPPL:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.DI:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.DCO:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.RD:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.DLR:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.AD:
-        # FIXME
-        return lambda x, facet: 0
-    elif metric == posttraining.FT:
-        # FIXME
-        return lambda x, facet: 0
-    else:
-        raise RuntimeError("metric_partial_binary_x_facet: Unregistered metric")
 
 
 def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, *args, **kwargs) -> Dict[Any, float]:

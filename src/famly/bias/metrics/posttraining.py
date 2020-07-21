@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -225,46 +226,64 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     return dar, drr
 
 
-def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def AD(
+    x: pd.Series,
+    facet: pd.Series,
+    label: pd.Series,
+    positive_label: Any,
+    predicted_label: pd.Series,
+    positive_predicted_label: Any,
+) -> float:
     """
+    Accuracy difference
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param labels: true values of the target column for the data
-    :param predicted_labels: boolean column indicating predictions made by model
+    :param label: true values of the target column for the data
+    :param positive_label: boolean series indicating the "positive" values of labels
+    :param predicted_label: boolean column indicating predictions made by model
+    :param positive_predicted_label: boolean series indicating the "positive" value of predicted labels
     :return: Accuracy Difference between advantaged and disadvantaged classes
     """
-    predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
+    predicted_label = predicted_label.astype(bool)
+    label = label.astype(bool)
     facet = facet.astype(bool)
 
-    if len(facet[facet]) == 0:
+    if len(x[facet]) == 0:
         raise ValueError("AD: Facet set is empty")
-    if len(facet[~facet]) == 0:
+    if len(x[~facet]) == 0:
         raise ValueError("AD: Negated Facet set is empty")
 
-    TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
-    FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
-    FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
-    TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
+    label_idx = label == positive_label
+    pred_label_idx = predicted_label == positive_predicted_label
+
+    idx_tp_a = label_idx & pred_label_idx & ~facet
+    TP_a = len(label[idx_tp_a])
+    idx_fp_a = ~label_idx & pred_label_idx & ~facet
+    FP_a = len(label[idx_fp_a])
+    idx_fn_a = label_idx & ~pred_label_idx & ~facet
+    FN_a = len(label[idx_fn_a])
+    idx_tn_a = ~label_idx & ~pred_label_idx & ~facet
+    TN_a = len(label[idx_tn_a])
 
     total_a = TP_a + TN_a + FP_a + FN_a
-
     acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITY
 
-    TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
-    FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
-    FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
-    TN_d = len(labels[(~labels) & (~predicted_labels) & (facet)])
+    idx_tp_d = label_idx & pred_label_idx & facet
+    TP_d = len(label[idx_tp_d])
+    idx_fp_d = ~label_idx & pred_label_idx & facet
+    FP_d = len(label[idx_fp_d])
+    idx_fn_d = label_idx & ~pred_label_idx & facet
+    FN_d = len(label[idx_fn_d])
+    idx_tn_d = ~label_idx & ~pred_label_idx & facet
+    TN_d = len(label[idx_tn_d])
 
     total_d = TP_d + TN_d + FP_d + FN_d
-
     acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITY
 
     ad = acc_a - acc_d
-
     if acc_a == acc_d and acc_a == INFINITY:
-        ad = 0
-
+        ad = 0.0
     return ad
 
 
