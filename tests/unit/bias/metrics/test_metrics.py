@@ -149,51 +149,35 @@ dfC = dfContinuous()
 dfFT = datasetFT()
 
 
-def test_ci():
+def test_CI():
     """test class imbalance"""
-
-    # Binary Facet, Binary Label
-
     facet = dfB[0] == "F"
-    positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    assert CI(dfB[0], facet, positive_label_index) == approx(-1 / 6)
+    assert CI(dfB[0], facet) == approx(-1 / 6)
 
     facet = dfB[0] == "M"
-    assert CI(dfB[0], facet, positive_label_index) == approx(1 / 6)
+    assert CI(dfB[0], facet) == approx(1 / 6)
 
     # Continuous Facet, Binary Label
     facet = dfC[0] > 1.0
-    assert CI(dfC[0], facet, positive_label_index) == approx(-1 / 3)
+    assert CI(dfC[0], facet) == approx(-1 / 3)
 
     facet = dfC[0] < 1.0
-    assert CI(dfC[0], facet, positive_label_index) == approx(1 / 3)
+    assert CI(dfC[0], facet) == approx(1 / 3)
 
     # Multicategory Facet, Binary Label
-    positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
 
-    response = metric_one_vs_all(CI, dfM[0], positive_label_index=positive_label_index)
-
+    response = metric_one_vs_all(CI, dfM[0])
     assert response["M"] == approx(1 / 3)
     assert response["F"] == approx(1 / 4)
     assert response["O"] == approx(5 / 12)
 
 
-def test_dpl():
-    # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    assert DPL(dfB[0], facet, positive_label_index) == approx((2 / 5 - 4 / 7) / (4 / 7 + 2 / 5))
-
-    facet = dfB[0] == "M"
-    assert DPL(dfB[0], facet, positive_label_index) == approx((4 / 7 - 2 / 5) / (4 / 7 + 2 / 5))
-
-    # Multicategory Facet, Binary Label
-    positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-
-    response = metric_one_vs_all(DPL, dfM[0], positive_label_index=positive_label_index)
-    assert response["M"] == approx((6 / 16 - 6 / 8) / (6 / 16 + 6 / 8))
-    assert response["F"] == approx((10 / 15 - 2 / 9) / (10 / 15 + 2 / 9))
-    assert response["O"] == approx((8 / 17 - 4 / 7) / (8 / 17 + 4 / 7))
+def test_DPL():
+    df = pd.DataFrame({"x": ["a", "a", "b", "b"], "y": [1, 1, 0, 1]})
+    res = metric_one_vs_all(DPL, df["x"], df["y"], 1)
+    assert res["a"] == -0.5
+    assert res["b"] == 0.5
+    return
 
 
 def test_KL():

@@ -5,6 +5,7 @@ import logging
 from famly.util import PDF
 import pandas as pd
 import numpy as np
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ def CI(x: pd.Series, facet: pd.Series) -> float:
     return ci
 
 
-def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
     """
     Difference in positive proportions in labels
     :param x: input feature
@@ -47,23 +48,21 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    positive_label_index = positive_label_index.astype(bool)
+    positive_label_index = label == positive_label
     facet = facet.astype(bool)
     positive_label_index_neg_facet = positive_label_index & ~facet
     positive_label_index_facet = positive_label_index & facet
-    np = len(x[~facet])
-    p = len(x[facet])
-    n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
-    n_pos_label_facet = len(x[positive_label_index_facet])
-    if np == 0:
+    na = len(x[~facet])
+    nd = len(x[facet])
+    na_pos = len(label[~facet & positive_label_index])
+    nd_pos = len(label[facet & positive_label_index])
+    if na == 0:
         raise ValueError("DPL: negative facet set is empty.")
-    if p == 0:
+    if nd == 0:
         raise ValueError("DPL: facet set is empty.")
-    q_neg = n_pos_label_neg_facet / np
-    q_pos = n_pos_label_facet / p
-    if (q_neg + q_pos) == 0:
-        raise ValueError("DPL: label facet is empty.")
-    dpl = (q_neg - q_pos) / (q_neg + q_pos)
+    qa = na_pos / na
+    qd = nd_pos / nd
+    dpl = qa - qd
     return dpl
 
 

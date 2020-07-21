@@ -23,26 +23,28 @@ POSTTRAINING_METRICS = public_functions(posttraining)
 
 __all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
 
-PRETRAINING_METRICS_BINARY = set([CI])
-PRETRAINING_METRICS_TERNARY = set([DPPL, KL, JS, LP, TVD, KS])
-POSTTRAINING_METRICS_QUATERNARY = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT])
+METRICS_ARITY_NILADIC = set([CI])
+METRICS_ARITY_DYADIC = set([])
+METRICS_ARITY_TRIADIC = set([])
+METRICS_ARITY_TETRADIC = set([DPL])
+METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT, DPPL, KL, JS, LP, TVD, KS])
 
 
 def metric_partial_nullary(
     metric: Callable,
     x: pd.Series,
     facet: pd.Series,
-    labels: pd.Series,
-    positive_label: Any,
-    predicted_labels: pd.Series,
-    positive_predicted_label: Any,
+    label: pd.Series = None,
+    positive_label: Any = None,
+    predicted_label: pd.Series = None,
+    positive_predicted_label: Any = None,
 ) -> float:
-    if metric == PRETRAINING_METRICS_BINARY:
+    if metric in METRICS_ARITY_NILADIC:
         return lambda: metric(x, facet)
-    elif metric == PRETRAINING_METRICS_TERNARY:
-        return lambda: metric(x, facet, positive_label_index)
-    elif metric in POSTTRAINING_METRICS_QUATERNARY:
-        return lambda: metric(x, facet, labels, positive_label, predicted_labels, positive_predicted_label)
+    elif metric in METRICS_ARITY_TETRADIC:
+        return lambda: metric(x, facet, label, positive_label)
+    elif metric in METRICS_ARITY_HEXADIC:
+        return lambda: metric(x, facet, label, positive_label, predicted_label, positive_predicted_label)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
         log.warning("unregistered metric: %s, FIXME", metric.__name__)
