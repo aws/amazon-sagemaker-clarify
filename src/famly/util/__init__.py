@@ -44,5 +44,5 @@ def pdf(xs) -> dict:
     """
     counts = seq(xs).map(lambda x: (x, 1)).reduce_by_key(lambda x, y: x + y)
     total = counts.map(lambda x: x[1]).sum()
-    result_pdf = counts.map(lambda x: (x[0], x[1] / total))
+    result_pdf = counts.map(lambda x: (x[0], x[1] / total)).sorted().list()
     return result_pdf
