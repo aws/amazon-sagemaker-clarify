@@ -46,3 +46,30 @@ def pdf(xs) -> dict:
     total = counts.map(lambda x: x[1]).sum()
     result_pdf = counts.map(lambda x: (x[0], x[1] / total)).sorted().list()
     return result_pdf
+
+
+def pdfs_aligned_nonzero(xs, ys) -> (np.array, np.array):
+    """
+    Convert a pair of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
+    :return: pair of numpy arrays of the same size with the aligned pdfs
+    """
+    # Calculate pdf
+    xs_f = pdf(xs)
+    ys_f = pdf(ys)
+
+    def keys(_xs):
+        return seq(_xs).map(lambda x: x[0])
+
+    # Extract union of keys
+    all_keys = keys(xs_f).union(keys(ys_f)).sorted()
+
+    # Fill numpy arrays for nonzero elements
+    xs_f_d = dict(xs_f)
+    ys_f_d = dict(ys_f)
+    xs_f_lst = []
+    ys_f_lst = []
+    for i, key in enumerate(all_keys):
+        if key in xs_f_d and key in ys_f_d and xs_f_d[key] and ys_f_d[key]:
+            xs_f_lst.append(xs_f_d[key])
+            ys_f_lst.append(ys_f_d[key])
+    return (np.array(xs_f_lst), np.array(ys_f_lst))

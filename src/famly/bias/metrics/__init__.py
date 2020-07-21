@@ -23,9 +23,8 @@ POSTTRAINING_METRICS = public_functions(posttraining)
 
 __all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
 
-METRICS_ARITY_NILADIC = set([CI])
-METRICS_ARITY_DYADIC = set([])
-METRICS_ARITY_TRIADIC = set([])
+
+METRICS_ARITY_DYADIC = set([CI, KL])
 METRICS_ARITY_TETRADIC = set([DPL])
 METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT, DPPL, KL, JS, LP, TVD, KS])
 
@@ -39,7 +38,7 @@ def metric_partial_nullary(
     predicted_label: pd.Series = None,
     positive_predicted_label: Any = None,
 ) -> float:
-    if metric in METRICS_ARITY_NILADIC:
+    if metric in METRICS_ARITY_DYADIC:
         return lambda: metric(x, facet)
     elif metric in METRICS_ARITY_TETRADIC:
         return lambda: metric(x, facet, label, positive_label)

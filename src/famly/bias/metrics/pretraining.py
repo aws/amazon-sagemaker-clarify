@@ -2,7 +2,7 @@
 Pre training metrics
 """
 import logging
-from famly.util import pdf
+from famly.util import pdfs_aligned_nonzero
 import pandas as pd
 import numpy as np
 from typing import Any
@@ -11,12 +11,15 @@ log = logging.getLogger(__name__)
 
 
 def CI(x: pd.Series, facet: pd.Series) -> float:
-    """
+    r"""
     Class imbalance (CI)
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the protected class.
+
+    .. math::
+        CI = \frac{na-nd}{na+nd}
 
     Bias is often generated from an under-representation of
     the protected class in the dataset, especially if the desired “golden truth”
@@ -66,26 +69,25 @@ def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -
     return dpl
 
 
-def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+def KL(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Kullback and Leibler divergence or relative entropy in bits.
+
+    .. math::
+        KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    facet = np.array(facet)
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-    Pa = pdf(x_a)  # x: raw values of the variable (column of data)
-    Pd = pdf(x_d)
-
-    if len(Pa) == len(Pd):
-        kl = np.sum(Pa * np.log(Pa / Pd))  # note log is base e, measured in nats
-    else:
-        raise ValueError("KL: Either facet set or negated facet set is empty")
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    if len(Pa) == 0 or len(Pd) == 0:
+        return np.nan
+    kl = np.sum(Pa * np.log2(Pa / Pd))
     return kl
 
 
