@@ -1,13 +1,12 @@
+"""
+Pre training metrics
+"""
 import logging
 from famly.util import PDF
 import pandas as pd
 import numpy as np
 
 log = logging.getLogger(__name__)
-
-INFINITE = float("inf")  # Default return value for all metrics to avoid division by zero errors
-
-######################################### Pre-training Bias Measures ###################################################
 
 
 def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
@@ -29,25 +28,21 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
     pos = len(x[facet])
     neg = len(x[~facet])
     q = pos + neg
-
     if neg == 0:
         raise ValueError("CI: negated facet set is empty. Check that x[~facet] has non-zero length.")
     if pos == 0:
         raise ValueError("CI: facet set is empty. Check that x[facet] has non-zero length.")
-
     assert q != 0
-
     ci = float(neg - pos) / q
     return ci
 
 
 def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
-    Difference in positive proportions in predicted labels
+    Difference in positive proportions in labels
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param label: pandas series of labels (binary, multicategory, or continuous)
@@ -56,21 +51,16 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     """
     positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
     positive_label_index_neg_facet = (positive_label_index) & ~facet
     positive_label_index_facet = (positive_label_index) & facet
-
     np = len(x[~facet])
     p = len(x[facet])
-
     n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
     n_pos_label_facet = len(x[positive_label_index_facet])
-
     if np == 0:
         raise ValueError("DPL: negative facet set is empty.")
     if p == 0:
         raise ValueError("DPL: facet set is empty.")
-
     q_neg = n_pos_label_neg_facet / np
     q_pos = n_pos_label_facet / p
     if (q_neg + q_pos) == 0:
@@ -129,7 +119,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
 
 def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
-    """
+    r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
