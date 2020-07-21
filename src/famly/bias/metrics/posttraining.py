@@ -1,15 +1,24 @@
+"""
+Post training metrics
+"""
 import logging
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
+from famly.bias.metrics.constants import INFINITY
 
 log = logging.getLogger(__name__)
 
-INFINITE = float("inf")  # Default return value for all metrics to avoid division by zero errors
-
 
 def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
-    """
+    r"""
+    Difference in positive proportions in predicted labels.
+
+    Indication if initial bias resident in the dataset increases or decreases after training.
+
+    .. math::
+        DPPL = \frac{\hat{n_a}^{(1)}}{n_a}-\frac{\hat{n_d}^{(1)}}{n_d}
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param labels: boolean column indicating true values of target column
@@ -19,28 +28,29 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
     predicted_labels = predicted_labels.astype(bool)
     labels = labels.astype(bool)
     facet = facet.astype(bool)
-
-    na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
+    na1hat = len(predicted_labels[predicted_labels & (~facet)])
     na = len(facet[~facet])
-
     if na == 0:
         raise ValueError("DPPL: Negated facet set is empty")
-
     qa = na1hat / na
-    nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
+    nd1hat = len(predicted_labels[predicted_labels & facet])
     nd = len(facet[facet])
-
     if nd == 0:
         raise ValueError("DPPL: facet set is empty")
-
     qd = nd1hat / nd
-
     return qa - qd
 
 
 def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
-    # Disparate impact
-    """
+    r"""
+    Disparate Impact
+
+    Measures adverse effects by the model predictions with respect to true labels on different groups selected by
+    the facet.
+
+    .. math::
+        DI = \frac{\frac{\hat{n_a}^{(1)}}{n_a}}{\frac{\hat{n_d}^{(1)}}{n_d}}
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param labels: boolean column indicating true values of target column
@@ -50,23 +60,18 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     predicted_labels = predicted_labels.astype(bool)
     labels = labels.astype(bool)
     facet = facet.astype(bool)
-
-    na1hat = len(predicted_labels[(predicted_labels) & (~facet)])
+    na1hat = len(predicted_labels[predicted_labels & (~facet)])
     na = len(facet[~facet])
-
-    qa = na1hat / na
-
     if na == 0:
         raise ValueError("DI: Negated facet set is empty")
-
-    nd1hat = len(predicted_labels[(predicted_labels) & (facet)])
+    qa = na1hat / na
+    nd1hat = len(predicted_labels[predicted_labels & facet])
     nd = len(facet[facet])
-
     if nd == 0:
         raise ValueError("DI: Facet set is empty")
-
     qd = nd1hat / nd
-
+    if qa == 0:
+        return INFINITY
     return qd / qa
 
 
@@ -100,29 +105,29 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     if na0hat != 0:
         rr_a = TN_a / na0hat
     else:
-        rr_a = INFINITE
+        rr_a = INFINITY
 
     if nd0hat != 0:
         rr_d = TN_d / nd0hat
     else:
-        rr_d = INFINITE
+        rr_d = INFINITY
 
     if na1hat != 0:
         ca = na1 / na1hat
     else:
-        ca = INFINITE
+        ca = INFINITY
 
     if nd1hat != 0:
         cd = nd1 / nd1hat
     else:
-        cd = INFINITE
+        cd = INFINITY
 
     dca = ca - cd
     dcr = rr_a - rr_d
 
-    if ca == cd and ca == INFINITE:
+    if ca == cd and ca == INFINITY:
         dca = 0
-    if rr_a == rr_d and rr_a == INFINITE:
+    if rr_a == rr_d and rr_a == INFINITY:
         dcr = 0
 
     return dca, dcr
@@ -148,16 +153,16 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
     FN_a = len(labels[(labels) & (~predicted_labels) & (~facet)])
 
-    rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else INFINITE
+    rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else INFINITY
 
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
 
-    rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else INFINITE
+    rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else INFINITY
 
     rd = rec_a - rec_d
 
-    if rec_a == rec_d and rec_a == INFINITE:
+    if rec_a == rec_d and rec_a == INFINITY:
         rd = 0
     return rd
 
@@ -192,29 +197,29 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     if na1hat != 0:
         ar_a = TP_a / na1hat
     else:
-        ar_a = INFINITE
+        ar_a = INFINITY
 
     if nd1hat != 0:
         ar_d = TP_d / nd1hat
     else:
-        ar_d = INFINITE
+        ar_d = INFINITY
 
     if na0hat != 0:
         rr_a = TN_a / na0hat
     else:
-        rr_a = INFINITE
+        rr_a = INFINITY
 
     if nd0hat != 0:
         rr_d = TN_d / nd0hat
     else:
-        rr_d = INFINITE
+        rr_d = INFINITY
 
     dar = ar_a - ar_d
     drr = rr_a - rr_d
 
-    if ar_a == ar_d and ar_a == INFINITE:
+    if ar_a == ar_d and ar_a == INFINITY:
         dar = 0
-    if rr_a == rr_d and rr_a == INFINITE:
+    if rr_a == rr_d and rr_a == INFINITY:
         drr = 0
 
     return dar, drr
@@ -244,7 +249,7 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     total_a = TP_a + TN_a + FP_a + FN_a
 
-    acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITE
+    acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITY
 
     TP_d = len(labels[(labels) & (predicted_labels) & (facet)])
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
@@ -253,11 +258,11 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     total_d = TP_d + TN_d + FP_d + FN_d
 
-    acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITE
+    acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITY
 
     ad = acc_a - acc_d
 
-    if acc_a == acc_d and acc_a == INFINITE:
+    if acc_a == acc_d and acc_a == INFINITY:
         ad = 0
 
     return ad
@@ -286,12 +291,12 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     FP_d = len(labels[(~labels) & (predicted_labels) & (facet)])
     FN_d = len(labels[(labels) & (~predicted_labels) & (facet)])
 
-    tau_a = FN_a / FP_a if FP_a != 0 else INFINITE
-    tau_d = FN_d / FP_d if FP_d != 0 else INFINITE
+    tau_a = FN_a / FP_a if FP_a != 0 else INFINITY
+    tau_d = FN_d / FP_d if FP_d != 0 else INFINITY
 
     te = tau_d - tau_a
 
-    if tau_a == tau_d and tau_a == INFINITE:
+    if tau_a == tau_d and tau_a == INFINITY:
         te = 0
 
     return te
