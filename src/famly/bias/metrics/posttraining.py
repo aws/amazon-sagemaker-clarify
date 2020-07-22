@@ -6,12 +6,12 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
-from . import registory
+from . import registry
 
 log = logging.getLogger(__name__)
 
 
-@registory.posttraining
+@registry.posttraining
 def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     r"""
     Difference in positive proportions in predicted labels.
@@ -43,7 +43,7 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
     return qa - qd
 
 
-@registory.posttraining
+@registry.posttraining
 def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     r"""
     Disparate Impact
@@ -78,7 +78,7 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     return qd / qa
 
 
-@registory.posttraining
+@registry.posttraining
 def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
     """
     :param x: input feature
@@ -137,7 +137,7 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     return dca, dcr
 
 
-@registory.posttraining
+@registry.posttraining
 def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
@@ -172,7 +172,7 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     return rd
 
 
-@registory.posttraining
+@registry.posttraining
 def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> (float, float):
     """
     :param x: input feature
@@ -231,7 +231,7 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     return dar, drr
 
 
-@registory.posttraining
+@registry.posttraining
 def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
@@ -275,7 +275,7 @@ def AD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     return ad
 
 
-@registory.posttraining
+@registry.posttraining
 def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param x: input feature
@@ -310,22 +310,22 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     return te
 
 
-@registory.posttraining
+@registry.posttraining
 def FlipSet_pos(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] > predicted_labels[i]])
 
 
-@registory.posttraining
+@registry.posttraining
 def FlipSet_neg(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] < predicted_labels[i]])
 
 
-@registory.posttraining
+@registry.posttraining
 def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
-@registory.posttraining
+@registry.posttraining
 def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
     :param dataset: array of data points

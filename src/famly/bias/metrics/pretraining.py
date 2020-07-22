@@ -3,14 +3,14 @@ Pre training metrics
 """
 import logging
 from famly.util import PDF
-from . import registory
+from . import registry
 import pandas as pd
 import numpy as np
 
 log = logging.getLogger(__name__)
 
 
-@registory.pretraining
+@registry.pretraining
 def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Class imbalance (CI)
@@ -42,7 +42,7 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return ci
 
 
-@registory.pretraining
+@registry.pretraining
 def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in labels
@@ -73,7 +73,7 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     return dpl
 
 
-@registory.pretraining
+@registry.pretraining
 def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
@@ -97,7 +97,7 @@ def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return kl
 
 
-@registory.pretraining
+@registry.pretraining
 def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
@@ -123,7 +123,7 @@ def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return js_divergence
 
 
-@registory.pretraining
+@registry.pretraining
 def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
@@ -154,7 +154,7 @@ def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_ord
     return lp_norm
 
 
-@registory.pretraining
+@registry.pretraining
 def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
    :param x: input feature
@@ -170,7 +170,7 @@ def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     return tvd
 
 
-@registory.pretraining
+@registry.pretraining
 def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
@@ -195,7 +195,7 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return max_distance
 
 
-@registory.pretraining
+@registry.pretraining
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature

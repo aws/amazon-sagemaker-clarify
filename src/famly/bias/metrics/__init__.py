@@ -7,12 +7,12 @@ from .pretraining import *
 
 from . import pretraining
 from . import posttraining
-from . import registory
+from . import registry
 
-PRETRAINING_METRICS = registory.PRETRAINING_METRIC_FUNCTIONS
-POSTTRAINING_METRICS = registory.POSTTRAINING_METRIC_FUNCTIONS
+PRETRAINING_METRICS = registry.PRETRAINING_METRIC_FUNCTIONS
+POSTTRAINING_METRICS = registry.POSTTRAINING_METRIC_FUNCTIONS
 
-__all__ = registory.all_metrics()
+__all__ = registry.all_metrics()
 
 
 def metric_one_vs_all(

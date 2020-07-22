@@ -1,79 +1,79 @@
 import pytest
-from famly.bias.metrics import registory
+from famly.bias.metrics import registry
 
 
 def testValidRegistrition():
-    @registory.pretraining
+    @registry.pretraining
     def pretraining_metric():
         pass
 
-    @registory.posttraining
+    @registry.posttraining
     def posttraining_metric():
         pass
 
-    assert pretraining_metric in registory.PRETRAINING_METRIC_FUNCTIONS
-    assert posttraining_metric in registory.POSTTRAINING_METRIC_FUNCTIONS
-    assert pretraining_metric.__name__ in registory.all_metrics()
-    assert posttraining_metric.__name__ in registory.all_metrics()
+    assert pretraining_metric in registry.PRETRAINING_METRIC_FUNCTIONS
+    assert posttraining_metric in registry.POSTTRAINING_METRIC_FUNCTIONS
+    assert pretraining_metric.__name__ in registry.all_metrics()
+    assert posttraining_metric.__name__ in registry.all_metrics()
 
 
 def testInalidRegistrition():
     # non-function
     with pytest.raises(TypeError) as e:
 
-        @registory.pretraining
+        @registry.pretraining
         class TestClass(object):
             pass
 
     with pytest.raises(TypeError) as e:
 
-        @registory.posttraining
+        @registry.posttraining
         class TestClass(object):
             pass
 
     # duplicate pretraining metrics
     with pytest.raises(AssertionError) as e:
 
-        @registory.pretraining
-        @registory.pretraining
+        @registry.pretraining
+        @registry.pretraining
         def metric_function():
             pass
 
     with pytest.raises(AssertionError) as e:
 
-        @registory.pretraining
+        @registry.pretraining
         def metric_function():
             pass
 
-        @registory.pretraining
+        @registry.pretraining
         def metric_function():
             pass
 
     # duplicate posttraining metrics
     with pytest.raises(AssertionError) as e:
 
-        @registory.posttraining
-        @registory.posttraining
+        @registry.posttraining
+        @registry.posttraining
         def metric_function():
             pass
 
     with pytest.raises(AssertionError) as e:
 
-        @registory.posttraining
+        @registry.posttraining
         def metric_function():
             pass
 
-        @registory.posttraining
+        @registry.posttraining
         def metric_function():
             pass
 
     # duplicate metrics
     with pytest.raises(AssertionError) as e:
 
-        @registory.pretraining
+        @registry.pretraining
         def metric_function():
             pass
 
-        @registory.posttraining
+        @registry.posttraining
         def metric_function():
             pass
