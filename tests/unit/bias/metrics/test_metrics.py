@@ -195,7 +195,6 @@ def test_KL():
 def test_JS():
     res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
     assert res == approx(0.3019448800171307)
-    print(res)
 
     res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
@@ -206,30 +205,16 @@ def test_JS():
     return
 
 
-def test_LPnorm():
-    # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    positive_label_index = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    assert LP(dfB[0], facet, positive_label_index) == approx(0.24243661)
+def test_LP():
+    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
+    assert res == approx(0.6)
 
-    facet = dfB[0] == "M"
-    assert LP(dfB[0], facet, positive_label_index) == approx(0.24243661)
+    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    assert res == 0.0
 
-    # Multicategory Facet, Binary Label
-    facet = dfM[0]
-    positive_label_index = pd.Series([1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1])
-    response = metric_one_vs_all(LP, dfM[0], positive_label_index=positive_label_index)
-    assert response["M"] < 1.0 and response["M"] > -1.0
-    assert response["F"] < 1.0 and response["F"] > -1.0
-    assert response["O"] < 1.0 and response["O"] > -1.0
-
-    # Multicategory Facet, Multicategory Label
-    labels = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-    response = metric_one_vs_all(LP, dfM[0], labels=labels)
-    for cat in facet.unique():
-        assert response[cat][0] < 1.0 and response[cat][0] > -1.0
-        assert response[cat][1] < 1.0 and response[cat][1] > -1.0
-        assert response[cat][2] < 1.0 and response[cat][2] > -1.0
+    # No facet selection
+    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
+    assert res is np.nan
 
 
 def test_KS():

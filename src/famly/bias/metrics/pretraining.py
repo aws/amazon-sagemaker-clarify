@@ -118,34 +118,26 @@ def JS(x: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
+def LP(x: pd.Series, facet: pd.Series, norm_order: int = 2) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
-        Lp(Pa, Pd) = [\sum_{y} |Pa(y)-Pd(y)|^p]^{1/p}
+        Lp(Pa, Pd) = [\sum_{x} |Pa(x)-Pd(x)|^p]^{1/p}
 
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
     :param norm_order: the order of norm desired (2 by default).
     :return: Returns the LP norm of the difference between class distributions
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        lp_norm = np.linalg.norm(Pa - Pd, norm_order)
-    else:
-        raise ValueError("LP: Either facet set or negated facet set is empty")
-
-    return lp_norm
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    if len(Pa) == 0 or len(Pd) == 0:
+        return np.nan
+    res = np.linalg.norm(Pa - Pd, norm_order)
+    return res
 
 
 @registry.pretraining
