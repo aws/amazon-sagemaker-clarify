@@ -141,24 +141,25 @@ def LP(x: pd.Series, facet: pd.Series, norm_order: int = 2) -> float:
 
 
 @registry.pretraining
-def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def TVD(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Total Variation Distance
+
+    .. math::
+        TVD = 0.5 * L1(Pa, Pd) \geq 0
+
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
+    :return: total variation distance metric
     """
-   :param x: input feature
-   :param facet: boolean column indicating sensitive group
-   :param positive_label_index: boolean column indicating positive labels
-   :return: 1/2 * L-1 norm
-   """
-
-    Lp_res = LP(x, facet, positive_label_index, p=1)
-
+    Lp_res = LP(x, facet, 1)
     tvd = 0.5 * Lp_res
-
     return tvd
 
 
 @registry.pretraining
 def KS(x: pd.Series, facet: pd.Series) -> float:
-    """
+    r"""
     Kolmogorov-Smirnov
 
     .. math::
