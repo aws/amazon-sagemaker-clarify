@@ -3,6 +3,7 @@ Pre training metrics
 """
 import logging
 from famly.util import pdfs_aligned_nonzero
+from . import registry
 import pandas as pd
 import numpy as np
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 
+@registry.pretraining
 def CI(x: pd.Series, facet: pd.Series) -> float:
     r"""
     Class imbalance (CI)
@@ -42,6 +44,7 @@ def CI(x: pd.Series, facet: pd.Series) -> float:
     return ci
 
 
+@registry.pretraining
 def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
     """
     Difference in positive proportions in labels
@@ -69,6 +72,7 @@ def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -
     return dpl
 
 
+@registry.pretraining
 def KL(x: pd.Series, facet: pd.Series) -> float:
     r"""
     Kullback and Leibler divergence or relative entropy in bits.
@@ -97,6 +101,7 @@ def JS(x: pd.Series, facet: pd.Series) -> float:
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
 
+@registry.pretraining
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
@@ -112,6 +117,7 @@ def JS(x: pd.Series, facet: pd.Series) -> float:
     return res
 
 
+@registry.pretraining
 def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
@@ -142,6 +148,7 @@ def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_ord
     return lp_norm
 
 
+@registry.pretraining
 def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
    :param x: input feature
@@ -157,6 +164,7 @@ def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     return tvd
 
 
+@registry.pretraining
 def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     :param x: input feature
@@ -181,6 +189,7 @@ def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     return max_distance
 
 
+@registry.pretraining
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature
