@@ -173,7 +173,8 @@ def KS(x: pd.Series, facet: pd.Series) -> float:
     return LP(x, facet, 1)
 
 
-@registry.pretraining
+# FIXME, CDD needs to be looked into
+# @registry.pretraining
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature

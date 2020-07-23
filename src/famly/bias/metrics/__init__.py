@@ -39,8 +39,8 @@ def metric_partial_nullary(
         return lambda: metric(label, facet)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
-        log.warning("unregistered metric: %s, FIXME", metric.__name__)
-        return lambda: 0
+        log.error("unregistered metric: %s, FIXME", metric.__name__)
+        raise RuntimeError("Unregistered metric {}".format(metric.__name__))
 
 
 def metric_one_vs_all(metric: Callable[..., float], x: pd.Series, *args, **kwargs) -> Dict[Any, float]:
