@@ -2,7 +2,7 @@ import pytest
 from famly.bias.metrics import registry
 
 
-def testValidRegistrition():
+def testValidRegistration():
     @registry.pretraining
     def pretraining_metric():
         pass
@@ -17,7 +17,7 @@ def testValidRegistrition():
     assert posttraining_metric.__name__ in registry.all_metrics()
 
 
-def testInalidRegistrition():
+def testInvalidRegistration():
     # non-function
     with pytest.raises(TypeError) as e:
 
