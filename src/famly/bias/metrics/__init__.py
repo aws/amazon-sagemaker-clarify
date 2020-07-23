@@ -4,24 +4,15 @@ import numpy as np
 
 from .posttraining import *
 from .pretraining import *
-import inspect
 
 from . import pretraining
 from . import posttraining
+from . import registry
 
+PRETRAINING_METRICS = registry.PRETRAINING_METRIC_FUNCTIONS
+POSTTRAINING_METRICS = registry.POSTTRAINING_METRIC_FUNCTIONS
 
-def public_functions(module):
-    return [x[1] for x in inspect.getmembers(module) if inspect.isfunction(x[1]) and not x[0].startswith("_")]
-
-
-# FIXME
-# Use a decorator or a more robust mechanism to register the metrics.
-# See https://github.com/aws/famly/pull/16
-PRETRAINING_METRICS = public_functions(pretraining)
-POSTTRAINING_METRICS = public_functions(posttraining)
-
-
-__all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
+__all__ = registry.all_metrics()
 
 
 def metric_one_vs_all(
@@ -89,7 +80,7 @@ def label_one_vs_all(
 
     for label in label_unique:
         if metric in PRETRAINING_METRICS:
-            if metric != CDD:
+            if metric != pretraining.CDD:
                 values[label] = metric(x, facet, labels == label)
             else:
                 values[label] = metric(x, facet, labels == label, group_variable)
