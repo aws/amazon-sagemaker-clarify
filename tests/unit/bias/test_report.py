@@ -14,7 +14,12 @@ df = dataframe()
 def test_report():
     # once the report is refactored, fill the test
     #
-    print(bias_report(df, FacetCategoricalColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1)))
+    report = bias_report(df, FacetCategoricalColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1))
+    assert isinstance(report, dict)
+    assert len(report) > 0
+    # Check that we have metric for each of the 3 classes vs the rest
+    for k, v in report.items():
+        assert len(v) == 3
 
 
 def test_problem_type():
