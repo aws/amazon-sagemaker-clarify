@@ -157,28 +157,19 @@ def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
 
 
 @registry.pretraining
-def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def KS(x: pd.Series, facet: pd.Series) -> float:
     """
+    Kolmogorov-Smirnov
+
+    .. math::
+        KS = max(\left | Pa-Pd \right |) \geq 0
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kolmogorov-Smirnov metric
     """
-    positive_label_index = positive_label_index.astype(bool)
-    facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        max_distance = np.max(np.abs(Pa - Pd))
-    else:
-        raise ValueError("KS: Either facet set or negated facet set is empty")
-
-    return max_distance
+    return LP(x, facet, 1)
 
 
 @registry.pretraining
