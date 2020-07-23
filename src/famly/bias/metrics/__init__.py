@@ -17,7 +17,7 @@ __all__ = registry.all_metrics()
 
 METRICS_ARITY_DYADIC = set([CI])
 METRICS_ARITY_TETRADIC = set([DPL])
-METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT, DPPL])
+METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT])
 
 
 def metric_partial_nullary(
