@@ -24,9 +24,9 @@ POSTTRAINING_METRICS = public_functions(posttraining)
 __all__ = [x.__name__ for x in PRETRAINING_METRICS + POSTTRAINING_METRICS]
 
 
-METRICS_ARITY_DYADIC = set([CI, KL])
+METRICS_ARITY_DYADIC = set([CI])
 METRICS_ARITY_TETRADIC = set([DPL])
-METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT, DPPL, KL, JS, LP, TVD, KS])
+METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT, DPPL, LP, TVD, KS])
 
 
 def metric_partial_nullary(
@@ -44,6 +44,8 @@ def metric_partial_nullary(
         return lambda: metric(x, facet, label, positive_label)
     elif metric in METRICS_ARITY_HEXADIC:
         return lambda: metric(x, facet, label, positive_label, predicted_label, positive_predicted_label)
+    elif metric in set([KL, JS]):
+        return lambda: metric(label, facet)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
         log.warning("unregistered metric: %s, FIXME", metric.__name__)

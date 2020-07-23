@@ -1,6 +1,7 @@
 import numpy as np
 from collections import defaultdict
 from functional import seq
+from typing import List
 
 
 def collapse_to_binary(values, pivot=0.0):
@@ -48,28 +49,36 @@ def pdf(xs) -> dict:
     return result_pdf
 
 
-def pdfs_aligned_nonzero(xs, ys) -> (np.array, np.array):
+def pdfs_aligned_nonzero(*args) -> List[np.array]:
     """
-    Convert a pair of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
+    Convert a list of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
     :return: pair of numpy arrays of the same size with the aligned pdfs
     """
-    # Calculate pdf
-    xs_f = pdf(xs)
-    ys_f = pdf(ys)
+    num_pdfs = len(args)
+    pdfs = []
+    for x in args:
+        pdfs.append(pdf(x))
 
     def keys(_xs):
         return seq(_xs).map(lambda x: x[0])
 
     # Extract union of keys
-    all_keys = keys(xs_f).union(keys(ys_f)).sorted()
+    all_keys = seq(pdfs).flat_map(keys).distinct().sorted()
 
-    # Fill numpy arrays for nonzero elements
-    xs_f_d = dict(xs_f)
-    ys_f_d = dict(ys_f)
-    xs_f_lst = []
-    ys_f_lst = []
+    # Index all pdfs by value
+    dict_pdfs = seq(pdfs).map(dict).list()
+
+    # result aligned lists
+    aligned_lists = [[] for x in range(num_pdfs)]
+
+    # fill keys present in all pdfs
     for i, key in enumerate(all_keys):
-        if key in xs_f_d and key in ys_f_d and xs_f_d[key] and ys_f_d[key]:
-            xs_f_lst.append(xs_f_d[key])
-            ys_f_lst.append(ys_f_d[key])
-    return (np.array(xs_f_lst), np.array(ys_f_lst))
+        for j, d in enumerate(dict_pdfs):
+            if d.get(key, 0) == 0:
+                break
+        else:
+            # All keys exist and are != 0
+            for j, d in enumerate(dict_pdfs):
+                aligned_lists[j].append(d[key])
+    np_arrays = seq(aligned_lists).map(np.array).list()
+    return np_arrays

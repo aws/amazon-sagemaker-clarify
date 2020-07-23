@@ -78,7 +78,6 @@ def KL(x: pd.Series, facet: pd.Series) -> float:
 
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
     facet = facet.astype(bool)
@@ -91,29 +90,26 @@ def KL(x: pd.Series, facet: pd.Series) -> float:
     return kl
 
 
-def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+def JS(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Jensen-Shannon divergence
+
+    .. math::
+        JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
-    :return: Jenson-Shannon (JS) divergence metric
+    :return: Jensen-Shannon (JS) divergence metric
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        P = PDF(positive_label_index)
-        js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
-    else:
-        raise ValueError("JS: Either facet set or negated facet set is empty")
-
-    return js_divergence
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, x)
+    if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
+        return np.nan
+    res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
+    return res
 
 
 def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:

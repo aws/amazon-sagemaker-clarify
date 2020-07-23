@@ -18,3 +18,8 @@ def test_pdfs_aligned():
     (pa, pb) = pdfs_aligned_nonzero([1, 2, 3], [1, 1, 4, 5, 5])
     assert np.array_equal(pa, [1 / 3])
     assert np.array_equal(pb, [2 / 5])
+
+    (pa, pb, pc) = pdfs_aligned_nonzero([1, 2, 3], [1, 1, 4, 5, 5], [1, 1, 1, 2])
+    assert np.array_equal(pa, [1 / 3])
+    assert np.array_equal(pb, [2 / 5])
+    assert np.array_equal(pc, [3 / 4])
