@@ -2,23 +2,26 @@
 Pre training metrics
 """
 import logging
-from famly.util import PDF
+from famly.util import pdfs_aligned_nonzero
 from . import registry
 import pandas as pd
 import numpy as np
+from typing import Any
 
 log = logging.getLogger(__name__)
 
 
 @registry.pretraining
-def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+def CI(x: pd.Series, facet: pd.Series) -> float:
+    r"""
     Class imbalance (CI)
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: series of boolean values indicating positive target labels
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
     of the protected class.
+
+    .. math::
+        CI = \frac{na-nd}{na+nd}
 
     Bias is often generated from an under-representation of
     the protected class in the dataset, especially if the desired “golden truth”
@@ -28,7 +31,6 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
     We define CI = (np − p)/(np + p). Where np is the number of instances in the not protected group
     and p is number of instances in the sensitive group.
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
     pos = len(x[facet])
     neg = len(x[~facet])
@@ -43,7 +45,7 @@ def CI(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float
 
 
 @registry.pretraining
-def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
     """
     Difference in positive proportions in labels
     :param x: input feature
@@ -52,150 +54,127 @@ def DPL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> floa
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    positive_label_index = positive_label_index.astype(bool)
+    positive_label_index = label == positive_label
     facet = facet.astype(bool)
-    positive_label_index_neg_facet = (positive_label_index) & ~facet
-    positive_label_index_facet = (positive_label_index) & facet
-    np = len(x[~facet])
-    p = len(x[facet])
-    n_pos_label_neg_facet = len(x[positive_label_index_neg_facet])
-    n_pos_label_facet = len(x[positive_label_index_facet])
-    if np == 0:
+    positive_label_index_neg_facet = positive_label_index & ~facet
+    positive_label_index_facet = positive_label_index & facet
+    na = len(x[~facet])
+    nd = len(x[facet])
+    na_pos = len(label[~facet & positive_label_index])
+    nd_pos = len(label[facet & positive_label_index])
+    if na == 0:
         raise ValueError("DPL: negative facet set is empty.")
-    if p == 0:
+    if nd == 0:
         raise ValueError("DPL: facet set is empty.")
-    q_neg = n_pos_label_neg_facet / np
-    q_pos = n_pos_label_facet / p
-    if (q_neg + q_pos) == 0:
-        raise ValueError("DPL: label facet is empty.")
-    dpl = (q_neg - q_pos) / (q_neg + q_pos)
-
+    qa = na_pos / na
+    qd = nd_pos / nd
+    dpl = qa - qd
     return dpl
 
 
 @registry.pretraining
-def KL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+def KL(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Kullback and Leibler divergence or relative entropy in bits.
+
+    .. math::
+        KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
     :return: Kullback and Leibler (KL) divergence metric
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    facet = np.array(facet)
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        kl = np.sum(Pa * np.log(Pa / Pd))  # note log is base e, measured in nats
-    else:
-        raise ValueError("KL: Either facet set or negated facet set is empty")
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    if len(Pa) == 0 or len(Pd) == 0:
+        return np.nan
+    kl = np.sum(Pa * np.log2(Pa / Pd))
     return kl
 
 
+def JS(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Jensen-Shannon divergence
+
+    .. math::
+        JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
+
 @registry.pretraining
-def JS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
-    :return: Jenson-Shannon (JS) divergence metric
+    :return: Jensen-Shannon (JS) divergence metric
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        P = PDF(positive_label_index)
-        js_divergence = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
-    else:
-        raise ValueError("JS: Either facet set or negated facet set is empty")
-
-    return js_divergence
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, x)
+    if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
+        return np.nan
+    res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
+    return res
 
 
 @registry.pretraining
-def LP(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, norm_order: int = 2) -> float:
+def LP(x: pd.Series, facet: pd.Series, norm_order: int = 2) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
-        Lp(Pa, Pd) = [\sum_{y} |Pa(y)-Pd(y)|^p]^{1/p}
+        Lp(Pa, Pd) = [\sum_{x} |Pa(x)-Pd(x)|^p]^{1/p}
 
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
     :param norm_order: the order of norm desired (2 by default).
     :return: Returns the LP norm of the difference between class distributions
     """
-    positive_label_index = positive_label_index.astype(bool)
     facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        lp_norm = np.linalg.norm(Pa - Pd, norm_order)
-    else:
-        raise ValueError("LP: Either facet set or negated facet set is empty")
-
-    return lp_norm
+    xs_a = x[facet]
+    xs_d = x[~facet]
+    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    if len(Pa) == 0 or len(Pd) == 0:
+        return np.nan
+    res = np.linalg.norm(Pa - Pd, norm_order)
+    return res
 
 
 @registry.pretraining
-def TVD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
+def TVD(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Total Variation Distance
+
+    .. math::
+        TVD = 0.5 * L1(Pa, Pd) \geq 0
+
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
+    :return: total variation distance metric
     """
-   :param x: input feature
-   :param facet: boolean column indicating sensitive group
-   :param positive_label_index: boolean column indicating positive labels
-   :return: 1/2 * L-1 norm
-   """
-
-    Lp_res = LP(x, facet, positive_label_index, p=1)
-
+    Lp_res = LP(x, facet, 1)
     tvd = 0.5 * Lp_res
-
     return tvd
 
 
 @registry.pretraining
-def KS(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+def KS(x: pd.Series, facet: pd.Series) -> float:
+    r"""
+    Kolmogorov-Smirnov
+
+    .. math::
+        KS = max(\left | Pa-Pd \right |) \geq 0
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :return: Kolmogorov-Smirnov metric
     """
-    positive_label_index = positive_label_index.astype(bool)
-    facet = facet.astype(bool)
-
-    x_a = positive_label_index[~facet]
-    x_d = positive_label_index[facet]
-
-    Pa = PDF(x_a)  # x: raw values of the variable (column of data)
-    Pd = PDF(x_d)
-
-    if len(Pa) == len(Pd):
-        max_distance = np.max(np.abs(Pa - Pd))
-    else:
-        raise ValueError("KS: Either facet set or negated facet set is empty")
-
-    return max_distance
+    return LP(x, facet, 1)
 
 
-@registry.pretraining
+# FIXME, CDD needs to be looked into
+# @registry.pretraining
 def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature
