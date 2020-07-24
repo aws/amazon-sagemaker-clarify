@@ -1,4 +1,7 @@
 import numpy as np
+from collections import defaultdict
+from functional import seq
+from typing import List
 
 
 def collapse_to_binary(values, pivot=0.0):
@@ -34,16 +37,48 @@ def GaussianFilter(input_array: np.array, sigma: int = 1) -> np.array:
     return np.convolve(input_array, gauss_filter, "same")
 
 
-def PDF(x: np.array) -> np.array:
+def pdf(xs) -> dict:
     """
-    #Calculates the estimated probability distribution based on input sample
-    :param x: input array
-    :return: probability distribution of the input array
+    Probability distribution function
+    :param xs: input sequence
+    :return: sequence of tuples as (value, frequency)
     """
-    y = np.unique(x)
+    counts = seq(xs).map(lambda x: (x, 1)).reduce_by_key(lambda x, y: x + y)
+    total = counts.map(lambda x: x[1]).sum()
+    result_pdf = counts.map(lambda x: (x[0], x[1] / total)).sorted().list()
+    return result_pdf
 
-    p, bins_edges = np.histogram(x, range=(0, 1))
-    filtered_zeros = p[p > 0]
-    normalized = filtered_zeros / np.sum(filtered_zeros)
 
-    return normalized
+def pdfs_aligned_nonzero(*args) -> List[np.array]:
+    """
+    Convert a list of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
+    :return: pair of numpy arrays of the same size with the aligned pdfs
+    """
+    num_pdfs = len(args)
+    pdfs = []
+    for x in args:
+        pdfs.append(pdf(x))
+
+    def keys(_xs):
+        return seq(_xs).map(lambda x: x[0])
+
+    # Extract union of keys
+    all_keys = seq(pdfs).flat_map(keys).distinct().sorted()
+
+    # Index all pdfs by value
+    dict_pdfs = seq(pdfs).map(dict).list()
+
+    # result aligned lists
+    aligned_lists = [[] for x in range(num_pdfs)]
+
+    # fill keys present in all pdfs
+    for i, key in enumerate(all_keys):
+        for j, d in enumerate(dict_pdfs):
+            if d.get(key, 0) == 0:
+                break
+        else:
+            # All keys exist and are != 0
+            for j, d in enumerate(dict_pdfs):
+                aligned_lists[j].append(d[key])
+    np_arrays = seq(aligned_lists).map(np.array).list()
+    return np_arrays

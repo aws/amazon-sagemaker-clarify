@@ -168,3 +168,107 @@ class Datasets:
             dataset_name in self.list()
         ), f"Dataset {dataset_name} is not a known dataset. Use DataSetInventory.list() to get a list of datasets"
         return self.datasets[dataset_name]
+
+
+def german_lending_readable_values(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert Statlog German lending dataset to have human readable values
+    https://archive.ics.uci.edu/ml/datasets/statlog+(german+credit+data)
+    """
+    # df["target"] = df["Class1Good2Bad"].replace([1, 2], ["good", "bad"]).astype('category')
+    df["target"] = df["Class1Good2Bad"].replace([1, 2], [1, 0]).astype("category")
+    df = df.drop(columns=["Class1Good2Bad"])
+    df["CheckingAC_Status"] = (
+        df["CheckingAC_Status"]
+        .replace(["A11", "A12", "A13", "A14"], ["x < 0 DM", "0 <= x < 200 DM", "x >= 200DM", "no checking account"])
+        .astype("category")
+    )
+    df["CreditHistory"] = (
+        df["CreditHistory"]
+        .replace(
+            ["A30", "A31", "A32", "A33", "A34"],
+            ["no credits", "all credits paid", "existing credits paid", "delay", "critical accnt. / other credits"],
+        )
+        .astype("category")
+    )
+    df["Purpose"] = (
+        df["Purpose"]
+        .replace(
+            ["A40", "A41", "A42", "A43", "A44", "A45", "A46", "A47", "A48", "A49", "A410"],
+            [
+                "new car",
+                "used car",
+                "forniture",
+                "radio/tv",
+                "appliances",
+                "repairs",
+                "education",
+                "vacation",
+                "retraining",
+                "business",
+                "others",
+            ],
+        )
+        .astype("category")
+    )
+    df["SavingsAC"] = (
+        df["SavingsAC"]
+        .replace(
+            ["A61", "A62", "A63", "A64", "A65"],
+            ["x < 100 DM", "100 <= x < 500 DM", "500 <= x < 1000 DM", "x >= 1000 DM", "unknown"],
+        )
+        .astype("category")
+    )
+    df["Employment"] = (
+        df["Employment"]
+        .replace(
+            ["A71", "A72", "A73", "A74", "A75"],
+            ["unemployed", "x < 1 year", "1 <= x < 4 years", "4 <= x < 7 years", "x >= 7 years"],
+        )
+        .astype("category")
+    )
+    df["SexAndStatus"] = (
+        df["SexAndStatus"]
+        .replace(
+            ["A91", "A92", "A93", "A94", "A95"],
+            [
+                "male divorced/separated",
+                "female divorced/separated/married",
+                "male single",
+                "male married/widowed",
+                "female single",
+            ],
+        )
+        .astype("category")
+    )
+    df["OtherDebts"] = (
+        df["OtherDebts"].replace(["A101", "A102", "A103"], ["none", "co-applicant", "guarantor"]).astype("category")
+    )
+    df["Property"] = (
+        df["Property"]
+        .replace(
+            ["A121", "A122", "A123", "A124"],
+            ["real estate", "soc. savings / life insurance", "car or other", "unknown"],
+        )
+        .astype("category")
+    )
+    df["OtherInstalmentPlans"] = (
+        df["OtherInstalmentPlans"].replace(["A141", "A142", "A143"], ["bank", "stores", "none"]).astype("category")
+    )
+    df["Housing"] = df["Housing"].replace(["A151", "A152", "A153"], ["rent", "own", "for free"]).astype("category")
+    df["Job"] = (
+        df["Job"]
+        .replace(
+            ["A171", "A172", "A173", "A174"],
+            [
+                "unemployed / unskilled-non-resident",
+                "unskilled-resident",
+                "skilled employee / official",
+                "management / self-employed / highly qualified employee / officer",
+            ],
+        )
+        .astype("category")
+    )
+    df["Telephone"] = df["Telephone"].replace(["A191", "A192"], ["none", "yes"]).astype("category")
+    df["ForeignWorker"] = df["ForeignWorker"].replace(["A201", "A202"], ["yes", "no"]).astype("category")
+    return df

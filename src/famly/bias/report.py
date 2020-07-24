@@ -4,8 +4,9 @@ from typing import Any, Dict, List, Optional, Callable
 
 import pandas as pd
 
-from famly.bias import *
-from famly.bias.metrics import *
+
+import famly
+import famly.bias.metrics
 
 
 class FacetColumn:
@@ -35,6 +36,12 @@ class FacetContinuousColumn(FacetColumn):
         self.intervals = intervals
 
 
+class LabelColumn:
+    def __init__(self, name, positive_label_value: Optional[Any]):
+        self.name = name
+        self.positive_label_value = positive_label_value
+
+
 class ProblemType(Enum):
     """Type of problem deduced from the label values"""
 
@@ -57,7 +64,7 @@ def problem_type(labels: pd.Series) -> ProblemType:
     return ProblemType.OTHER
 
 
-def column_list_to_str(xs: List[Any]) -> str:
+def _column_list_to_str(xs: List[Any]) -> str:
     """
     Format a metric name from multiple aggregated columns
     :returns: joint string separated by commas.
@@ -66,42 +73,56 @@ def column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def call_metric_facet_values(metric: Callable, col: pd.Series, facet_values: Optional[List[Any]] = None) -> Dict:
+def _metric_call_wrapper(
+    metric: Callable,
+    x: pd.Series,
+    facet_values: Optional[List[Any]],
+    label: pd.Series,
+    positive_label_index: pd.Series,
+    predicted_label: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> Dict:
     """
+    Dispatch calling of different metric functions with the correct arguments
+
     Calculate CI from a list of values or 1 vs all
     """
 
-    def index_key(col, facet_values: List[Any]) -> pd.Series:
+    def facet_idx(col: pd.Series, _facet_values: List[Any]) -> pd.Series:
         """
         :returns: a boolean series where facet_values are present in col
         """
-        index_key_series: pd.Series = (col == facet_values[0])
-        for val in facet_values[1:]:
+        # create indexing series with boolean OR of facet values
+        index_key_series: pd.Series = (col == _facet_values[0])
+        for val in _facet_values[1:]:
             index_key_series = index_key_series | (col == val)
         return index_key_series
 
     if facet_values:
-        # A list of protected values
-        # Build index series selecting protected values
-        # create indexing series with boolean OR of values
-
-        metric_result = metric(col, index_key(col, facet_values))
-        ci_all = {metric.__name__: metric_result}
+        # Build index series from facet
+        facet = facet_idx(x, facet_values)
+        f = famly.bias.metrics.metric_partial_nulary_x_facet(
+            metric, x, facet, label, positive_label_index, predicted_label, positive_predicted_label_index
+        )
+        metric_values = {metric.__name__: f()}
     else:
-        # FIXME
-        assert False
         # Do one vs all for every value
-        # ci_all = famly.bias.metrics.metric_one_vs_all(col)
-    return ci_all
+        metric_values = famly.bias.metrics.metric_one_vs_all(
+            metric, x, label, positive_label_index, predicted_label, positive_predicted_label_index
+        )
+    return metric_values
 
 
-def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) -> Dict:
+def bias_report(
+    df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn, predicted_label_column: LabelColumn
+) -> Dict:
     """
     Run Full bias report on a dataset.
 
     :param df: Dataset as a pandas.DataFrame
-    :param facet_column: marks which column to consider for Bias analysis
-    :param label_column: column name which has the labels.
+    :param facet_column: description of column to consider for Bias analysis
+    :param label_column: description of column which has the labels.
+    :param predicted_label_column: description of column with predicted labels
     :return:
     """
     if facet_column:
@@ -109,22 +130,41 @@ def bias_report(df: pd.DataFrame, facet_column: FacetColumn, label_column: str) 
             facet_column.name
         )
 
-    if problem_type(df[label_column]) != ProblemType.BINARY:
+    if problem_type(df[label_column.name]) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
-    col: pd.Series = df[facet_column.name].dropna()
-    col_cat: pd.Series  # Category series
+    data_series: pd.Series = df[facet_column.name]
+    label_series: pd.Series = df[label_column.name]
+    positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
+    predicted_label_series = df[predicted_label_column.name]
+    positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
+
+    data_series_cat: pd.Series  # Category series
+
+    metrics_to_run = []
+    if predicted_label_column:
+        metrics_to_run.extend(famly.bias.metrics.POSTTRAINING_METRICS)
+    metrics_to_run.extend(famly.bias.metrics.PRETRAINING_METRICS)
+
     result = dict()
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
-        col_cat = col.astype("category")
+        data_series_cat = data_series.astype("category")
         for metric in famly.bias.metrics.PRETRAINING_METRICS:
-            result[metric.__name__] = call_metric_facet_values(metric, col_cat, facet_column.protected_values)
+            result[metric.__name__] = _metric_call_wrapper(
+                metric,
+                data_series_cat,
+                facet_column.protected_values,
+                label_series,
+                positive_label_index,
+                predicted_label_series,
+                positive_predicted_label_index,
+            )
         return result
 
     elif issubclass(facet_column.__class__, FacetContinuousColumn):
         facet_column: FacetContinuousColumn
-        col_cat = pd.cut(col, facet_column.interval_indices)
+        data_series_cat = pd.cut(data_series, facet_column.interval_indices)
         # TODO: finish impl
         # In [44]: df=pd.DataFrame({'age': [5,25,10,80]})
         # In [50]: df
