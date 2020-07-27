@@ -281,6 +281,12 @@ def AD(
     return ad
 
 
+# FIXME, CDD needs to be looked into
+# @registry.posttraining
+def CDDPL(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series, group_variable: pd.Series) -> float:
+    return common.CDD(facet, predicted_labels, group_variable)
+
+
 @registry.posttraining
 def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """

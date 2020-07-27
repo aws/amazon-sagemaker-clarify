@@ -160,7 +160,7 @@ def KS(x: pd.Series, facet: pd.Series) -> float:
 
 # FIXME, CDD needs to be looked into
 # @registry.pretraining
-def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
+def CDDL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     """
     :param x: input feature
     :param facet: boolean column indicating sensitive group
