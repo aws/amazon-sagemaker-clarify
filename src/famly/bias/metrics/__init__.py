@@ -1,6 +1,4 @@
-from typing import Callable, Dict, Any, Optional
-import pandas as pd
-import numpy as np
+from typing import Callable, Dict
 
 from .posttraining import *
 from .pretraining import *
@@ -35,7 +33,7 @@ def metric_partial_nullary(
         return lambda: metric(x, facet, label, positive_label)
     elif metric in METRICS_ARITY_HEXADIC:
         return lambda: metric(x, facet, label, positive_label, predicted_label, positive_predicted_label)
-    elif metric in set([KL, JS, LP, TVD, KS]):
+    elif metric in {KL, JS, LP, TVD, KS}:
         return lambda: metric(label, facet)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")

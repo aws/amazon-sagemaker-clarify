@@ -3,7 +3,7 @@ Pre training metrics
 """
 import logging
 from famly.util import pdfs_aligned_nonzero
-from . import registry
+from . import registry, common
 import pandas as pd
 import numpy as np
 from typing import Any
@@ -54,22 +54,7 @@ def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -
     :param positive_label_index: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    positive_label_index = label == positive_label
-    facet = facet.astype(bool)
-    positive_label_index_neg_facet = positive_label_index & ~facet
-    positive_label_index_facet = positive_label_index & facet
-    na = len(x[~facet])
-    nd = len(x[facet])
-    na_pos = len(label[~facet & positive_label_index])
-    nd_pos = len(label[facet & positive_label_index])
-    if na == 0:
-        raise ValueError("DPL: negative facet set is empty.")
-    if nd == 0:
-        raise ValueError("DPL: facet set is empty.")
-    qa = na_pos / na
-    qd = nd_pos / nd
-    dpl = qa - qd
-    return dpl
+    return common.DPL(facet, label, positive_label)
 
 
 @registry.pretraining
@@ -183,40 +168,4 @@ def CDD(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_v
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    unique_groups = np.unique(group_variable)
-    positive_label_index = positive_label_index.astype(bool)
-    facet = facet.astype(bool)
-
-    # Global demographic disparity (DD)
-    numA = len(positive_label_index[(positive_label_index) & (facet)])
-    denomA = len(facet[positive_label_index])
-
-    if denomA == 0:
-        raise ValueError("CDD: No positive labels in set")
-
-    A = numA / denomA
-    numD = len(positive_label_index[(~positive_label_index) & (facet)])
-    denomD = len(facet[~positive_label_index])
-
-    if denomD == 0:
-        raise ValueError("CDD: No negative labels in set")
-
-    D = numD / denomD
-    DD = D - A
-
-    # Conditional demographic disparity (CDD)
-    CDD = []
-    counts = []
-    for subgroup_variable in unique_groups:
-        counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
-        numA = len(positive_label_index[(positive_label_index) & (facet) & (group_variable == subgroup_variable)])
-        denomA = len(facet[(positive_label_index) & (group_variable == subgroup_variable)])
-        A = numA / denomA if denomA != 0 else 0
-        numD = len(positive_label_index[(~positive_label_index) & (facet) & (group_variable == subgroup_variable)])
-        denomD = len(facet[(~positive_label_index) & (group_variable == subgroup_variable)])
-        D = numD / denomD if denomD != 0 else 0
-        CDD = np.append(CDD, D - A)
-
-    wtd_mean_CDD = np.sum(counts * CDD) / np.sum(counts)
-
-    return wtd_mean_CDD
+    return common.CDD(facet, positive_label_index, group_variable)

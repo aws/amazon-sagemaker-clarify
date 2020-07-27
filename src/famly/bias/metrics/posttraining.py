@@ -7,13 +7,13 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
 from typing import Any
-from . import registry
+from . import registry, common
 
 log = logging.getLogger(__name__)
 
 
 @registry.posttraining
-def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def DPPL(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series, positive_predicted_label: Any) -> float:
     r"""
     Difference in positive proportions in predicted labels.
 
@@ -28,20 +28,7 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns Difference in Positive Proportions, based on predictions rather than true labels
     """
-    predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
-    facet = facet.astype(bool)
-    na1hat = len(predicted_labels[predicted_labels & (~facet)])
-    na = len(facet[~facet])
-    if na == 0:
-        raise ValueError("DPPL: Negated facet set is empty")
-    qa = na1hat / na
-    nd1hat = len(predicted_labels[predicted_labels & facet])
-    nd = len(facet[facet])
-    if nd == 0:
-        raise ValueError("DPPL: facet set is empty")
-    qd = nd1hat / nd
-    return qa - qd
+    return common.DPL(facet, predicted_labels, positive_predicted_label)
 
 
 @registry.posttraining
