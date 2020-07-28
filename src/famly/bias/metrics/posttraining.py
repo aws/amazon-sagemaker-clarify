@@ -7,13 +7,13 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
 from typing import Any
-from . import registry
+from . import registry, common
 
 log = logging.getLogger(__name__)
 
 
 @registry.posttraining
-def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def DPPL(x: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label: Any) -> float:
     r"""
     Difference in positive proportions in predicted labels.
 
@@ -24,28 +24,15 @@ def DPPL(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd
 
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param labels: boolean column indicating true values of target column
-    :param predicted_labels: boolean column indicating predictions made by model
+    :param predicted_label: boolean column indicating predictions made by model
+    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
     :return: Returns Difference in Positive Proportions, based on predictions rather than true labels
     """
-    predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
-    facet = facet.astype(bool)
-    na1hat = len(predicted_labels[predicted_labels & (~facet)])
-    na = len(facet[~facet])
-    if na == 0:
-        raise ValueError("DPPL: Negated facet set is empty")
-    qa = na1hat / na
-    nd1hat = len(predicted_labels[predicted_labels & facet])
-    nd = len(facet[facet])
-    if nd == 0:
-        raise ValueError("DPPL: facet set is empty")
-    qd = nd1hat / nd
-    return qa - qd
+    return common.DPL(x, facet, predicted_label, positive_predicted_label)
 
 
 @registry.posttraining
-def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def DI(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series) -> float:
     r"""
     Disparate Impact
 
@@ -57,20 +44,18 @@ def DI(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
 
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param labels: boolean column indicating true values of target column
     :param predicted_labels: boolean column indicating predictions made by model
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
     predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
     facet = facet.astype(bool)
     na1hat = len(predicted_labels[predicted_labels & (~facet)])
-    na = len(facet[~facet])
+    na = len(x[~facet])
     if na == 0:
         raise ValueError("DI: Negated facet set is empty")
     qa = na1hat / na
     nd1hat = len(predicted_labels[predicted_labels & facet])
-    nd = len(facet[facet])
+    nd = len(x[facet])
     if nd == 0:
         raise ValueError("DI: Facet set is empty")
     qd = nd1hat / nd
@@ -92,9 +77,9 @@ def DCO(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
-    if len(facet[facet]) == 0:
+    if len(x[facet]) == 0:
         raise ValueError("DCO: Facet set is empty")
-    if len(facet[~facet]) == 0:
+    if len(x[~facet]) == 0:
         raise ValueError("DCO: Negated Facet set is empty")
 
     TN_a = len(labels[(~labels) & (~predicted_labels) & (~facet)])
@@ -151,9 +136,9 @@ def RD(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
-    if len(facet[facet]) == 0:
+    if len(x[facet]) == 0:
         raise ValueError("RD: Facet set is empty")
-    if len(facet[~facet]) == 0:
+    if len(x[~facet]) == 0:
         raise ValueError("RD: Negated Facet set is empty")
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
@@ -186,9 +171,9 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
-    if len(facet[facet]) == 0:
+    if len(x[facet]) == 0:
         raise ValueError("DLR: Facet set is empty")
-    if len(facet[~facet]) == 0:
+    if len(x[~facet]) == 0:
         raise ValueError("DLR: Negated Facet set is empty")
 
     TP_a = len(labels[(labels) & (predicted_labels) & (~facet)])
@@ -236,7 +221,7 @@ def DLR(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.
 def AD(
     x: pd.Series,
     facet: pd.Series,
-    label: pd.Series,
+    true_label: pd.Series,
     positive_label: Any,
     predicted_label: pd.Series,
     positive_predicted_label: Any,
@@ -253,7 +238,7 @@ def AD(
     :return: Accuracy Difference between advantaged and disadvantaged classes
     """
     predicted_label = predicted_label.astype(bool)
-    label = label.astype(bool)
+    true_label = true_label.astype(bool)
     facet = facet.astype(bool)
 
     if len(x[facet]) == 0:
@@ -261,29 +246,29 @@ def AD(
     if len(x[~facet]) == 0:
         raise ValueError("AD: Negated Facet set is empty")
 
-    label_idx = label == positive_label
+    label_idx = true_label == positive_label
     pred_label_idx = predicted_label == positive_predicted_label
 
     idx_tp_a = label_idx & pred_label_idx & ~facet
-    TP_a = len(label[idx_tp_a])
+    TP_a = len(true_label[idx_tp_a])
     idx_fp_a = ~label_idx & pred_label_idx & ~facet
-    FP_a = len(label[idx_fp_a])
+    FP_a = len(true_label[idx_fp_a])
     idx_fn_a = label_idx & ~pred_label_idx & ~facet
-    FN_a = len(label[idx_fn_a])
+    FN_a = len(true_label[idx_fn_a])
     idx_tn_a = ~label_idx & ~pred_label_idx & ~facet
-    TN_a = len(label[idx_tn_a])
+    TN_a = len(true_label[idx_tn_a])
 
     total_a = TP_a + TN_a + FP_a + FN_a
     acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITY
 
     idx_tp_d = label_idx & pred_label_idx & facet
-    TP_d = len(label[idx_tp_d])
+    TP_d = len(true_label[idx_tp_d])
     idx_fp_d = ~label_idx & pred_label_idx & facet
-    FP_d = len(label[idx_fp_d])
+    FP_d = len(true_label[idx_fp_d])
     idx_fn_d = label_idx & ~pred_label_idx & facet
-    FN_d = len(label[idx_fn_d])
+    FN_d = len(true_label[idx_fn_d])
     idx_tn_d = ~label_idx & ~pred_label_idx & facet
-    TN_d = len(label[idx_tn_d])
+    TN_d = len(true_label[idx_tn_d])
 
     total_d = TP_d + TN_d + FP_d + FN_d
     acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITY
@@ -292,6 +277,24 @@ def AD(
     if acc_a == acc_d and acc_a == INFINITY:
         ad = 0.0
     return ad
+
+
+# FIXME, CDDPL needs to be looked into
+# @registry.posttraining
+def CDDPL(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series, group_variable: pd.Series) -> float:
+    """
+    Conditional Demographic Disparity in true labels
+    .. math::
+        CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
+        \frac{Number\:of\:accepted\:applicants\:protected\:facet}{Total\:number\:of\:accepted\:applicants} \\for\:each\:group\:variable\: i
+
+    :param x: input feature
+    :param facet: boolean column indicating sensitive group
+    :param true_label: boolean column indicating positive labels
+    :param group_variable: categorical column indicating subgroups each point belongs to
+    :return: the weighted average of demographic disparity on all subgroups
+    """
+    return common.CDD(x, facet, predicted_labels, group_variable)
 
 
 @registry.posttraining
@@ -308,9 +311,9 @@ def TE(x: pd.Series, facet: pd.Series, labels: pd.Series, predicted_labels: pd.S
     labels = labels.astype(bool)
     facet = facet.astype(bool)
 
-    if len(facet[facet]) == 0:
+    if len(x[facet]) == 0:
         raise ValueError("TE: Facet set is empty")
-    if len(facet[~facet]) == 0:
+    if len(x[~facet]) == 0:
         raise ValueError("TE: Negated Facet set is empty")
 
     FP_a = len(labels[(~labels) & (predicted_labels) & (~facet)])
