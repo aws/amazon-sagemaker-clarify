@@ -8,11 +8,11 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
-def DPL(facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
+def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
     positive_label_index = label == positive_label
     facet = facet.astype(bool)
-    na = len(facet[~facet])
-    nd = len(facet[facet])
+    na = len(x[~facet])
+    nd = len(x[facet])
     na_pos = len(label[~facet & positive_label_index])
     nd_pos = len(label[facet & positive_label_index])
     if na == 0:
@@ -25,8 +25,9 @@ def DPL(facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
     return dpl
 
 
-def CDD(facet: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
+def CDD(x: pd.Series, facet: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
     """
+    :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
@@ -37,11 +38,11 @@ def CDD(facet: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
     facet = facet.astype(bool)
 
     # Global demographic disparity (DD)]
-    denomA = len(facet[label])
+    denomA = len(x[label])
 
     if denomA == 0:
         raise ValueError("CDD: No positive labels in set")
-    denomD = len(facet[~label])
+    denomD = len(x[~label])
 
     if denomD == 0:
         raise ValueError("CDD: No negative labels in set")
@@ -52,10 +53,10 @@ def CDD(facet: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
     for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
         numA = len(label[label & facet & (group_variable == subgroup_variable)])
-        denomA = len(facet[label & (group_variable == subgroup_variable)])
+        denomA = len(x[label & (group_variable == subgroup_variable)])
         A = numA / denomA if denomA != 0 else 0
         numD = len(label[(~label) & facet & (group_variable == subgroup_variable)])
-        denomD = len(facet[(~label) & (group_variable == subgroup_variable)])
+        denomD = len(x[(~label) & (group_variable == subgroup_variable)])
         D = numD / denomD if denomD != 0 else 0
         CDD = np.append(CDD, D - A)
 

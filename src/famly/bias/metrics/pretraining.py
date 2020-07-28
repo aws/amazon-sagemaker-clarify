@@ -45,16 +45,16 @@ def CI(x: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def DPL(x: pd.Series, facet: pd.Series, label: pd.Series, positive_label: Any) -> float:
+def DPTL(x: pd.Series, facet: pd.Series, true_label: pd.Series, positive_label: Any) -> float:
     """
-    Difference in positive proportions in labels
+    Difference in positive proportions in true labels
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: pandas series of labels (binary, multicategory, or continuous)
-    :param positive_label_index: consider this label value as the positive value, default is 1.
+    :param true_label: pandas series of labels (binary, multicategory, or continuous)
+    :param positive_label: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    return common.DPL(facet, label, positive_label)
+    return common.DPL(x, facet, true_label, positive_label)
 
 
 @registry.pretraining
@@ -158,14 +158,19 @@ def KS(x: pd.Series, facet: pd.Series) -> float:
     return LP(x, facet, 1)
 
 
-# FIXME, CDD needs to be looked into
+# FIXME, CDDTL needs to be looked into
 # @registry.pretraining
-def CDDL(x: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
+def CDDTL(x: pd.Series, facet: pd.Series, true_label: pd.Series, group_variable: pd.Series) -> float:
     """
+    Conditional Demographic Disparity in true labels
+    .. math::
+        CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
+        \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} \\\quad\:\quad\:\quad\:\quad\:\quad\:\quad\:for\:each\:group\:variable\: i
+
     :param x: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
+    :param true_label: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    return common.CDD(facet, positive_label_index, group_variable)
+    return common.CDD(x, facet, true_label, group_variable)
