@@ -150,7 +150,7 @@ def bias_report(
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
         data_series_cat = data_series.astype("category")
-        for metric in famly.bias.metrics.PRETRAINING_METRICS:
+        for metric in metrics_to_run:
             result[metric.__name__] = _metric_call_wrapper(
                 metric,
                 data_series_cat,

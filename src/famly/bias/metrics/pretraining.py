@@ -45,16 +45,16 @@ def CI(x: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def DPTL(x: pd.Series, facet: pd.Series, true_label: pd.Series, positive_label: Any) -> float:
+def DPTL(x: pd.Series, facet: pd.Series, true_label: pd.Series, positive_true_label: Any) -> float:
     """
     Difference in positive proportions in true labels
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param true_label: pandas series of labels (binary, multicategory, or continuous)
-    :param positive_label: consider this label value as the positive value, default is 1.
+    :param positive_true_label: consider this label value as the positive value, default is 1.
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    return common.DPL(x, facet, true_label, positive_label)
+    return common.DPL(x, facet, true_label, positive_true_label)
 
 
 @registry.pretraining
@@ -161,7 +161,7 @@ def KS(x: pd.Series, facet: pd.Series) -> float:
 # FIXME, CDDTL needs to be looked into
 # @registry.pretraining
 def CDDTL(x: pd.Series, facet: pd.Series, true_label: pd.Series, group_variable: pd.Series) -> float:
-    """
+    r"""
     Conditional Demographic Disparity in true labels
     .. math::
         CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -

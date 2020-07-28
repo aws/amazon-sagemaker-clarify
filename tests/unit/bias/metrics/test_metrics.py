@@ -280,17 +280,17 @@ def test_DI():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DI(dfB[0], facet, predicted) == approx(1.4285714285)
+    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DI(dfB[0], facet, true_labels, 1, predicted, 1) == approx(1.4285714285)
 
     facet = dfB[0] == "M"
-    assert DI(dfB[0], facet, predicted) == approx(0.700000000)
+    assert DI(dfB[0], facet, true_labels, 1, predicted, 1) == approx(0.700000000)
 
     pred_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
-    assert DI(dfB[0], dfB[0] == "F", pred_labels_zero_for_M) == INFINITY
+    assert DI(dfB[0], dfB[0] == "F", true_labels, 1, pred_labels_zero_for_M, 1) == INFINITY
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
-        DI(dfB[0], dfB[0] == None, predicted)
+        DI(dfB[0], dfB[0] == None, true_labels, 1, predicted, 1)
     assert str(e.value) == "DI: Facet set is empty"
 
     # Check empty facet selection
@@ -298,7 +298,7 @@ def test_DI():
         x = Series(["A", "A"])
         labels = Series([0, 1])
         pred = Series([0, 1])
-        DI(x, x == "A", pred)
+        DI(x, x == "A", labels, 1, pred, 1)
     assert str(e.value) == "DI: Negated facet set is empty"
 
 
@@ -306,44 +306,44 @@ def test_DCA():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(1 / 4)
+    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[0] == approx(1 / 4)
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, labels, predicted)[0] == approx(-1 / 4)
+    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[0] == approx(-1 / 4)
 
 
 def test_DCR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, labels, predicted)[1] == approx(-1 / 3)
+    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, labels, predicted)[1] == approx(1 / 3)
+    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[1] == approx(1 / 3)
 
 
 def test_RD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert RD(dfB[0], facet, labels, predicted) == approx(-2 / 3)
+    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert RD(dfB[0], facet, true_label, 1, predicted, 1) == approx(-2 / 3)
 
     facet = dfB[0] == "M"
-    assert RD(dfB[0], facet, labels, predicted) == approx(2 / 3)
+    assert RD(dfB[0], facet, true_label, 1, predicted, 1) == approx(2 / 3)
 
 
 def test_DRR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, labels, predicted)[1] == approx(-1 / 3)
+    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, labels, predicted)[1] == approx(1 / 3)
+    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[1] == approx(1 / 3)
 
 
 def test_AD():
@@ -361,22 +361,22 @@ def test_PD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, labels, predicted)[0] == approx(-1 / 2)
+    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[0] == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, labels, predicted)[0] == approx(1 / 2)
+    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[0] == approx(1 / 2)
 
 
 def test_TE():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert TE(dfB[0], facet, labels, predicted) == approx(-1 / 2)
+    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert TE(dfB[0], facet, true_label, 1, predicted, 1) == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert TE(dfB[0], facet, labels, predicted) == approx(1 / 2)
+    assert TE(dfB[0], facet, true_label, 1, predicted, 1) == approx(1 / 2)
 
 
 def test_FT():

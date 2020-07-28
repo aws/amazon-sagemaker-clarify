@@ -22,19 +22,19 @@ def metric_partial_nullary(
     metric: Callable,
     x: pd.Series,
     facet: pd.Series,
-    label: pd.Series = None,
-    positive_label: Any = None,
+    true_label: pd.Series = None,
+    positive_true_label: Any = None,
     predicted_label: pd.Series = None,
     positive_predicted_label: Any = None,
 ) -> float:
     if metric in METRICS_ARITY_DYADIC:
         return lambda: metric(x, facet)
     elif metric in METRICS_ARITY_TETRADIC:
-        return lambda: metric(x, facet, label, positive_label)
+        return lambda: metric(x, facet, true_label, positive_true_label)
     elif metric in METRICS_ARITY_HEXADIC:
-        return lambda: metric(x, facet, label, positive_label, predicted_label, positive_predicted_label)
+        return lambda: metric(x, facet, true_label, positive_true_label, predicted_label, positive_predicted_label)
     elif metric in {KL, JS, LP, TVD, KS}:
-        return lambda: metric(label, facet)
+        return lambda: metric(true_label, facet)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
         log.error("unregistered metric: %s, FIXME", metric.__name__)
