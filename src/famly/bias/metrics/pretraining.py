@@ -79,6 +79,7 @@ def KL(x: pd.Series, facet: pd.Series) -> float:
     return kl
 
 
+@registry.pretraining
 def JS(x: pd.Series, facet: pd.Series) -> float:
     r"""
     Jensen-Shannon divergence
@@ -86,7 +87,6 @@ def JS(x: pd.Series, facet: pd.Series) -> float:
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
 
-@registry.pretraining
     :param x: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
