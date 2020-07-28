@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CI, DCO, DI, DLR, DPL, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CI, DCO, DI, DLR, DPTL, FT, JS, KL, LP, RD, TE
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -174,7 +174,7 @@ def test_CI():
 
 def test_DPL():
     df = pd.DataFrame({"x": ["a", "a", "b", "b"], "y": [1, 1, 0, 1]})
-    res = metric_one_vs_all(DPL, df["x"], df["y"], 1)
+    res = metric_one_vs_all(DPTL, df["x"], df["y"], 1)
     assert res["a"] == -0.5
     assert res["b"] == 0.5
     return
@@ -250,7 +250,7 @@ def test_LP():
 #    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
 #    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 #
-#    response = metric_one_vs_all(CDD, x, positive_label_index=positive_label_index, group_variable=group_variable)
+#    response = metric_one_vs_all(CDDTL, x, positive_label_index=positive_label_index, group_variable=group_variable)
 #    assert response["F"] == approx(0.3982142857)
 #    assert response["M"] == approx(-0.3982142857)
 #
@@ -281,16 +281,16 @@ def test_DI():
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DI(dfB[0], facet, labels, predicted) == approx(1.4285714285)
+    assert DI(dfB[0], facet, predicted) == approx(1.4285714285)
 
     facet = dfB[0] == "M"
-    assert DI(dfB[0], facet, labels, predicted) == approx(0.700000000)
+    assert DI(dfB[0], facet, predicted) == approx(0.700000000)
 
     pred_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
-    assert DI(dfB[0], dfB[0] == "F", labels, pred_labels_zero_for_M) == INFINITY
+    assert DI(dfB[0], dfB[0] == "F", pred_labels_zero_for_M) == INFINITY
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
-        DI(dfB[0], dfB[0] == None, labels, predicted)
+        DI(dfB[0], dfB[0] == None, predicted)
     assert str(e.value) == "DI: Facet set is empty"
 
     # Check empty facet selection
@@ -298,7 +298,7 @@ def test_DI():
         x = Series(["A", "A"])
         labels = Series([0, 1])
         pred = Series([0, 1])
-        DI(x, x == "A", labels, pred)
+        DI(x, x == "A", pred)
     assert str(e.value) == "DI: Negated facet set is empty"
 
 
