@@ -101,7 +101,7 @@ def _metric_call_wrapper(
     if facet_values:
         # Build index series from facet
         facet = facet_idx(x, facet_values)
-        f = famly.bias.metrics.metric_partial_nulary_x_facet(
+        f = famly.bias.metrics.metric_partial_nullary(
             metric, x, facet, label, positive_label_index, predicted_label, positive_predicted_label_index
         )
         metric_values = {metric.__name__: f()}
@@ -114,7 +114,7 @@ def _metric_call_wrapper(
 
 
 def bias_report(
-    df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn, predicted_label_column: LabelColumn
+    df: pd.DataFrame, facet_column: FacetColumn, label_column: LabelColumn, predicted_label_column: LabelColumn = None
 ) -> Dict:
     """
     Run Full bias report on a dataset.
@@ -136,17 +136,19 @@ def bias_report(
     data_series: pd.Series = df[facet_column.name]
     label_series: pd.Series = df[label_column.name]
     positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
-    predicted_label_series = df[predicted_label_column.name]
-    positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
-
-    data_series_cat: pd.Series  # Category series
 
     metrics_to_run = []
     if predicted_label_column:
         metrics_to_run.extend(famly.bias.metrics.POSTTRAINING_METRICS)
+        positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
+        predicted_label_series = df[predicted_label_column.name]
+    else:
+        positive_predicted_label_index = None
+        predicted_label_series = None
     metrics_to_run.extend(famly.bias.metrics.PRETRAINING_METRICS)
 
     result = dict()
+    data_series_cat: pd.Series  # Category series
     if issubclass(facet_column.__class__, FacetCategoricalColumn):
         facet_column: FacetCategoricalColumn
         data_series_cat = data_series.astype("category")
