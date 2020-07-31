@@ -66,14 +66,14 @@ def DI(
     :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
-    predicted_label = predicted_label == positive_predicted_label
+    postive_predicted_label_index = predicted_label == positive_predicted_label
     facet = facet.astype(bool)
-    na1hat = len(predicted_label[predicted_label & (~facet)])
+    na1hat = len(predicted_label[postive_predicted_label_index & (~facet)])
     na = len(x[~facet])
     if na == 0:
         raise ValueError("DI: Negated facet set is empty")
     qa = na1hat / na
-    nd1hat = len(predicted_label[predicted_label & facet])
+    nd1hat = len(predicted_label[postive_predicted_label_index & facet])
     nd = len(x[facet])
     if nd == 0:
         raise ValueError("DI: Facet set is empty")
@@ -101,8 +101,8 @@ def DCO(
     :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
     :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
     """
-    predicted_label = predicted_label == positive_predicted_label
-    true_label = true_label == positive_true_label
+    postive_predicted_label_index = predicted_label == positive_predicted_label
+    postive_true_label_index = true_label == positive_true_label
     facet = facet.astype(bool)
 
     if len(x[facet]) == 0:
@@ -110,15 +110,15 @@ def DCO(
     if len(x[~facet]) == 0:
         raise ValueError("DCO: Negated Facet set is empty")
 
-    TN_a = len(true_label[(~true_label) & (~predicted_label) & (~facet)])
-    na0hat = len(predicted_label[(~predicted_label) & (~facet)])
-    TN_d = len(true_label[(~true_label) & (~predicted_label) & (facet)])
-    nd0hat = len(predicted_label[(~predicted_label) & (facet)])
+    TN_a = len(true_label[(~postive_true_label_index) & (~postive_predicted_label_index) & (~facet)])
+    na0hat = len(predicted_label[(~postive_predicted_label_index) & (~facet)])
+    TN_d = len(true_label[(~postive_true_label_index) & (~postive_predicted_label_index) & (facet)])
+    nd0hat = len(predicted_label[(~postive_predicted_label_index) & (facet)])
 
-    na1 = len(true_label[true_label & (~facet)])
-    na1hat = len(predicted_label[predicted_label & (~facet)])
-    nd1 = len(true_label[true_label & facet])
-    nd1hat = len(predicted_label[predicted_label & facet])
+    na1 = len(true_label[postive_true_label_index & (~facet)])
+    na1hat = len(predicted_label[postive_predicted_label_index & (~facet)])
+    nd1 = len(true_label[postive_true_label_index & facet])
+    nd1hat = len(predicted_label[postive_predicted_label_index & facet])
 
     if na0hat != 0:
         rr_a = TN_a / na0hat
@@ -169,8 +169,8 @@ def RD(
     :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
     :return: Recall Difference between advantaged and disadvantaged classes
     """
-    predicted_label = predicted_label == positive_predicted_label
-    true_label = true_label == positive_true_label
+    postive_predicted_label_index = predicted_label == positive_predicted_label
+    postive_true_label_index = true_label == positive_true_label
     facet = facet.astype(bool)
 
     if len(x[facet]) == 0:
@@ -178,13 +178,13 @@ def RD(
     if len(x[~facet]) == 0:
         raise ValueError("RD: Negated Facet set is empty")
 
-    TP_a = len(true_label[true_label & predicted_label & (~facet)])
-    FN_a = len(true_label[true_label & (~predicted_label) & (~facet)])
+    TP_a = len(true_label[postive_true_label_index & postive_predicted_label_index & (~facet)])
+    FN_a = len(true_label[postive_true_label_index & (~postive_predicted_label_index) & (~facet)])
 
     rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else INFINITY
 
-    TP_d = len(true_label[true_label & predicted_label & (facet)])
-    FN_d = len(true_label[true_label & (~predicted_label) & (facet)])
+    TP_d = len(true_label[postive_true_label_index & postive_predicted_label_index & (facet)])
+    FN_d = len(true_label[postive_true_label_index & (~postive_predicted_label_index) & (facet)])
 
     rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else INFINITY
 
@@ -213,8 +213,8 @@ def DLR(
     :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
     :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
     """
-    predicted_label = predicted_label == positive_predicted_label
-    true_label = true_label == positive_true_label
+    postive_predicted_label_index = predicted_label == positive_predicted_label
+    postive_true_label_index = true_label == positive_true_label
     facet = facet.astype(bool)
 
     if len(x[facet]) == 0:
@@ -222,15 +222,15 @@ def DLR(
     if len(x[~facet]) == 0:
         raise ValueError("DLR: Negated Facet set is empty")
 
-    TP_a = len(true_label[true_label & predicted_label & (~facet)])
-    na1hat = len(predicted_label[predicted_label & (~facet)])
-    TP_d = len(true_label[true_label & predicted_label & facet])
-    nd1hat = len(predicted_label[predicted_label & facet])
+    TP_a = len(true_label[postive_true_label_index & postive_predicted_label_index & (~facet)])
+    na1hat = len(predicted_label[postive_predicted_label_index & (~facet)])
+    TP_d = len(true_label[postive_true_label_index & postive_predicted_label_index & facet])
+    nd1hat = len(predicted_label[postive_predicted_label_index & facet])
 
-    TN_a = len(true_label[(~true_label) & (~predicted_label) & (~facet)])
-    na0hat = len(predicted_label[(~predicted_label) & (~facet)])
-    TN_d = len(true_label[(~true_label) & (~predicted_label) & facet])
-    nd0hat = len(predicted_label[(~predicted_label) & facet])
+    TN_a = len(true_label[(~postive_true_label_index) & (~postive_predicted_label_index) & (~facet)])
+    na0hat = len(predicted_label[(~postive_predicted_label_index) & (~facet)])
+    TN_d = len(true_label[(~postive_true_label_index) & (~postive_predicted_label_index) & facet])
+    nd0hat = len(predicted_label[(~postive_predicted_label_index) & facet])
 
     if na1hat != 0:
         ar_a = TP_a / na1hat
@@ -362,8 +362,8 @@ def TE(
     :return: Returns the difference in ratios between false negatives and false positives for the advantaged
     and disadvantaged classes
     """
-    predicted_label = predicted_label == positive_predicted_label
-    true_label = true_label == positive_true_label
+    postive_predicted_label_index = predicted_label == positive_predicted_label
+    postive_true_label_index = true_label == positive_true_label
     facet = facet.astype(bool)
 
     if len(x[facet]) == 0:
@@ -371,10 +371,10 @@ def TE(
     if len(x[~facet]) == 0:
         raise ValueError("TE: Negated Facet set is empty")
 
-    FP_a = len(true_label[(~true_label) & predicted_label & (~facet)])
-    FN_a = len(true_label[true_label & (~predicted_label) & (~facet)])
-    FP_d = len(true_label[(~true_label) & predicted_label & facet])
-    FN_d = len(true_label[true_label & (~predicted_label) & facet])
+    FP_a = len(true_label[(~true_label) & postive_predicted_label_index & (~facet)])
+    FN_a = len(true_label[postive_true_label_index & (~postive_predicted_label_index) & (~facet)])
+    FP_d = len(true_label[(~true_label) & postive_predicted_label_index & facet])
+    FN_d = len(true_label[postive_true_label_index & (~postive_predicted_label_index) & facet])
 
     tau_a = FN_a / FP_a if FP_a != 0 else INFINITY
     tau_d = FN_d / FP_d if FP_d != 0 else INFINITY
