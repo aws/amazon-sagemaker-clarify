@@ -14,7 +14,7 @@ __all__ = registry.all_metrics()
 
 
 METRICS_ARITY_DYADIC = set([CI])
-METRICS_ARITY_TETRADIC = set([DPTL])
+METRICS_ARITY_TETRADIC = set([DPL])
 METRICS_ARITY_HEXADIC = set([AD, DPPL, DI, DCO, RD, DLR, AD, TE, FT])
 
 
@@ -22,19 +22,19 @@ def metric_partial_nullary(
     metric: Callable,
     x: pd.Series,
     facet: pd.Series,
-    true_label: pd.Series = None,
-    positive_true_label: Any = None,
+    label: pd.Series = None,
+    positive_label: Any = None,
     predicted_label: pd.Series = None,
     positive_predicted_label: Any = None,
 ) -> float:
     if metric in METRICS_ARITY_DYADIC:
         return lambda: metric(x, facet)
     elif metric in METRICS_ARITY_TETRADIC:
-        return lambda: metric(x, facet, true_label, positive_true_label)
+        return lambda: metric(x, facet, label, positive_label)
     elif metric in METRICS_ARITY_HEXADIC:
-        return lambda: metric(x, facet, true_label, positive_true_label, predicted_label, positive_predicted_label)
+        return lambda: metric(x, facet, label, positive_label, predicted_label, positive_predicted_label)
     elif metric in {KL, JS, LP, TVD, KS}:
-        return lambda: metric(true_label, facet)
+        return lambda: metric(label, facet)
     else:
         # raise RuntimeError("wrap_metric_partial_nullary: Unregistered metric")
         log.error("unregistered metric: %s, FIXME", metric.__name__)

@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CI, DCO, DI, DLR, DPTL, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CI, DCO, DI, DLR, DPL, FT, JS, KL, LP, RD, TE
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -174,7 +174,7 @@ def test_CI():
 
 def test_DPL():
     df = pd.DataFrame({"x": ["a", "a", "b", "b"], "y": [1, 1, 0, 1]})
-    res = metric_one_vs_all(DPTL, df["x"], df["y"], 1)
+    res = metric_one_vs_all(DPL, df["x"], df["y"], 1)
     assert res["a"] == -0.5
     assert res["b"] == 0.5
     return
@@ -250,7 +250,7 @@ def test_LP():
 #    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
 #    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 #
-#    response = metric_one_vs_all(CDDTL, x, positive_label_index=positive_label_index, group_variable=group_variable)
+#    response = metric_one_vs_all(CDDL, x, positive_label_index=positive_label_index, group_variable=group_variable)
 #    assert response["F"] == approx(0.3982142857)
 #    assert response["M"] == approx(-0.3982142857)
 #
@@ -280,17 +280,17 @@ def test_DI():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DI(dfB[0], facet, true_labels, 1, predicted, 1) == approx(1.4285714285)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DI(dfB[0], facet, labels, 1, predicted, 1) == approx(1.4285714285)
 
     facet = dfB[0] == "M"
-    assert DI(dfB[0], facet, true_labels, 1, predicted, 1) == approx(0.700000000)
+    assert DI(dfB[0], facet, labels, 1, predicted, 1) == approx(0.700000000)
 
     pred_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
-    assert DI(dfB[0], dfB[0] == "F", true_labels, 1, pred_labels_zero_for_M, 1) == INFINITY
+    assert DI(dfB[0], dfB[0] == "F", labels, 1, pred_labels_zero_for_M, 1) == INFINITY
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
-        DI(dfB[0], dfB[0] == None, true_labels, 1, predicted, 1)
+        DI(dfB[0], dfB[0] == None, labels, 1, predicted, 1)
     assert str(e.value) == "DI: Facet set is empty"
 
     # Check empty facet selection
@@ -306,44 +306,44 @@ def test_DCA():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[0] == approx(1 / 4)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[0] == approx(1 / 4)
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[0] == approx(-1 / 4)
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[0] == approx(-1 / 4)
 
 
 def test_DCR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[1] == approx(-1 / 3)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, true_labels, 1, predicted, 1)[1] == approx(1 / 3)
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(1 / 3)
 
 
 def test_RD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert RD(dfB[0], facet, true_label, 1, predicted, 1) == approx(-2 / 3)
+    label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert RD(dfB[0], facet, label, 1, predicted, 1) == approx(-2 / 3)
 
     facet = dfB[0] == "M"
-    assert RD(dfB[0], facet, true_label, 1, predicted, 1) == approx(2 / 3)
+    assert RD(dfB[0], facet, label, 1, predicted, 1) == approx(2 / 3)
 
 
 def test_DRR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[1] == approx(-1 / 3)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DLR(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[1] == approx(1 / 3)
+    assert DLR(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(1 / 3)
 
 
 def test_AD():
@@ -361,22 +361,22 @@ def test_PD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[0] == approx(-1 / 2)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert DLR(dfB[0], facet, labels, 1, predicted, 1)[0] == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, true_label, 1, predicted, 1)[0] == approx(1 / 2)
+    assert DLR(dfB[0], facet, labels, 1, predicted, 1)[0] == approx(1 / 2)
 
 
 def test_TE():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
     predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
-    true_label = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert TE(dfB[0], facet, true_label, 1, predicted, 1) == approx(-1 / 2)
+    labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
+    assert TE(dfB[0], facet, labels, 1, predicted, 1) == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert TE(dfB[0], facet, true_label, 1, predicted, 1) == approx(1 / 2)
+    assert TE(dfB[0], facet, labels, 1, predicted, 1) == approx(1 / 2)
 
 
 def test_FT():
