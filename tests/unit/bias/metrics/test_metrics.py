@@ -316,12 +316,12 @@ def test_DCA():
 def test_DCR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    predicted = pd.Series([1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0])
+    predicted = pd.Series([1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0])
     labels = pd.Series([0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0])
-    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(-1 / 3)
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == 0
 
     facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == approx(1 / 3)
+    assert DCO(dfB[0], facet, labels, 1, predicted, 1)[1] == 0
 
 
 def test_RD():
