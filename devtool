@@ -9,6 +9,7 @@ install_dependencies_dev() {
 
 unit_tests() {
     pytest --pspec
+    scripts/run_examples.py
 }
 
 lint() {
@@ -17,6 +18,7 @@ lint() {
 }
 
 test_with_coverage() {
+    scripts/run_examples.py
     coverage run -m pytest --pspec
     coverage report -m --fail-under=72
 }
