@@ -3,7 +3,20 @@ from setuptools import find_packages, setup
 INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "s3fs", "numpy", "sklearn", "pyfunctional"]
 
 EXTRAS_REQUIRE = {
-    "test": ["tox", "flake8", "black", "mock", "pre-commit", "pytest", "pytest-pspec", "sphinx", "coverage"]
+    "test": [
+        "tox",
+        "flake8",
+        "black",
+        "mock",
+        "pre-commit",
+        "pytest",
+        "pytest-pspec",
+        "sphinx",
+        "coverage",
+        "nbconvert",
+        "jupyter",
+        "seaborn",
+    ]
 }
 
 with open("README.md", "r") as f:
