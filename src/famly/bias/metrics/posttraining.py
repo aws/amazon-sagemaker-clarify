@@ -110,23 +110,23 @@ def DCO(
     if len(x[~facet]) == 0:
         raise ValueError("DCO: Negated Facet set is empty")
 
-    TN_a = len(label[(~positive_label_index) & (~positive_predicted_label_index) & (~facet)])
-    na0hat = len(predicted_label[(~positive_predicted_label_index) & (~facet)])
-    TN_d = len(label[(~positive_label_index) & (~positive_predicted_label_index) & (facet)])
-    nd0hat = len(predicted_label[(~positive_predicted_label_index) & (facet)])
+    na0 = len(x[~positive_label_index & ~facet])
+    na0hat = len(x[~positive_predicted_label_index & ~facet])
+    nd0 = len(x[~positive_label_index & facet])
+    nd0hat = len(x[~positive_predicted_label_index & facet])
 
-    na1 = len(label[positive_label_index & (~facet)])
-    na1hat = len(predicted_label[positive_predicted_label_index & (~facet)])
-    nd1 = len(label[positive_label_index & facet])
-    nd1hat = len(predicted_label[positive_predicted_label_index & facet])
+    na1 = len(x[positive_label_index & ~facet])
+    na1hat = len(x[positive_predicted_label_index & ~facet])
+    nd1 = len(x[positive_label_index & facet])
+    nd1hat = len(x[positive_predicted_label_index & facet])
 
     if na0hat != 0:
-        rr_a = TN_a / na0hat
+        rr_a = na0 / na0hat
     else:
         rr_a = INFINITY
 
     if nd0hat != 0:
-        rr_d = TN_d / nd0hat
+        rr_d = nd0 / nd0hat
     else:
         rr_d = INFINITY
 
@@ -141,7 +141,7 @@ def DCO(
         cd = INFINITY
 
     dca = ca - cd
-    dcr = rr_a - rr_d
+    dcr = rr_d - rr_a
 
     if ca == cd and ca == INFINITY:
         dca = 0
