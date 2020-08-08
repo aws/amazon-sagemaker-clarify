@@ -104,7 +104,7 @@ def _facet_datatype(facet: pd.Series) -> DataType:
     # if datatype is boolean or categorical we return data as categorical
     data_type = DataType.CATEGORICAL
     data_uniqueness_fraction = facet.nunique() / facet.count()
-    print("facet uniqueness fraction: ", data_uniqueness_fraction)
+    logger.info(f"facet uniqueness fraction: {data_uniqueness_fraction}")
     if facet.dtype.name == "category":
         return data_type
     if facet.dtype.name in ["str", "string", "object"]:
@@ -173,8 +173,17 @@ def _continous_metric_call_wrapper(
     """
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
-    # returns bool pd.Series after checking threshold index for each value from input
-    facet = x.map(lambda y: any(facet_threshold_index.contains(y)))
+
+    def facet_from_thresholds(x: pd.Series, _facet_threshold_index: pd.IntervalIndex) -> pd.Series:
+        """
+        returns bool Series after checking threshold index for each value from input
+        :param x:
+        :param _facet_threshold_index:
+        :return: boolean Series for facet
+        """
+        return x.map(lambda y: any(facet_threshold_index.contains(y)))
+
+    facet = facet_from_thresholds(x, facet_threshold_index)
     f = famly.bias.metrics.metric_partial_nullary(
         metric, x, facet, label, positive_label_index, predicted_label, positive_predicted_label_index
     )
