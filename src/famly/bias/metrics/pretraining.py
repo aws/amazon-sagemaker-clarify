@@ -160,7 +160,7 @@ def KS(feature: pd.Series, facet: pd.Series) -> float:
 
 # FIXME, CDDL needs to be looked into
 # @registry.pretraining
-def CDDL(feature: pd.Series, facet: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
+def CDDL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     r"""
     Conditional Demographic Disparity in  labels
     .. math::
@@ -169,8 +169,8 @@ def CDDL(feature: pd.Series, facet: pd.Series, label: pd.Series, group_variable:
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label : boolean column indicating positive labels
+    :param positive_label_index : boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    return common.CDD(feature, facet, label, group_variable)
+    return common.CDD(feature, facet, positive_label_index, group_variable)

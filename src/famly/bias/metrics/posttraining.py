@@ -300,7 +300,9 @@ def AD(
 
 # FIXME, CDDPL needs to be looked into
 # @registry.posttraining
-def CDDPL(feature: pd.Series, facet: pd.Series, predicted_labels: pd.Series, group_variable: pd.Series) -> float:
+def CDDPL(
+    feature: pd.Series, facet: pd.Series, positive_predicted_label_index: pd.Series, group_variable: pd.Series
+) -> float:
     r"""
     Conditional Demographic Disparity in labels
     .. math::
@@ -309,11 +311,11 @@ def CDDPL(feature: pd.Series, facet: pd.Series, predicted_labels: pd.Series, gro
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: boolean column indicating positive labels
+    :param label: boolean column indicating positive predicted labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    return common.CDD(feature, facet, predicted_labels, group_variable)
+    return common.CDD(feature, facet, positive_predicted_label_index, group_variable)
 
 
 @registry.posttraining
