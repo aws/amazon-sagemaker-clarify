@@ -75,7 +75,7 @@ def _column_list_to_str(xs: List[Any]) -> str:
 
 def _metric_call_wrapper(
     metric: Callable,
-    x: pd.Series,
+    feature: pd.Series,
     facet_values: Optional[List[Any]],
     label: pd.Series,
     positive_label_index: pd.Series,
@@ -100,15 +100,26 @@ def _metric_call_wrapper(
 
     if facet_values:
         # Build index series from facet
-        facet = facet_idx(x, facet_values)
-        f = famly.bias.metrics.metric_partial_nullary(
-            metric, x, facet, label, positive_label_index, predicted_label, positive_predicted_label_index
+        facet = facet_idx(feature, facet_values)
+        result = famly.bias.metrics.call_metric(
+            metric,
+            feature=feature,
+            facet=facet,
+            label=label,
+            positive_label_index=positive_label_index,
+            predicted_label=predicted_label,
+            positive_predicted_label_index=positive_predicted_label_index,
         )
-        metric_values = {metric.__name__: f()}
+        metric_values = {metric.__name__: result}
     else:
         # Do one vs all for every value
         metric_values = famly.bias.metrics.metric_one_vs_all(
-            metric, x, label, positive_label_index, predicted_label, positive_predicted_label_index
+            metric,
+            feature,
+            label=label,
+            positive_label_index=positive_label_index,
+            predicted_label=predicted_label,
+            positive_predicted_label_index=positive_predicted_label_index,
         )
     return metric_values
 
