@@ -1,5 +1,13 @@
 import pandas as pd
-from famly.bias.report import ProblemType, problem_type, bias_report, FacetColumn, LabelColumn, fetch_metrics_to_run
+from famly.bias.report import (
+    ProblemType,
+    problem_type,
+    bias_report,
+    FacetColumn,
+    LabelColumn,
+    fetch_metrics_to_run,
+    StageType,
+)
 from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCO, RD
 from typing import List, Any
 
@@ -16,7 +24,7 @@ df_cont = dataframe([[1, 1, 1], [2, 1, 0], [3, 0, 0], [2, 0, 1]])
 def test_report_category_data():
     # test the bias_report function on the category data
     #
-    report = bias_report(df_cat, FacetColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1))
+    report = bias_report(df_cat, FacetColumn("x"), LabelColumn("y", 1), StageType.PRE_TRAINING, LabelColumn("yhat", 1))
     assert isinstance(report, dict)
     assert len(report) > 0
     # Check that we have metric for each of the 3 classes vs the rest
@@ -24,7 +32,7 @@ def test_report_category_data():
         assert len(v) == 3
     result = {
         "CI": {"a": 0.5, "b": 0.0, "c": 0.5},
-        "DPL": {"a": 0.0, "b": 0.0, "c": 0.0},
+        "DPL": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
         "KL": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
         "JS": {"a": 0.2789960722619452, "b": 0.0, "c": 0.2789960722619452},
         "LP": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667},
@@ -37,7 +45,7 @@ def test_report_category_data():
 def test_report_continuous_data():
     #   test the bias_report function on the category data
     #
-    report = bias_report(df_cont, FacetColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1))
+    report = bias_report(df_cont, FacetColumn("x"), LabelColumn("y", 1), StageType.PRE_TRAINING, LabelColumn("yhat", 1))
     assert isinstance(report, dict)
     assert len(report) > 0
     # Check that we have metric for each of the 3 classes vs the rest
@@ -45,7 +53,7 @@ def test_report_continuous_data():
         assert len(v) == 1
     result = {
         "CI": {"(2, 3]": 0.5},
-        "DPL": {"(2, 3]": 0.0},
+        "DPL": {"(2, 3]": 0.6666666666666666},
         "KL": {"(2, 3]": 1.584962500721156},
         "JS": {"(2, 3]": 0.2789960722619452},
         "LP": {"(2, 3]": 0.6666666666666667},

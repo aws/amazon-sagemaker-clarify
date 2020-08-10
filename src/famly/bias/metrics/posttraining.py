@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
-from typing import Any
 from . import registry, common
 
 log = logging.getLogger(__name__)
@@ -14,12 +13,7 @@ log = logging.getLogger(__name__)
 
 @registry.posttraining
 def DPPL(
-    x: pd.Series,
-    facet: pd.Series,
-    label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
     Difference in positive proportions in predicted labels.
@@ -29,25 +23,18 @@ def DPPL(
     .. math::
         DPPL = \frac{\hat{n_a}^{(1)}}{n_a}-\frac{\hat{n_d}^{(1)}}{n_d}
 
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
     :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Returns Difference in Positive Proportions, based on predictions rather than labels
     """
-    return common.DPL(x, facet, predicted_label, positive_predicted_label)
+    return common.DPL(feature, facet, predicted_label, positive_predicted_label_index)
 
 
 @registry.posttraining
 def DI(
-    x: pd.Series,
-    facet: pd.Series,
-    label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
     Disparate Impact
@@ -58,23 +45,22 @@ def DI(
     .. math::
         DI = \frac{\frac{\hat{n_a}^{(1)}}{n_a}}{\frac{\hat{n_d}^{(1)}}{n_d}}
 
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
     :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
-    positive_predicted_label_index = predicted_label == positive_predicted_label
     facet = facet.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+
     na1hat = len(predicted_label[positive_predicted_label_index & (~facet)])
-    na = len(x[~facet])
+    na = len(feature[~facet])
     if na == 0:
         raise ValueError("DI: Negated facet set is empty")
     qa = na1hat / na
     nd1hat = len(predicted_label[positive_predicted_label_index & facet])
-    nd = len(x[facet])
+    nd = len(feature[facet])
     if nd == 0:
         raise ValueError("DI: Facet set is empty")
     qd = nd1hat / nd
@@ -85,40 +71,33 @@ def DI(
 
 @registry.posttraining
 def DCO(
-    x: pd.Series,
-    facet: pd.Series,
-    label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> (float, float):
     """
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
-    :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
     """
-    positive_predicted_label_index = predicted_label == positive_predicted_label
-    positive_label_index = label == positive_label
     facet = facet.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(x[facet]) == 0:
+    if len(feature[facet]) == 0:
         raise ValueError("DCO: Facet set is empty")
-    if len(x[~facet]) == 0:
+    if len(feature[~facet]) == 0:
         raise ValueError("DCO: Negated Facet set is empty")
 
-    na0 = len(x[~positive_label_index & ~facet])
-    na0hat = len(x[~positive_predicted_label_index & ~facet])
-    nd0 = len(x[~positive_label_index & facet])
-    nd0hat = len(x[~positive_predicted_label_index & facet])
+    na0 = len(feature[~positive_label_index & ~facet])
+    na0hat = len(feature[~positive_predicted_label_index & ~facet])
+    nd0 = len(feature[~positive_label_index & facet])
+    nd0hat = len(feature[~positive_predicted_label_index & facet])
 
-    na1 = len(x[positive_label_index & ~facet])
-    na1hat = len(x[positive_predicted_label_index & ~facet])
-    nd1 = len(x[positive_label_index & facet])
-    nd1hat = len(x[positive_predicted_label_index & facet])
+    na1 = len(feature[positive_label_index & ~facet])
+    na1hat = len(feature[positive_predicted_label_index & ~facet])
+    nd1 = len(feature[positive_label_index & facet])
+    nd1hat = len(feature[positive_predicted_label_index & facet])
 
     if na0hat != 0:
         rr_a = na0 / na0hat
@@ -153,29 +132,27 @@ def DCO(
 
 @registry.posttraining
 def RD(
-    x: pd.Series,
+    feature: pd.Series,
     facet: pd.Series,
     label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
 ) -> float:
     """
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
-    :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Recall Difference between advantaged and disadvantaged classes
     """
-    positive_predicted_label_index = predicted_label == positive_predicted_label
-    positive_label_index = label == positive_label
     facet = facet.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(x[facet]) == 0:
+    if len(feature[facet]) == 0:
         raise ValueError("RD: Facet set is empty")
-    if len(x[~facet]) == 0:
+    if len(feature[~facet]) == 0:
         raise ValueError("RD: Negated Facet set is empty")
 
     TP_a = len(label[positive_label_index & positive_predicted_label_index & (~facet)])
@@ -197,29 +174,29 @@ def RD(
 
 @registry.posttraining
 def DLR(
-    x: pd.Series,
+    feature: pd.Series,
     facet: pd.Series,
     label: pd.Series,
-    positive_label: Any,
+    positive_label_index: pd.Series,
     predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    positive_predicted_label_index: pd.Series,
 ) -> (float, float):
     """
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
+    :param positive_label_index: boolean column indicating positive labels
     :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
     """
-    positive_predicted_label_index = predicted_label == positive_predicted_label
-    positive_label_index = label == positive_label
     facet = facet.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(x[facet]) == 0:
+    if len(feature[facet]) == 0:
         raise ValueError("DLR: Facet set is empty")
-    if len(x[~facet]) == 0:
+    if len(feature[~facet]) == 0:
         raise ValueError("DLR: Negated Facet set is empty")
 
     TP_a = len(label[positive_label_index & positive_predicted_label_index & (~facet)])
@@ -265,55 +242,51 @@ def DLR(
 
 @registry.posttraining
 def AD(
-    x: pd.Series,
+    feature: pd.Series,
     facet: pd.Series,
     label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
 ) -> float:
     """
     Accuracy difference
 
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
-    :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Accuracy Difference between advantaged and disadvantaged classes
     """
-    predicted_label = predicted_label.astype(bool)
     label = label.astype(bool)
     facet = facet.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(x[facet]) == 0:
+    if len(feature[facet]) == 0:
         raise ValueError("AD: Facet set is empty")
-    if len(x[~facet]) == 0:
+    if len(feature[~facet]) == 0:
         raise ValueError("AD: Negated Facet set is empty")
 
-    label_idx = label == positive_label
-    pred_label_idx = predicted_label == positive_predicted_label
-
-    idx_tp_a = label_idx & pred_label_idx & ~facet
+    idx_tp_a = positive_label_index & positive_predicted_label_index & ~facet
     TP_a = len(label[idx_tp_a])
-    idx_fp_a = ~label_idx & pred_label_idx & ~facet
+    idx_fp_a = ~positive_label_index & positive_predicted_label_index & ~facet
     FP_a = len(label[idx_fp_a])
-    idx_fn_a = label_idx & ~pred_label_idx & ~facet
+    idx_fn_a = positive_label_index & ~positive_predicted_label_index & ~facet
     FN_a = len(label[idx_fn_a])
-    idx_tn_a = ~label_idx & ~pred_label_idx & ~facet
+    idx_tn_a = ~positive_label_index & ~positive_predicted_label_index & ~facet
     TN_a = len(label[idx_tn_a])
 
     total_a = TP_a + TN_a + FP_a + FN_a
     acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITY
 
-    idx_tp_d = label_idx & pred_label_idx & facet
+    idx_tp_d = positive_label_index & positive_predicted_label_index & facet
     TP_d = len(label[idx_tp_d])
-    idx_fp_d = ~label_idx & pred_label_idx & facet
+    idx_fp_d = ~positive_label_index & positive_predicted_label_index & facet
     FP_d = len(label[idx_fp_d])
-    idx_fn_d = label_idx & ~pred_label_idx & facet
+    idx_fn_d = positive_label_index & ~positive_predicted_label_index & facet
     FN_d = len(label[idx_fn_d])
-    idx_tn_d = ~label_idx & ~pred_label_idx & facet
+    idx_tn_d = ~positive_label_index & ~positive_predicted_label_index & facet
     TN_d = len(label[idx_tn_d])
 
     total_d = TP_d + TN_d + FP_d + FN_d
@@ -327,48 +300,48 @@ def AD(
 
 # FIXME, CDDPL needs to be looked into
 # @registry.posttraining
-def CDDPL(x: pd.Series, facet: pd.Series, predicted_labels: pd.Series, group_variable: pd.Series) -> float:
+def CDDPL(
+    feature: pd.Series, facet: pd.Series, positive_predicted_label_index: pd.Series, group_variable: pd.Series
+) -> float:
     r"""
     Conditional Demographic Disparity in labels
     .. math::
         CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
         \frac{Number\:of\:accepted\:applicants\:protected\:facet}{Total\:number\:of\:accepted\:applicants} \\for\:each\:group\:variable\: i
 
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: boolean column indicating positive labels
+    :param label: boolean column indicating positive predicted labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    return common.CDD(x, facet, predicted_labels, group_variable)
+    return common.CDD(feature, facet, positive_predicted_label_index, group_variable)
 
 
 @registry.posttraining
 def TE(
-    x: pd.Series,
+    feature: pd.Series,
     facet: pd.Series,
     label: pd.Series,
-    positive_label: Any,
-    predicted_label: pd.Series,
-    positive_predicted_label: Any,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
 ) -> float:
     """
-    :param x: input feature
+    :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
-    :param positive_label: consider this label value as the positive value in label, default is 1.
-    :param predicted_label: boolean column indicating predictions made by model
-    :param positive_predicted_label: consider this label value as the positive value in predicted label, default is 1.
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Returns the difference in ratios between false negatives and false positives for the advantaged
     and disadvantaged classes
     """
-    positive_predicted_label_index = predicted_label == positive_predicted_label
-    positive_label_index = label == positive_label
     facet = facet.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(x[facet]) == 0:
+    if len(feature[facet]) == 0:
         raise ValueError("TE: Facet set is empty")
-    if len(x[~facet]) == 0:
+    if len(feature[~facet]) == 0:
         raise ValueError("TE: Negated Facet set is empty")
 
     FP_a = len(label[(~label) & positive_predicted_label_index & (~facet)])
