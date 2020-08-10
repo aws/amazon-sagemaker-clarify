@@ -14,6 +14,11 @@ logger = logging.getLogger(__name__)
 
 class FacetColumn:
     def __init__(self, name, protected_values: Optional[List[Any]] = None):
+        """
+        initialize facet column name and  facet_values if present
+        :param name: str
+        :param protected_values: list of values indicating categories or threshold
+        """
         self.name = name
         self.protected_values = protected_values
 
@@ -22,7 +27,7 @@ class FacetContinuousColumn(FacetColumn):
     def __init__(self, name, interval_indices: pd.IntervalIndex):
         """
         :param name: Name of the column
-            thresholds for binning.
+        :param interval_indices: thresholds for binning.
         """
         super().__init__(name)
         self.interval_indices = interval_indices
@@ -30,6 +35,11 @@ class FacetContinuousColumn(FacetColumn):
 
 class LabelColumn:
     def __init__(self, name, positive_label_value: Optional[Any] = 1):
+        """
+        initalize the label data with name and postive value
+        :param name: str
+        :param positive_label_value: int
+        """
         self.name = name
         self.positive_label_value = positive_label_value
 
