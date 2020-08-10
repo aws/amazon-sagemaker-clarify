@@ -60,19 +60,14 @@ def test_fetch_metrics_to_run():
     test the list of callable metric functions to be run
     :return:
     """
-    input_metrics_1 = ["all"]
+
+    input_metrics_1 = ["CI", "DPL", "KL", "KS"]
     metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_1)
-    assert metrics_to_run == PRETRAINING_METRICS
-
-    metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_1)
-    assert metrics_to_run == POSTTRAINING_METRICS
-
-    input_metrics_2 = ["CI", "DPL", "KL", "KS"]
-    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_2)
+    print(metrics_to_run, PRETRAINING_METRICS)
     assert metrics_to_run == [CI, DPL, KL, KS]
 
-    input_metrics_3 = ["DPPL", "DI", "DCO", "RD"]
-    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_3)
+    input_metrics_2 = ["DPPL", "DI", "DCO", "RD"]
+    metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_2)
     assert metrics_to_run == [DPPL, DI, DCO, RD]
 
 
