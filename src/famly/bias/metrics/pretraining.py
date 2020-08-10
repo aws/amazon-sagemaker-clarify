@@ -57,20 +57,20 @@ def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_i
 
 
 @registry.pretraining
-def KL(feature: pd.Series, facet: pd.Series) -> float:
+def KL(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Kullback and Leibler divergence or relative entropy in bits.
 
     .. math::
         KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
 
-    :param feature: input feature
+    :param label: input feature
     :param facet: boolean column indicating sensitive group
     :return: Kullback and Leibler (KL) divergence metric
     """
     facet = facet.astype(bool)
-    xs_a = feature[facet]
-    xs_d = feature[~facet]
+    xs_a = label[facet]
+    xs_d = label[~facet]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
         return np.nan
@@ -79,21 +79,21 @@ def KL(feature: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def JS(feature: pd.Series, facet: pd.Series) -> float:
+def JS(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Jensen-Shannon divergence
 
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
 
-    :param feature: input feature
+    :param label: input feature
     :param facet: boolean column indicating sensitive group
     :return: Jensen-Shannon (JS) divergence metric
     """
     facet = facet.astype(bool)
-    xs_a = feature[facet]
-    xs_d = feature[~facet]
-    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, feature)
+    xs_a = label[facet]
+    xs_d = label[~facet]
+    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, label)
     if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
         return np.nan
     res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
@@ -101,24 +101,24 @@ def JS(feature: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def LP(feature: pd.Series, facet: pd.Series) -> float:
+def LP(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
         Lp(Pa, Pd) = [\sum_{x} |Pa(x)-Pd(x)|^p]^{1/p}
 
-    :param feature: input feature
+    :param label: input feature
     :param facet: boolean column indicating sensitive group
     :return: Returns the LP norm of the difference between class distributions
     """
-    return LP_norm(feature, facet, 2)
+    return LP_norm(label, facet, 2)
 
 
-def LP_norm(feature: pd.Series, facet: pd.Series, norm_order) -> float:
+def LP_norm(label: pd.Series, facet: pd.Series, norm_order) -> float:
     facet = facet.astype(bool)
-    xs_a = feature[facet]
-    xs_d = feature[~facet]
+    xs_a = label[facet]
+    xs_d = label[~facet]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
         return np.nan
@@ -127,35 +127,35 @@ def LP_norm(feature: pd.Series, facet: pd.Series, norm_order) -> float:
 
 
 @registry.pretraining
-def TVD(feature: pd.Series, facet: pd.Series) -> float:
+def TVD(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Total Variation Distance
 
     .. math::
         TVD = 0.5 * L1(Pa, Pd) \geq 0
 
-    :param feature: input feature
+    :param label: input feature
     :param facet: boolean column indicating sensitive group
     :return: total variation distance metric
     """
-    Lp_res = LP_norm(feature, facet, 1)
+    Lp_res = LP_norm(label, facet, 1)
     tvd = 0.5 * Lp_res
     return tvd
 
 
 @registry.pretraining
-def KS(feature: pd.Series, facet: pd.Series) -> float:
+def KS(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Kolmogorov-Smirnov
 
     .. math::
         KS = max(\left | Pa-Pd \right |) \geq 0
 
-    :param feature: input feature
+    :param label: input feature
     :param facet: boolean column indicating sensitive group
     :return: Kolmogorov-Smirnov metric
     """
-    return LP_norm(feature, facet, 1)
+    return LP_norm(label, facet, 1)
 
 
 # FIXME, CDDL needs to be looked into
