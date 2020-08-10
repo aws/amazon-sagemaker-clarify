@@ -81,7 +81,7 @@ def _column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def _fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
+def fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
     """
     Validates the list of metric names passed and returns the callable methods for them
     :param full_metrics:
@@ -89,10 +89,8 @@ def _fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
     :return: List[Callable..] methods
     """
     full_metrics_names = [f.__name__ for f in full_metrics]
-    # checks given metrics are part of registered metrics for pre_training or post_training
     if not (set(metric_names).issubset(set(full_metrics_names))):
         raise ValueError("Invalid metric_name: metrics should be one of the registered metrics" f"{full_metrics_names}")
-    # returns callable metric methods for given metric names
     metrics_to_run = [metric for metric in full_metrics if metric.__name__ in metric_names]
     return metrics_to_run
 
@@ -243,7 +241,7 @@ def bias_report(
         post_training_metrics = (
             famly.bias.metrics.POSTTRAINING_METRICS
             if metrics == ["all"]
-            else _fetch_metrics_to_run(famly.bias.metrics.POSTTRAINING_METRICS, metrics)
+            else fetch_metrics_to_run(famly.bias.metrics.POSTTRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(post_training_metrics)
         positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
@@ -254,7 +252,7 @@ def bias_report(
     pre_training_metrics = (
         famly.bias.metrics.PRETRAINING_METRICS
         if metrics == ["all"]
-        else _fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
+        else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
     )
     metrics_to_run.extend(pre_training_metrics)
 

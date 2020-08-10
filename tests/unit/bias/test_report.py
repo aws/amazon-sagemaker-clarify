@@ -1,5 +1,6 @@
 import pandas as pd
-from famly.bias.report import ProblemType, problem_type, bias_report, FacetColumn, LabelColumn
+from famly.bias.report import ProblemType, problem_type, bias_report, FacetColumn, LabelColumn, fetch_metrics_to_run
+from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCO, RD
 from typing import List, Any
 
 
@@ -13,16 +14,15 @@ df_cont = dataframe([[1, 1, 1], [2, 1, 0], [3, 0, 0], [2, 0, 1]])
 
 
 def test_report_category_data():
-    # once the report is refactored, fill the test
+    # test the bias_report function on the category data
     #
     report = bias_report(df_cat, FacetColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1))
     assert isinstance(report, dict)
     assert len(report) > 0
-    print(report)
     # Check that we have metric for each of the 3 classes vs the rest
     for k, v in report.items():
         assert len(v) == 3
-    cat_result = {
+    result = {
         "CI": {"a": 0.5, "b": 0.0, "c": 0.5},
         "DPL": {"a": 0.0, "b": 0.0, "c": 0.0},
         "KL": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
@@ -31,11 +31,11 @@ def test_report_category_data():
         "TVD": {"a": 0.33333333333333337, "b": 0.0, "c": 0.33333333333333337},
         "KS": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667},
     }
-    assert report == report
+    assert report == result
 
 
 def test_report_continuous_data():
-    # Todo: check if there is better way to
+    #   test the bias_report function on the category data
     #
     report = bias_report(df_cont, FacetColumn("x"), LabelColumn("y", 1), LabelColumn("yhat", 1))
     assert isinstance(report, dict)
@@ -53,6 +53,27 @@ def test_report_continuous_data():
         "KS": {"(2, 3]": 0.6666666666666667},
     }
     assert report == result
+
+
+def test_fetch_metrics_to_run():
+    """
+    test the list of callable metric functions to be run
+    :return:
+    """
+    input_metrics_1 = ["all"]
+    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_1)
+    assert metrics_to_run == PRETRAINING_METRICS
+
+    metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_1)
+    assert metrics_to_run == POSTTRAINING_METRICS
+
+    input_metrics_2 = ["CI", "DPL", "KL", "KS"]
+    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_2)
+    assert metrics_to_run == [CI, DPL, KL, KS]
+
+    input_metrics_3 = ["DPPL", "DI", "DCO", "RD"]
+    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_3)
+    assert metrics_to_run == [DPPL, DI, DCO, RD]
 
 
 def test_problem_type():
