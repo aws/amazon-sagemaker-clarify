@@ -14,8 +14,6 @@ def pretraining(function):
     :raise: TypeError: if the actual parameter is not a function.
     :raise: AssertError: if function name is duplicate with an registered one.
     """
-    # assign first line of docstring as description
-    function.description = function.__doc__.lstrip().split("\n")[0]
     __register(PRETRAINING_METRIC_FUNCTIONS, function)
     return function
 
@@ -27,8 +25,6 @@ def posttraining(function):
     :raise: Exception: if the actual parameter is not a function.
     :raise: AssertError: if function name is duplicate with an registered one.
     """
-    # assign first line of docstring as description
-    function.description = function.__doc__.lstrip().split("\n")[0]
     __register(POSTTRAINING_METRIC_FUNCTIONS, function)
     return function
 
@@ -38,7 +34,10 @@ def __register(metrics, function):
         raise TypeError("{} is not a function".format(function))
 
     assert not any(x == function.__name__ for x in all_metrics()), "{} is already registered".format(function.__name__)
-
+    # assign first line of docstring as description
+    if not function.__doc__:
+        raise ValueError("Metric function doesn't have a docstring")
+    function.description = function.__doc__.lstrip().split("\n")[0]
     metrics.append(function)
 
 

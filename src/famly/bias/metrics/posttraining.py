@@ -16,7 +16,7 @@ def DPPL(
     feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    "Difference in positive proportions in predicted labels (DPPL)")
+    "Difference in Positive Proportions in Predicted Labels (DPPL)")
 
     Indication if initial bias resident in the dataset increases or decreases after training.
 

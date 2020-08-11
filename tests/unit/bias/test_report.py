@@ -39,29 +39,29 @@ def test_report_category_data():
         assert len(v["value"]) == 3
     result = {
         "CDDL": {
-            "description": "Conditional Demographic Disparity in labels (CDDL)",
+            "description": "Conditional Demographic Disparity in Labels (CDDL)",
             "value": {"a": -0.375, "b": 0.375, "c": 0.25},
         },
         "CI": {"description": "Class Imbalance (CI)", "value": {"a": 0.5, "b": 0.0, "c": 0.5}},
         "DPL": {
-            "description": "Difference in Positive proportions in Labels (DPL)",
+            "description": "Difference in Positive Proportions in Labels (DPL)",
             "value": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
         },
         "JS": {
-            "description": "Jensen-Shannon divergence (JS)",
+            "description": "Jensen-Shannon Divergence (JS)",
             "value": {"a": 0.2789960722619452, "b": 0.0, "c": 0.2789960722619452},
         },
         "KL": {
-            "description": "Kullback - Liebler divergence (KL)",
+            "description": "Kullback-Liebler Divergence (KL)",
             "value": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
         },
         "KS": {
-            "description": "Kolmogorov-Smirnov distance (KS)",
+            "description": "Kolmogorov-Smirnov Distance (KS)",
             "value": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667},
         },
-        "LP": {"description": "L-p norm (LP)", "value": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667}},
+        "LP": {"description": "L-p Norm (LP)", "value": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667}},
         "TVD": {
-            "description": "Total variation distance (TVD)",
+            "description": "Total Variation Distance (TVD)",
             "value": {"a": 0.33333333333333337, "b": 0.0, "c": 0.33333333333333337},
         },
     }
@@ -85,17 +85,17 @@ def test_report_continuous_data():
     for k, v in report.items():
         assert len(v["value"]) == 1
     result = {
-        "CDDL": {"description": "Conditional Demographic Disparity in labels (CDDL)", "value": {"(2, 3]": 0.25}},
+        "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
         "CI": {"description": "Class Imbalance (CI)", "value": {"(2, 3]": 0.5}},
         "DPL": {
-            "description": "Difference in Positive proportions in Labels (DPL)",
+            "description": "Difference in Positive Proportions in Labels (DPL)",
             "value": {"(2, 3]": 0.6666666666666666},
         },
-        "JS": {"description": "Jensen-Shannon divergence (JS)", "value": {"(2, 3]": 0.2789960722619452}},
-        "KL": {"description": "Kullback - Liebler divergence (KL)", "value": {"(2, 3]": 1.584962500721156},},
-        "KS": {"description": "Kolmogorov-Smirnov distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
-        "LP": {"description": "L-p norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
-        "TVD": {"description": "Total variation distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
+        "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": {"(2, 3]": 0.2789960722619452}},
+        "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": {"(2, 3]": 1.584962500721156},},
+        "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
+        "LP": {"description": "L-p Norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
+        "TVD": {"description": "Total Variation Distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
     }
     assert report == result
 

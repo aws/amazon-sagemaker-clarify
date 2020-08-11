@@ -47,7 +47,7 @@ def CI(feature: pd.Series, facet: pd.Series) -> float:
 @registry.pretraining
 def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_index: pd.Series) -> float:
     """
-    Difference in Positive proportions in Labels (DPL)
+    Difference in Positive Proportions in Labels (DPL)
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
@@ -61,7 +61,7 @@ def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_i
 @registry.pretraining
 def KL(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Kullback - Liebler divergence (KL)
+    Kullback-Liebler Divergence (KL)
 
     .. math::
         KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
@@ -83,7 +83,7 @@ def KL(label: pd.Series, facet: pd.Series) -> float:
 @registry.pretraining
 def JS(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Jensen-Shannon divergence (JS)
+    Jensen-Shannon Divergence (JS)
 
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
@@ -105,7 +105,7 @@ def JS(label: pd.Series, facet: pd.Series) -> float:
 @registry.pretraining
 def LP(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    L-p norm (LP)
+    L-p Norm (LP)
 
     Difference of norms of the distributions defined by the facet selection and its complement.
 
@@ -133,7 +133,7 @@ def LP_norm(label: pd.Series, facet: pd.Series, norm_order) -> float:
 @registry.pretraining
 def TVD(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Total variation distance (TVD)
+    Total Variation Distance (TVD)
 
     .. math::
         TVD = 0.5 * L1(Pa, Pd) \geq 0
@@ -150,7 +150,7 @@ def TVD(label: pd.Series, facet: pd.Series) -> float:
 @registry.pretraining
 def KS(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Kolmogorov-Smirnov distance (KS)
+    Kolmogorov-Smirnov Distance (KS)
 
     .. math::
         KS = max(\left | Pa-Pd \right |) \geq 0
@@ -165,7 +165,7 @@ def KS(label: pd.Series, facet: pd.Series) -> float:
 @registry.pretraining
 def CDDL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     r"""
-    Conditional Demographic Disparity in labels (CDDL)
+    Conditional Demographic Disparity in Labels (CDDL)
 
     .. math::
         CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
