@@ -34,7 +34,10 @@ def __register(metrics, function):
         raise TypeError("{} is not a function".format(function))
 
     assert not any(x == function.__name__ for x in all_metrics()), "{} is already registered".format(function.__name__)
-
+    # assign first line of docstring as description
+    if not function.__doc__:
+        raise ValueError("Metric function doesn't have a docstring")
+    function.description = function.__doc__.lstrip().split("\n")[0]
     metrics.append(function)
 
 

@@ -34,14 +34,15 @@ class FacetContinuousColumn(FacetColumn):
 
 
 class LabelColumn:
-    def __init__(self, name, positive_label_value: Optional[Any] = 1):
+    def __init__(self, data: pd.Series, positive_label_value: Optional[Any] = None):
         """
         initalize the label data with name and postive value
-        :param name: str
-        :param positive_label_value: int
+        :param data: data series for the label column
+        :param positive_label_value: positive label value for target column
         """
-        self.name = name
-        self.positive_label_value = positive_label_value
+        self.data = data
+        # Todo add support for multilabels
+        self.positive_label_value = positive_label_value[0] if positive_label_value else 1
 
 
 class ProblemType(Enum):
@@ -105,6 +106,22 @@ def fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
     return metrics_to_run
 
 
+def _metric_description(metric: Callable, metric_values: dict) -> dict:
+    """
+    returns a dict with metric description and computed metric values
+    :param metric: metric function name
+     :param metric_values: dict with facet value (key) and its results
+    :return: metric result dict
+    {"description": "Class Imbalance (CI)",
+    "value": {1: -0.9288888888888889, 0: 0.9288888888888889}
+    }
+    """
+    if not metric.description:
+        raise KeyError(f"Description is not found for the registered metric: {metric}")
+        result_metrics[metric] = {"description": metric_description, "value": result_metrics[metric]}
+    return {"description": metric.description, "value": metric_values}
+
+
 def _interval_index(facet: pd.Series, thresholds: List[Any]) -> pd.IntervalIndex:
     """
     Creates a Interval Index from list of threshold values
@@ -154,6 +171,7 @@ def _categorical_metric_call_wrapper(
     positive_label_index: pd.Series,
     predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
+    group_variable: pd.Series,
 ) -> Dict:
     """
     Dispatch calling of different metric functions with the correct arguments
@@ -181,6 +199,7 @@ def _categorical_metric_call_wrapper(
             positive_label_index=positive_label_index,
             predicted_label=predicted_label,
             positive_predicted_label_index=positive_predicted_label_index,
+            group_variable=group_variable,
         )
         metric_values = {",".join(map(str, facet_values)): result}
     else:
@@ -192,8 +211,10 @@ def _categorical_metric_call_wrapper(
             positive_label_index=positive_label_index,
             predicted_label=predicted_label,
             positive_predicted_label_index=positive_predicted_label_index,
+            group_variable=group_variable,
         )
-    return metric_values
+    metric_result = _metric_description(metric, metric_values)
+    return metric_result
 
 
 def _continous_metric_call_wrapper(
@@ -204,6 +225,7 @@ def _continous_metric_call_wrapper(
     positive_label_index: pd.Series,
     predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
+    group_variable: pd.Series,
 ) -> Dict:
     """
     Dispatch calling of different metric functions with the correct arguments and bool facet data
@@ -227,9 +249,11 @@ def _continous_metric_call_wrapper(
         positive_label_index=positive_label_index,
         predicted_label=predicted_label,
         positive_predicted_label_index=positive_predicted_label_index,
+        group_variable=group_variable,
     )
     metric_values = {",".join(map(str, facet_threshold_index)): result}
-    return metric_values
+    metric_result = _metric_description(metric, metric_values)
+    return metric_result
 
 
 def bias_report(
@@ -239,6 +263,7 @@ def bias_report(
     stage_type: StageType,
     predicted_label_column: LabelColumn = None,
     metrics: List[Any] = ["all"],
+    group_variable: Optional[pd.Series] = None,
 ) -> Dict:
     """
     Run Full bias report on a dataset.:
@@ -247,6 +272,8 @@ def bias_report(
     :param label_column: description of column which has the labels.
     :param stage_type: pre_training or post_training for which bias metrics is computed
     :param predicted_label_column: description of column with predicted labels
+    :param metrics: list of metrics names to provide bias metrics
+    :param group_variable: data series for the group variable
     :return:
     """
     if facet_column:
@@ -256,12 +283,12 @@ def bias_report(
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
-    if problem_type(df[label_column.name]) != ProblemType.BINARY:
+    if problem_type(label_column.data) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
     data_series: pd.Series = df[facet_column.name]
-    label_series: pd.Series = df[label_column.name]
-    positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
+    label_series: pd.Series = label_column.data
+    positive_label_index: pd.Series = label_column.data == label_column.positive_label_value
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
@@ -297,6 +324,7 @@ def bias_report(
                 positive_label_index,
                 predicted_label_series,
                 positive_predicted_label_index,
+                group_variable,
             )
         return result
 
@@ -313,6 +341,7 @@ def bias_report(
                 positive_label_index,
                 predicted_label_series,
                 positive_predicted_label_index,
+                group_variable,
             )
         return result
     else:
