@@ -10,7 +10,7 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 
-@registry.pretraining
+@registry.pretraining("Class Imbalance (CI)")
 def CI(feature: pd.Series, facet: pd.Series) -> float:
     r"""
     Class imbalance (CI)
@@ -43,7 +43,7 @@ def CI(feature: pd.Series, facet: pd.Series) -> float:
     return ci
 
 
-@registry.pretraining
+@registry.pretraining("Difference in Positive proportions in Labels (DPL)")
 def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in positive proportions in  labels
@@ -56,7 +56,7 @@ def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_i
     return common.DPL(feature, facet, label, positive_label_index)
 
 
-@registry.pretraining
+@registry.pretraining("Kullback - Liebler divergence in true labels (KL)")
 def KL(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Kullback and Leibler divergence or relative entropy in bits.
@@ -78,7 +78,7 @@ def KL(label: pd.Series, facet: pd.Series) -> float:
     return kl
 
 
-@registry.pretraining
+@registry.pretraining("Jensen-Shannon divergence in true labels (JS)")
 def JS(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Jensen-Shannon divergence
@@ -100,7 +100,7 @@ def JS(label: pd.Series, facet: pd.Series) -> float:
     return res
 
 
-@registry.pretraining
+@registry.pretraining("L-p norm (LP)")
 def LP(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Difference of norms of the distributions defined by the facet selection and its complement.
@@ -126,7 +126,7 @@ def LP_norm(label: pd.Series, facet: pd.Series, norm_order) -> float:
     return res
 
 
-@registry.pretraining
+@registry.pretraining("Total variation distance (TVD)")
 def TVD(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Total Variation Distance
@@ -143,7 +143,7 @@ def TVD(label: pd.Series, facet: pd.Series) -> float:
     return tvd
 
 
-@registry.pretraining
+@registry.pretraining("Kolmogorov-Smirnov distance (KS)")
 def KS(label: pd.Series, facet: pd.Series) -> float:
     r"""
     Kolmogorov-Smirnov
@@ -158,8 +158,7 @@ def KS(label: pd.Series, facet: pd.Series) -> float:
     return LP_norm(label, facet, 1)
 
 
-# FIXME, CDDL needs to be looked into
-# @registry.pretraining
+@registry.pretraining("Conditional Demographic Disparity in labels (CDDL)")
 def CDDL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     r"""
     Conditional Demographic Disparity in  labels

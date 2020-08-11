@@ -11,7 +11,7 @@ from . import registry, common
 log = logging.getLogger(__name__)
 
 
-@registry.posttraining
+@registry.posttraining("Difference in positive proportions in predicted labels (DPPL)")
 def DPPL(
     feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
@@ -32,7 +32,7 @@ def DPPL(
     return common.DPL(feature, facet, predicted_label, positive_predicted_label_index)
 
 
-@registry.posttraining
+@registry.posttraining("Disparate Impact (DI)")
 def DI(
     feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
@@ -69,7 +69,7 @@ def DI(
     return qd / qa
 
 
-@registry.posttraining
+@registry.posttraining("Difference in Conditional Outcomes (DCO)")
 def DCO(
     feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> (float, float):
@@ -130,7 +130,7 @@ def DCO(
     return dca, dcr
 
 
-@registry.posttraining
+@registry.posttraining("Recall Difference (RD)")
 def RD(
     feature: pd.Series,
     facet: pd.Series,
@@ -172,7 +172,7 @@ def RD(
     return rd
 
 
-@registry.posttraining
+@registry.posttraining("Difference in Label Rates (DLR)")
 def DLR(
     feature: pd.Series,
     facet: pd.Series,
@@ -240,7 +240,7 @@ def DLR(
     return dar, drr
 
 
-@registry.posttraining
+@registry.posttraining("Accuracy Difference (AD)")
 def AD(
     feature: pd.Series,
     facet: pd.Series,
@@ -299,7 +299,7 @@ def AD(
 
 
 # FIXME, CDDPL needs to be looked into
-# @registry.posttraining
+# @registry.posttraining("Conditional Demographic Disparity in Predicted Labels (CDDPL)")
 def CDDPL(
     feature: pd.Series, facet: pd.Series, positive_predicted_label_index: pd.Series, group_variable: pd.Series
 ) -> float:
@@ -318,7 +318,7 @@ def CDDPL(
     return common.CDD(feature, facet, positive_predicted_label_index, group_variable)
 
 
-@registry.posttraining
+@registry.posttraining("Treatment Equality (TE)")
 def TE(
     feature: pd.Series,
     facet: pd.Series,
@@ -372,7 +372,7 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
-# @registry.posttraining
+# @registry.posttraining("Flip Test (FT)")
 # FIXME: Registering this metric with post training metrics results in failure
 def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """

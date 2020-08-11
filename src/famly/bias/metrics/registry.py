@@ -7,26 +7,36 @@ PRETRAINING_METRIC_FUNCTIONS = []
 POSTTRAINING_METRIC_FUNCTIONS = []
 
 
-def pretraining(function):
+def pretraining(description=""):
     """
     Decorator to register a pretraining function.
     :return: The function
     :raise: TypeError: if the actual parameter is not a function.
     :raise: AssertError: if function name is duplicate with an registered one.
     """
-    __register(PRETRAINING_METRIC_FUNCTIONS, function)
-    return function
+
+    def register_function(function):
+        function.description = description
+        __register(PRETRAINING_METRIC_FUNCTIONS, function)
+        return function
+
+    return register_function
 
 
-def posttraining(function):
+def posttraining(description=""):
     """
     Decorator to register a posttraining function.
     :return: The function
     :raise: Exception: if the actual parameter is not a function.
     :raise: AssertError: if function name is duplicate with an registered one.
     """
-    __register(POSTTRAINING_METRIC_FUNCTIONS, function)
-    return function
+
+    def register_function(function):
+        function.description = description
+        __register(POSTTRAINING_METRIC_FUNCTIONS, function)
+        return function
+
+    return register_function
 
 
 def __register(metrics, function):

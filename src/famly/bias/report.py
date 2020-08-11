@@ -38,7 +38,7 @@ class LabelColumn:
         """
         initalize the label data with name and postive value
         :param data: data series for the label column
-        :param positive_label_value: postive label value for target column
+        :param positive_label_value: positive label value for target column
         """
         self.data = data
         # Todo add support for multilabels
@@ -106,23 +106,20 @@ def fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
     return metrics_to_run
 
 
-def _metrics_description(result_metrics: dict) -> dict:
+def _metric_description(metric: Callable, metric_values: dict) -> dict:
     """
-    Update the result metrics with metrics full description instead of method name
-    :param result_metrics:
-    :return: metrics dict
-    {"CI": {"description": "Class imbalance (CI)",
-             "value": "{1: -0.9288888888888889, 0: 0.9288888888888889}"}
-           }
+    returns a dict with metric description and computed metric values
+    :param metric: metric function name
+     :param metric_values: dict with facet value (key) and its results
+    :return: metric result dict
+    {"description": "Class Imbalance (CI)",
+    "value": {1: -0.9288888888888889, 0: 0.9288888888888889}
     }
     """
-    metric_descriptions = famly.bias.metrics.PRETRAINING_METRIC_DESCRIPTIONS
-    for metric in set(result_metrics.keys()):
-        metric_description = metric_descriptions.get(metric, "")
-        if not str(metric_description):
-            raise KeyError(f"Description is not found for the registered metric: {metric}")
+    if not metric.description:
+        raise KeyError(f"Description is not found for the registered metric: {metric}")
         result_metrics[metric] = {"description": metric_description, "value": result_metrics[metric]}
-    return result_metrics
+    return {"description": metric.description, "value": metric_values}
 
 
 def _interval_index(facet: pd.Series, thresholds: List[Any]) -> pd.IntervalIndex:
@@ -216,7 +213,8 @@ def _categorical_metric_call_wrapper(
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
-    return metric_values
+    metric_result = _metric_description(metric, metric_values)
+    return metric_result
 
 
 def _continous_metric_call_wrapper(
@@ -254,7 +252,8 @@ def _continous_metric_call_wrapper(
         group_variable=group_variable,
     )
     metric_values = {",".join(map(str, facet_threshold_index)): result}
-    return metric_values
+    metric_result = _metric_description(metric, metric_values)
+    return metric_result
 
 
 def bias_report(
@@ -327,7 +326,7 @@ def bias_report(
                 positive_predicted_label_index,
                 group_variable,
             )
-        return _metrics_description(result)
+        return result
 
     elif facet_dtype == DataType.CONTINUOUS:
         facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
@@ -344,6 +343,6 @@ def bias_report(
                 positive_predicted_label_index,
                 group_variable,
             )
-        return _metrics_description(result)
+        return result
     else:
         raise RuntimeError("facet_column data is invalid or can't be classified")

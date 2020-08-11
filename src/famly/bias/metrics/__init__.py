@@ -10,16 +10,6 @@ from . import registry
 
 PRETRAINING_METRICS = registry.PRETRAINING_METRIC_FUNCTIONS
 POSTTRAINING_METRICS = registry.POSTTRAINING_METRIC_FUNCTIONS
-PRETRAINING_METRIC_DESCRIPTIONS = {
-    "CI": "Class imbalance (CI)",
-    "CDDL": "Conditional Demographic Disparity in labels (CDDL)",
-    "DPL": "Difference in positive proportions in true labels (DPL)",
-    "JS": "Jensen-Shannon divergence in true labels (JS)",
-    "KL": "Kullback - Liebler divergence in true labels(KL)",
-    "KS": "Kolmogorov-Smirnov distance (KS)",
-    "LP": "L-p norm (LP)",
-    "TVD": "Total variation distance (TVD)",
-}
 
 __all__ = registry.all_metrics()
 

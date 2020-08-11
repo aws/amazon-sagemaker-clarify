@@ -13,12 +13,12 @@ from typing import List, Any
 
 
 def dataframe(data: List[List[Any]]):
-    df = pd.DataFrame(data, columns=["x", "y", "yhat"])
+    df = pd.DataFrame(data, columns=["x", "y", "z", "yhat"])
     return df
 
 
-df_cat = dataframe([["a", 1, 1], ["b", 1, 0], ["b", 0, 0], ["c", 0, 1]])
-df_cont = dataframe([[1, 1, 1], [2, 1, 0], [3, 0, 0], [2, 0, 1]])
+df_cat = dataframe([["a", 1, 1, 1], ["b", 1, 1, 0], ["b", 0, 1, 0], ["c", 0, 0, 1]])
+df_cont = dataframe([[1, 1, 1, 1], [2, 1, 1, 0], [3, 0, 0, 0], [2, 0, 1, 1]])
 
 
 def test_report_category_data():
@@ -30,6 +30,7 @@ def test_report_category_data():
         LabelColumn(df_cat["y"], [1]),
         StageType.PRE_TRAINING,
         LabelColumn(df_cat["yhat"], [1]),
+        group_variable=(df_cat["z"]),
     )
     assert isinstance(report, dict)
     assert len(report) > 0
@@ -37,9 +38,13 @@ def test_report_category_data():
     for k, v in report.items():
         assert len(v["value"]) == 3
     result = {
-        "CI": {"description": "Class imbalance (CI)", "value": {"a": 0.5, "b": 0.0, "c": 0.5}},
+        "CDDL": {
+            "description": "Conditional Demographic Disparity in labels (CDDL)",
+            "value": {"a": -0.375, "b": 0.375, "c": 0.25},
+        },
+        "CI": {"description": "Class Imbalance (CI)", "value": {"a": 0.5, "b": 0.0, "c": 0.5}},
         "DPL": {
-            "description": "Difference in positive proportions in true labels (DPL)",
+            "description": "Difference in Positive proportions in Labels (DPL)",
             "value": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
         },
         "JS": {
@@ -47,7 +52,7 @@ def test_report_category_data():
             "value": {"a": 0.2789960722619452, "b": 0.0, "c": 0.2789960722619452},
         },
         "KL": {
-            "description": "Kullback - Liebler divergence in true labels(KL)",
+            "description": "Kullback - Liebler divergence in true labels (KL)",
             "value": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
         },
         "KS": {
@@ -67,7 +72,12 @@ def test_report_continuous_data():
     #   test the bias_report function on the category data
     #
     report = bias_report(
-        df_cont, FacetColumn("x"), LabelColumn(df_cont["y"]), StageType.PRE_TRAINING, LabelColumn(df_cont["yhat"], [1])
+        df_cont,
+        FacetColumn("x"),
+        LabelColumn(df_cont["y"]),
+        StageType.PRE_TRAINING,
+        LabelColumn(df_cont["yhat"], [1]),
+        group_variable=(df_cont["z"]),
     )
     assert isinstance(report, dict)
     assert len(report) > 0
@@ -75,14 +85,15 @@ def test_report_continuous_data():
     for k, v in report.items():
         assert len(v["value"]) == 1
     result = {
-        "CI": {"description": "Class imbalance (CI)", "value": {"(2, 3]": 0.5}},
+        "CDDL": {"description": "Conditional Demographic Disparity in labels (CDDL)", "value": {"(2, 3]": 0.25}},
+        "CI": {"description": "Class Imbalance (CI)", "value": {"(2, 3]": 0.5}},
         "DPL": {
-            "description": "Difference in positive proportions in true labels (DPL)",
+            "description": "Difference in Positive proportions in Labels (DPL)",
             "value": {"(2, 3]": 0.6666666666666666},
         },
         "JS": {"description": "Jensen-Shannon divergence in true labels (JS)", "value": {"(2, 3]": 0.2789960722619452}},
         "KL": {
-            "description": "Kullback - Liebler divergence in true labels(KL)",
+            "description": "Kullback - Liebler divergence in true labels (KL)",
             "value": {"(2, 3]": 1.584962500721156},
         },
         "KS": {"description": "Kolmogorov-Smirnov distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
