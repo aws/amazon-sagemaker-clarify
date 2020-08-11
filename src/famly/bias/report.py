@@ -34,14 +34,15 @@ class FacetContinuousColumn(FacetColumn):
 
 
 class LabelColumn:
-    def __init__(self, name, positive_label_value: Optional[Any] = 1):
+    def __init__(self, data: pd.Series, positive_label_value: Optional[Any] = None):
         """
         initalize the label data with name and postive value
-        :param name: str
-        :param positive_label_value: int
+        :param data: data series for the label column
+        :param positive_label_value: postive label value for target column
         """
-        self.name = name
-        self.positive_label_value = positive_label_value
+        self.data = data
+        # Todo add support for multilabels
+        self.positive_label_value = positive_label_value[0] if positive_label_value else 1
 
 
 class ProblemType(Enum):
@@ -103,6 +104,25 @@ def fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
         raise ValueError("Invalid metric_name: metrics should be one of the registered metrics" f"{full_metrics_names}")
     metrics_to_run = [metric for metric in full_metrics if metric.__name__ in metric_names]
     return metrics_to_run
+
+
+def _metrics_description(result_metrics: dict) -> dict:
+    """
+    Update the result metrics with metrics full description instead of method name
+    :param result_metrics:
+    :return: metrics dict
+    {"CI": {"description": "Class imbalance (CI)",
+             "value": "{1: -0.9288888888888889, 0: 0.9288888888888889}"}
+           }
+    }
+    """
+    metric_descriptions = famly.bias.metrics.PRETRAINING_METRIC_DESCRIPTIONS
+    for metric in set(result_metrics.keys()):
+        metric_description = metric_descriptions.get(metric, "")
+        if not str(metric_description):
+            raise KeyError(f"Description is not found for the registered metric: {metric}")
+        result_metrics[metric] = {"description": metric_description, "value": result_metrics[metric]}
+    return result_metrics
 
 
 def _interval_index(facet: pd.Series, thresholds: List[Any]) -> pd.IntervalIndex:
@@ -222,6 +242,7 @@ def bias_report(
     stage_type: StageType,
     predicted_label_column: LabelColumn = None,
     metrics: List[Any] = ["all"],
+    group_variable: Optional[pd.Series] = None,
 ) -> Dict:
     """
     Run Full bias report on a dataset.:
@@ -230,6 +251,8 @@ def bias_report(
     :param label_column: description of column which has the labels.
     :param stage_type: pre_training or post_training for which bias metrics is computed
     :param predicted_label_column: description of column with predicted labels
+    :param metrics: list of metrics names to provide bias metrics
+    :param group_variable: data series for the group variable
     :return:
     """
     if facet_column:
@@ -239,12 +262,12 @@ def bias_report(
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
-    if problem_type(df[label_column.name]) != ProblemType.BINARY:
+    if problem_type(label_column.data) != ProblemType.BINARY:
         raise RuntimeError("Only binary classification problems are supported")
 
     data_series: pd.Series = df[facet_column.name]
-    label_series: pd.Series = df[label_column.name]
-    positive_label_index: pd.Series = df[label_column.name] == label_column.positive_label_value
+    label_series: pd.Series = label_column.data
+    positive_label_index: pd.Series = label_column.data == label_column.positive_label_value
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
@@ -281,7 +304,7 @@ def bias_report(
                 predicted_label_series,
                 positive_predicted_label_index,
             )
-        return result
+        return _metrics_description(result)
 
     elif facet_dtype == DataType.CONTINUOUS:
         facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
@@ -297,6 +320,6 @@ def bias_report(
                 predicted_label_series,
                 positive_predicted_label_index,
             )
-        return result
+        return _metrics_description(result)
     else:
         raise RuntimeError("facet_column data is invalid or can't be classified")
