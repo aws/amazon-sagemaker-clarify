@@ -11,12 +11,12 @@ from . import registry, common
 log = logging.getLogger(__name__)
 
 
-@registry.posttraining("Difference in positive proportions in predicted labels (DPPL)")
+@registry.posttraining
 def DPPL(
     feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    Difference in positive proportions in predicted labels.
+    "Difference in positive proportions in predicted labels (DPPL)")
 
     Indication if initial bias resident in the dataset increases or decreases after training.
 
@@ -32,12 +32,12 @@ def DPPL(
     return common.DPL(feature, facet, predicted_label, positive_predicted_label_index)
 
 
-@registry.posttraining("Disparate Impact (DI)")
+@registry.posttraining
 def DI(
     feature: pd.Series, facet: pd.Series, predicted_label: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    Disparate Impact
+    Disparate Impact (DI)
 
     Measures adverse effects by the model predictions with respect to labels on different groups selected by
     the facet.
@@ -69,11 +69,13 @@ def DI(
     return qd / qa
 
 
-@registry.posttraining("Difference in Conditional Outcomes (DCO)")
+@registry.posttraining
 def DCO(
     feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series,
 ) -> (float, float):
     """
+    Difference in Conditional Outcomes (DCO)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
@@ -130,7 +132,7 @@ def DCO(
     return dca, dcr
 
 
-@registry.posttraining("Recall Difference (RD)")
+@registry.posttraining
 def RD(
     feature: pd.Series,
     facet: pd.Series,
@@ -139,6 +141,8 @@ def RD(
     positive_predicted_label_index: pd.Series,
 ) -> float:
     """
+    Recall Difference (RD)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
@@ -172,7 +176,7 @@ def RD(
     return rd
 
 
-@registry.posttraining("Difference in Label Rates (DLR)")
+@registry.posttraining
 def DLR(
     feature: pd.Series,
     facet: pd.Series,
@@ -182,6 +186,8 @@ def DLR(
     positive_predicted_label_index: pd.Series,
 ) -> (float, float):
     """
+    Difference in Label Rates (DLR)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
@@ -240,7 +246,7 @@ def DLR(
     return dar, drr
 
 
-@registry.posttraining("Accuracy Difference (AD)")
+@registry.posttraining
 def AD(
     feature: pd.Series,
     facet: pd.Series,
@@ -249,7 +255,7 @@ def AD(
     positive_predicted_label_index: pd.Series,
 ) -> float:
     """
-    Accuracy difference
+    Accuracy Difference (AD)
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
@@ -299,12 +305,13 @@ def AD(
 
 
 # FIXME, CDDPL needs to be looked into
-# @registry.posttraining("Conditional Demographic Disparity in Predicted Labels (CDDPL)")
+# @registry.posttraining
 def CDDPL(
     feature: pd.Series, facet: pd.Series, positive_predicted_label_index: pd.Series, group_variable: pd.Series
 ) -> float:
     r"""
-    Conditional Demographic Disparity in labels
+    Conditional Demographic Disparity in Predicted Labels (CDDPL)
+
     .. math::
         CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
         \frac{Number\:of\:accepted\:applicants\:protected\:facet}{Total\:number\:of\:accepted\:applicants} \\for\:each\:group\:variable\: i
@@ -318,7 +325,7 @@ def CDDPL(
     return common.CDD(feature, facet, positive_predicted_label_index, group_variable)
 
 
-@registry.posttraining("Treatment Equality (TE)")
+@registry.posttraining
 def TE(
     feature: pd.Series,
     facet: pd.Series,
@@ -327,6 +334,8 @@ def TE(
     positive_predicted_label_index: pd.Series,
 ) -> float:
     """
+    Treatment Equality (TE)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: boolean column indicating labels
@@ -372,10 +381,12 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
-# @registry.posttraining("Flip Test (FT)")
+# @registry.posttraining
 # FIXME: Registering this metric with post training metrics results in failure
 def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
     """
+    Flip Test (FT)
+
     :param dataset: array of data points
     :param facet: boolean column indicating sensitive group
     :param labels: boolean column of positive values for target column

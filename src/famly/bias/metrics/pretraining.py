@@ -10,10 +10,11 @@ import numpy as np
 log = logging.getLogger(__name__)
 
 
-@registry.pretraining("Class Imbalance (CI)")
+@registry.pretraining
 def CI(feature: pd.Series, facet: pd.Series) -> float:
     r"""
-    Class imbalance (CI)
+    Class Imbalance (CI)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
@@ -43,10 +44,11 @@ def CI(feature: pd.Series, facet: pd.Series) -> float:
     return ci
 
 
-@registry.pretraining("Difference in Positive proportions in Labels (DPL)")
+@registry.pretraining
 def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_index: pd.Series) -> float:
     """
-    Difference in positive proportions in  labels
+    Difference in Positive proportions in Labels (DPL)
+
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :param label: pandas series of labels (binary, multicategory, or continuous)
@@ -56,10 +58,10 @@ def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_i
     return common.DPL(feature, facet, label, positive_label_index)
 
 
-@registry.pretraining("Kullback - Liebler divergence in true labels (KL)")
+@registry.pretraining
 def KL(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Kullback and Leibler divergence or relative entropy in bits.
+    Kullback - Liebler divergence (KL)
 
     .. math::
         KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
@@ -78,10 +80,10 @@ def KL(label: pd.Series, facet: pd.Series) -> float:
     return kl
 
 
-@registry.pretraining("Jensen-Shannon divergence in true labels (JS)")
+@registry.pretraining
 def JS(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Jensen-Shannon divergence
+    Jensen-Shannon divergence (JS)
 
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
@@ -100,9 +102,11 @@ def JS(label: pd.Series, facet: pd.Series) -> float:
     return res
 
 
-@registry.pretraining("L-p norm (LP)")
+@registry.pretraining
 def LP(label: pd.Series, facet: pd.Series) -> float:
     r"""
+    L-p norm (LP)
+
     Difference of norms of the distributions defined by the facet selection and its complement.
 
     .. math::
@@ -126,10 +130,10 @@ def LP_norm(label: pd.Series, facet: pd.Series, norm_order) -> float:
     return res
 
 
-@registry.pretraining("Total variation distance (TVD)")
+@registry.pretraining
 def TVD(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Total Variation Distance
+    Total variation distance (TVD)
 
     .. math::
         TVD = 0.5 * L1(Pa, Pd) \geq 0
@@ -143,10 +147,10 @@ def TVD(label: pd.Series, facet: pd.Series) -> float:
     return tvd
 
 
-@registry.pretraining("Kolmogorov-Smirnov distance (KS)")
+@registry.pretraining
 def KS(label: pd.Series, facet: pd.Series) -> float:
     r"""
-    Kolmogorov-Smirnov
+    Kolmogorov-Smirnov distance (KS)
 
     .. math::
         KS = max(\left | Pa-Pd \right |) \geq 0
@@ -158,10 +162,11 @@ def KS(label: pd.Series, facet: pd.Series) -> float:
     return LP_norm(label, facet, 1)
 
 
-@registry.pretraining("Conditional Demographic Disparity in labels (CDDL)")
+@registry.pretraining
 def CDDL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series) -> float:
     r"""
-    Conditional Demographic Disparity in  labels
+    Conditional Demographic Disparity in labels (CDDL)
+
     .. math::
         CDD = \frac{1}{n}\sum_i n_i * DD_i \\\quad\:where \: DD_i = \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} -
         \frac{Number\:of\:rejected\:applicants\:protected\:facet}{Total\:number\:of\:rejected\:applicants} \\\quad\:\quad\:\quad\:\quad\:\quad\:\quad\:for\:each\:group\:variable\: i

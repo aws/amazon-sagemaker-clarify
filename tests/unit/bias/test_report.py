@@ -48,11 +48,11 @@ def test_report_category_data():
             "value": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
         },
         "JS": {
-            "description": "Jensen-Shannon divergence in true labels (JS)",
+            "description": "Jensen-Shannon divergence (JS)",
             "value": {"a": 0.2789960722619452, "b": 0.0, "c": 0.2789960722619452},
         },
         "KL": {
-            "description": "Kullback - Liebler divergence in true labels (KL)",
+            "description": "Kullback - Liebler divergence (KL)",
             "value": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
         },
         "KS": {
@@ -91,11 +91,8 @@ def test_report_continuous_data():
             "description": "Difference in Positive proportions in Labels (DPL)",
             "value": {"(2, 3]": 0.6666666666666666},
         },
-        "JS": {"description": "Jensen-Shannon divergence in true labels (JS)", "value": {"(2, 3]": 0.2789960722619452}},
-        "KL": {
-            "description": "Kullback - Liebler divergence in true labels (KL)",
-            "value": {"(2, 3]": 1.584962500721156},
-        },
+        "JS": {"description": "Jensen-Shannon divergence (JS)", "value": {"(2, 3]": 0.2789960722619452}},
+        "KL": {"description": "Kullback - Liebler divergence (KL)", "value": {"(2, 3]": 1.584962500721156},},
         "KS": {"description": "Kolmogorov-Smirnov distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
         "LP": {"description": "L-p norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
         "TVD": {"description": "Total variation distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
@@ -106,7 +103,6 @@ def test_report_continuous_data():
 def test_fetch_metrics_to_run():
     """
     test the list of callable metric functions to be run
-    :return:
     """
 
     input_metrics_1 = ["CI", "DPL", "KL", "KS"]
