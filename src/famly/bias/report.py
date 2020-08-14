@@ -36,12 +36,11 @@ class FacetContinuousColumn(FacetColumn):
 class LabelColumn:
     def __init__(self, data: pd.Series, positive_label_values: Optional[Any] = None):
         """
-        initalize the label data with name and positive value
+        initialize the label column with data  and positive values
         :param data: data series for the label column
-        :param positive_label_value: positive label value for target column
+        :param positive_label_values: positive label values for target column
         """
         self.data = data
-        # Todo add support for multilabels
         self.positive_label_values = positive_label_values
 
 
@@ -156,7 +155,7 @@ def _series_datatype(data: pd.Series) -> DataType:
     elif np.issubdtype(data.dtype, np.floating):
         data_type = DataType.CONTINUOUS
     elif np.issubdtype(data.dtype, np.integer):
-        # If data is more than 5% if unique values then it is continuous
+        # Current rule: If data has more than 5% if unique values then it is continuous
         # Todo: Needs to be enhanced, This rule doesn't always determine the datatype correctly
         if data_uniqueness_fraction >= 0.05:
             data_type = DataType.CONTINUOUS
@@ -165,10 +164,13 @@ def _series_datatype(data: pd.Series) -> DataType:
 
 def _positive_index(data: pd.Series, positive_values: List[Any]) -> Tuple[List[pd.Series], List[str]]:
     """
-    returns a dataframe with boolean Series
-    :param data: input data for label or predicted labels
-    :param positive_values: list of positive values
-    :return:
+    creates a list of bool series for positive label index|positive predicted label index
+    based on the type of input data values,
+    list of positive label values or intervals for which the positive label index is created
+
+    :param data: input data for label or predicted label columns
+    :param positive_values: list of {positive label values|predicted positive label values}
+    :return: list of positive label index series, positive_label_values or intervals
     """
     data_type = _series_datatype(data)
     if data_type == DataType.CONTINUOUS:
@@ -192,7 +194,7 @@ def _positive_index(data: pd.Series, positive_values: List[Any]) -> Tuple[List[p
 def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
     """
     :param col: input data series
-    :param _data_values: list of category values to generate boolean index
+    :param data_values: list of category values to generate boolean index
     :returns: a boolean series where data_values are present in col as True
    """
     # create indexing series with boolean OR of facet values
@@ -202,14 +204,14 @@ def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
     return index_key_series
 
 
-def _continuous_data_idx(x: pd.Series, _data_threshold_index: pd.IntervalIndex) -> pd.Series:
+def _continuous_data_idx(x: pd.Series, data_threshold_index: pd.IntervalIndex) -> pd.Series:
     """
     returns bool Series after checking threshold index for each value from input
     :param x:
-    :param _data_threshold_index: group of threshold intervals
+    :param data_threshold_index: group of threshold intervals
     :return: boolean Series of data against threshold interval index
     """
-    return x.map(lambda y: any(_data_threshold_index.contains(y)))
+    return x.map(lambda y: any(data_threshold_index.contains(y)))
 
 
 def _categorical_metric_call_wrapper(
