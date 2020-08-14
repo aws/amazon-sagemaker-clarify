@@ -27,16 +27,18 @@ def test_report_category_data():
     report = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn(df_cat["y"], [1]),
+        LabelColumn(df_cat["y"], [0]),
         StageType.PRE_TRAINING,
         LabelColumn(df_cat["yhat"], [1]),
         group_variable=(df_cat["z"]),
     )
-    assert isinstance(report, dict)
+    assert isinstance(report, list)
     assert len(report) > 0
     # Check that we have metric for each of the 3 classes vs the rest
-    for k, v in report.items():
-        assert len(v["value"]) == 3
+    for k, v in report[0].items():
+        if isinstance(v, dict):
+            assert len(v["value"]) == 3
+
     result = {
         "CDDL": {
             "description": "Conditional Demographic Disparity in Labels (CDDL)",
@@ -64,8 +66,9 @@ def test_report_category_data():
             "description": "Total Variation Distance (TVD)",
             "value": {"a": 0.33333333333333337, "b": 0.0, "c": 0.33333333333333337},
         },
+        "label_value": "(0, 1]",
     }
-    assert report == result
+    assert report[0] == result
 
 
 def test_report_continuous_data():
@@ -79,11 +82,12 @@ def test_report_continuous_data():
         LabelColumn(df_cont["yhat"], [1]),
         group_variable=(df_cont["z"]),
     )
-    assert isinstance(report, dict)
+    assert isinstance(report, list)
     assert len(report) > 0
     # Check that we have metric for each of the 3 classes vs the rest
-    for k, v in report.items():
-        assert len(v["value"]) == 1
+    for k, v in report[0].items():
+        if isinstance(v, dict):
+            assert len(v["value"]) == 1
     result = {
         "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
         "CI": {"description": "Class Imbalance (CI)", "value": {"(2, 3]": 0.5}},
@@ -96,8 +100,71 @@ def test_report_continuous_data():
         "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
         "LP": {"description": "L-p Norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
         "TVD": {"description": "Total Variation Distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
+        "label_value": "(0, 1]",
     }
-    assert report == result
+    assert report[0] == result
+
+
+def test_label_values():
+    df = dataframe([["a", "p", 1, 1], ["b", "q", 1, 0], ["b", "r", 1, 0], ["c", "p", 0, 1], ["c", "q", 0, 1]])
+    # when no explicit label values are given for categorical data
+    report = bias_report(
+        df_cont,
+        FacetColumn("x"),
+        LabelColumn(df["y"]),
+        StageType.PRE_TRAINING,
+        LabelColumn(df_cont["yhat"], [1]),
+        metrics=["DPL", "CDDL"],
+        group_variable=(df_cont["z"]),
+    )
+
+    assert isinstance(report[0], dict)
+    assert len(report) > 0
+    expected_result = [
+        {
+            "DPL": {
+                "description": "Difference in Positive Proportions in Labels (DPL)",
+                "value": {"(2, 3]": 0.6666666666666666},
+            },
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
+            "label_value": "p",
+        },
+        {
+            "DPL": {
+                "description": "Difference in Positive Proportions in Labels (DPL)",
+                "value": {"(2, 3]": 0.3333333333333333},
+            },
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
+            "label_value": "q",
+        },
+        {
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": {"(2, 3]": -1.0}},
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": -0.25}},
+            "label_value": "r",
+        },
+    ]
+    assert report == expected_result
+
+    # when  explicit label values are given for categorical data
+    report_1 = bias_report(
+        df_cont,
+        FacetColumn("x"),
+        LabelColumn(df["y"], ["p", "q"]),
+        StageType.PRE_TRAINING,
+        LabelColumn(df_cont["yhat"], [1]),
+        metrics=["DPL", "CDDL"],
+        group_variable=(df_cont["z"]),
+    )
+
+    assert isinstance(report_1[0], dict)
+    expected_result_1 = [
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": {"(2, 3]": 1.0}},
+            "label_value": "p,q",
+        }
+    ]
+    assert report_1 == expected_result_1
 
 
 def test_fetch_metrics_to_run():
