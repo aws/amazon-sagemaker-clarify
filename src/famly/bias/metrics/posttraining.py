@@ -383,13 +383,12 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 # @registry.posttraining
 # FIXME: Registering this metric with post training metrics results in failure
-def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def FT(dataset: pd.DataFrame, facet: pd.Series, predicted_labels: pd.Series) -> float:
     """
     Flip Test (FT)
 
     :param dataset: array of data points
     :param facet: boolean column indicating sensitive group
-    :param labels: boolean column of positive values for target column
     :param predicted_labels: boolean column of predicted positive values for target column
     :param verbose: optional boolean value
     :return: FT difference metric
@@ -397,7 +396,6 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_lab
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
     predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
