@@ -16,6 +16,8 @@ EXTRAS_REQUIRE = {
         "nbconvert",
         "jupyter",
         "seaborn",
+        "mypy",
+        "lxml",
     ]
 }
 

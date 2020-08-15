@@ -13,8 +13,15 @@ unit_tests() {
 }
 
 lint() {
+    echo "Running pre-commit hooks"
+    echo "========================"
     pre-commit run -v -a
+    echo "Running Flake8"
+    echo "=============="
     flake8 . --count --show-source --statistics
+    echo "Running Mypy"
+    echo "============"
+    mypy --junit-xml reports/typecheck.xml --html-report reports --config-file mypy.ini src/
 }
 
 test_with_coverage() {
