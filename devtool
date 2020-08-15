@@ -21,7 +21,7 @@ lint() {
     flake8 . --count --show-source --statistics
     echo "Running Mypy"
     echo "============"
-    mypy --junit-xml reports/typecheck.xml --html-report reports --config-file mypy.ini src/
+    mypy --junit-xml reports/typecheck.xml --html-report reports --config-file setup.cfg src/
 }
 
 test_with_coverage() {
