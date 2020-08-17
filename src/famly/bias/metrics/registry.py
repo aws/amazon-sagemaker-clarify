@@ -2,9 +2,10 @@
 A module to register metric functions by decorators. Not supposed to be used outside of the package.
 """
 import types
+from typing import Callable, List, Any
 
-PRETRAINING_METRIC_FUNCTIONS = []
-POSTTRAINING_METRIC_FUNCTIONS = []
+PRETRAINING_METRIC_FUNCTIONS: List[Callable[..., Any]] = []
+POSTTRAINING_METRIC_FUNCTIONS: List[Callable[..., Any]] = []
 
 
 def pretraining(function):

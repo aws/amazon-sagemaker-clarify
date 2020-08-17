@@ -12,18 +12,23 @@ import famly.bias.metrics
 logger = logging.getLogger(__name__)
 
 
-class FacetColumn:
-    def __init__(self, name, protected_values: Optional[List[Any]] = None):
+class Column:
+    def __init__(self, name: str):
+        self.name = name
+
+
+class FacetColumn(Column):
+    def __init__(self, name: str, protected_values: Optional[List[Any]] = None):
         """
         initialize facet column name and  facet_values if present
         :param name: str
         :param protected_values: list of values indicating categories or threshold
         """
-        self.name = name
+        super().__init__(name)
         self.protected_values = protected_values
 
 
-class FacetContinuousColumn(FacetColumn):
+class FacetContinuousColumn(Column):
     def __init__(self, name, interval_indices: pd.IntervalIndex):
         """
         :param name: Name of the column
@@ -33,16 +38,17 @@ class FacetContinuousColumn(FacetColumn):
         self.interval_indices = interval_indices
 
 
-class LabelColumn:
-    def __init__(self, data: pd.Series, positive_label_value: Optional[Any] = None):
+class LabelColumn(Column):
+    def __init__(self, name: str, data: pd.Series, positive_label_value: Optional[Any] = None):
         """
         initalize the label data with name and postive value
         :param data: data series for the label column
         :param positive_label_value: positive label value for target column
         """
+        super().__init__(name)
         self.data = data
         # Todo add support for multilabels
-        self.positive_label_value = positive_label_value[0] if positive_label_value else 1
+        self.positive_label_value = positive_label_value if positive_label_value else 1
 
 
 class ProblemType(Enum):
@@ -92,7 +98,7 @@ def _column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def fetch_metrics_to_run(full_metrics: Callable, metric_names: List[Any]):
+def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: List[str]):
     """
     Validates the list of metric names passed and returns the callable methods for them
     :param full_metrics:
@@ -110,22 +116,23 @@ def _metric_description(metric: Callable, metric_values: dict) -> dict:
     """
     returns a dict with metric description and computed metric values
     :param metric: metric function name
-     :param metric_values: dict with facet value (key) and its results
+    :param metric_values: dict with facet value (key) and its results
     :return: metric result dict
     {"description": "Class Imbalance (CI)",
     "value": {1: -0.9288888888888889, 0: 0.9288888888888889}
     }
     """
-    if not metric.description:
+    if not metric.description:  # type: ignore
         raise KeyError(f"Description is not found for the registered metric: {metric}")
-    return {"description": metric.description, "value": metric_values}
+    return {"description": metric.description, "value": metric_values}  # type: ignore
 
 
-def _interval_index(facet: pd.Series, thresholds: List[Any]) -> pd.IntervalIndex:
+def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
     """
-    Creates a Interval Index from list of threshold values
+    Creates a Interval Index from list of threshold values. See pd.IntervalIndex.from_breaks
+    Ex. [0,1,2] -> [(0, 1], (1,2]]
     :param facet: input data series
-    :param thresholds: list of int or float values
+    :param thresholds: list of int or float values defining the threshold splits
     :return: pd.IntervalIndex
     """
     # Fix: use mean as threshold when no input is provided.
@@ -151,7 +158,7 @@ def _facet_datatype(facet: pd.Series) -> DataType:
         # cast the dtype to int, if exception is raised data is categorical
         casted_facet = facet.astype("int64", copy=True, errors="ignore")
         if np.issubdtype(casted_facet.dtype, np.integer) and data_uniqueness_fraction >= 0.05:
-            data_type = DataType.CONTINOUS
+            data_type = DataType.CONTINOUS  # type: ignore
     elif np.issubdtype(facet.dtype, np.floating):
         data_type = DataType.CONTINUOUS
     elif np.issubdtype(facet.dtype, np.integer):
@@ -329,13 +336,13 @@ def bias_report(
 
     elif facet_dtype == DataType.CONTINUOUS:
         facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
-        facet_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
+        facet_continuous_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
         for metric in metrics_to_run:
             result[metric.__name__] = _continous_metric_call_wrapper(
                 metric,
                 data_series,
-                facet_column.interval_indices,
+                facet_continuous_column.interval_indices,
                 label_series,
                 positive_label_index,
                 predicted_label_series,
