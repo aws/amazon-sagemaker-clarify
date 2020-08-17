@@ -27,10 +27,10 @@ def test_report_category_data():
     report = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn(df_cat["y"], [1]),
+        LabelColumn("y", df_cat["y"], 1),
         StageType.PRE_TRAINING,
-        LabelColumn(df_cat["yhat"], [1]),
-        group_variable=(df_cat["z"]),
+        LabelColumn("yhat", df_cat["yhat"], 1),
+        group_variable=df_cat["z"],
     )
     assert isinstance(report, dict)
     assert len(report) > 0
@@ -74,10 +74,10 @@ def test_report_continuous_data():
     report = bias_report(
         df_cont,
         FacetColumn("x"),
-        LabelColumn(df_cont["y"]),
+        LabelColumn("y", df_cont["y"]),
         StageType.PRE_TRAINING,
-        LabelColumn(df_cont["yhat"], [1]),
-        group_variable=(df_cont["z"]),
+        LabelColumn("yhat", df_cont["yhat"], 1),
+        group_variable=df_cont["z"],
     )
     assert isinstance(report, dict)
     assert len(report) > 0

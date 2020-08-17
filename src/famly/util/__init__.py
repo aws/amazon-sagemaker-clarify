@@ -69,7 +69,7 @@ def pdfs_aligned_nonzero(*args) -> List[np.array]:
     dict_pdfs = seq(pdfs).map(dict).list()
 
     # result aligned lists
-    aligned_lists = [[] for x in range(num_pdfs)]
+    aligned_lists: List[List[np.array]] = [[] for x in range(num_pdfs)]
 
     # fill keys present in all pdfs
     for i, key in enumerate(all_keys):

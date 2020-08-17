@@ -21,3 +21,4 @@ venv/
 .pytest_cache/
 *.swp
 .docker/
+reports

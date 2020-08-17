@@ -47,8 +47,9 @@ def CDD(feature: pd.Series, facet: pd.Series, label_index: pd.Series, group_vari
         raise ValueError("CDD: No negative labels in set")
 
     # Conditional demographic disparity (CDD)
-    CDD = []
-    counts = []
+    # FIXME: appending to numpy arrays is inefficient
+    CDD = np.array([])
+    counts = np.array([])
     for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
         numA = len(label_index[label_index & facet & (group_variable == subgroup_variable)])
