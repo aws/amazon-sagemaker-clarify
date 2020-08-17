@@ -118,7 +118,6 @@ def _metric_description(metric: Callable, metric_values: dict) -> dict:
     """
     if not metric.description:
         raise KeyError(f"Description is not found for the registered metric: {metric}")
-        result_metrics[metric] = {"description": metric_description, "value": result_metrics[metric]}
     return {"description": metric.description, "value": metric_values}
 
 
