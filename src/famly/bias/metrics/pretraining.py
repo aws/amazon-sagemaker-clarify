@@ -18,7 +18,7 @@ def CI(feature: pd.Series, facet: pd.Series) -> float:
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
     :return: a float in the interval [-1, +1] indicating an under-representation or over-representation
-    of the protected class.
+        of the protected class.
 
     .. math::
         CI = \frac{na-nd}{na+nd}
@@ -173,7 +173,7 @@ def CDDL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, 
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param positive_label_index : boolean column indicating positive labels
+    :param positive_label_index: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """

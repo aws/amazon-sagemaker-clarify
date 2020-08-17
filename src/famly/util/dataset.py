@@ -161,7 +161,7 @@ class Datasets:
 
     @staticmethod
     def list() -> List[str]:
-        return Datasets.datasets.keys()
+        return list(Datasets.datasets.keys())
 
     def __call__(self, dataset_name: str) -> Dataset:
         assert (
