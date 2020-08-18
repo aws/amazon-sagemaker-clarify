@@ -5,6 +5,8 @@ install_dependencies_dev() {
     python -m pip install --upgrade pip
     pip install -e .[test]
     if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    if [ -f docs/requirements.txt ]; then pip install -r docs/requirements.txt; fi
+    if [ -f examples/requirements.txt ]; then pip install -r examples/requirements.txt; fi
 }
 
 unit_tests() {

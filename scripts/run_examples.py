@@ -19,7 +19,7 @@ def run_notebook(path: str) -> None:
 
 def run_examples() -> None:
     log.info("Running example notebooks")
-    notebooks = ["examples/Bias_metrics_usage.ipynb"]
+    notebooks = ["examples/Bias_metrics_usage.ipynb", "examples/Bias_metrics_usage_marketing.ipynb"]
     for notebook in notebooks:
         run_notebook(notebook)
 
