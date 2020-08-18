@@ -13,8 +13,25 @@ unit_tests() {
 }
 
 lint() {
+    echo ""
+    echo "Lint checks"
+    echo -e "===========\n"
+    echo "1. pre-commit hooks"
+    echo "==================="
     pre-commit run -v -a
+    echo ""
+
+    echo "2. Flake8"
+    echo "========="
     flake8 . --count --show-source --statistics
+    echo ""
+
+    echo "3. Mypy"
+    echo "======="
+    mypy --junit-xml reports/typecheck.xml --html-report reports --config-file setup.cfg src/
+    echo ""
+
+    echo "Lint: SUCCESS"
 }
 
 test_with_coverage() {

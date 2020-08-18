@@ -17,6 +17,7 @@ __all__ = registry.all_metrics()
 def call_metric(metric: Callable[..., float], **kwargs) -> float:
     """
     Call metric function with keyword arguments. The excess arguments will be ignored.
+
     :param metric: a callable for a bias metric
     :param kwargs: keyword argument list
     :return: Return value of the callable
@@ -28,6 +29,7 @@ def call_metric(metric: Callable[..., float], **kwargs) -> float:
 def metric_one_vs_all(metric: Callable[..., float], feature: pd.Series, **kwargs) -> Dict[Any, float]:
     """
     Calculate any metric for a categorical facet and/or label using 1 vs all
+
     :param metric: a callable for a bias metric
     :param feature: pandas series containing categorical values
     :param kwargs: additional keyword argument list

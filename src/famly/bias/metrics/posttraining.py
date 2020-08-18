@@ -4,6 +4,7 @@ Post training metrics
 import logging
 import pandas as pd
 import numpy as np
+from typing import Tuple
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
 from . import registry, common
@@ -72,7 +73,7 @@ def DI(
 @registry.posttraining
 def DCO(
     feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series,
-) -> (float, float):
+) -> Tuple[float, float]:
     """
     Difference in Conditional Outcomes (DCO)
 
@@ -184,7 +185,7 @@ def DLR(
     positive_label_index: pd.Series,
     predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
-) -> (float, float):
+) -> Tuple[float, float]:
     """
     Difference in Label Rates (DLR)
 
@@ -342,7 +343,7 @@ def TE(
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Returns the difference in ratios between false negatives and false positives for the advantaged
-    and disadvantaged classes
+        and disadvantaged classes
     """
     facet = facet.astype(bool)
     positive_label_index = positive_label_index.astype(bool)
@@ -383,13 +384,12 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 # @registry.posttraining
 # FIXME: Registering this metric with post training metrics results in failure
-def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_labels: pd.Series) -> float:
+def FT(dataset: pd.DataFrame, facet: pd.Series, predicted_labels: pd.Series) -> float:
     """
     Flip Test (FT)
 
     :param dataset: array of data points
     :param facet: boolean column indicating sensitive group
-    :param labels: boolean column of positive values for target column
     :param predicted_labels: boolean column of predicted positive values for target column
     :param verbose: optional boolean value
     :return: FT difference metric
@@ -397,7 +397,6 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, labels: pd.Series, predicted_lab
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
     predicted_labels = predicted_labels.astype(bool)
-    labels = labels.astype(bool)
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
