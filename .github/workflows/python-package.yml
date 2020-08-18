@@ -20,7 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install_dependencies_dev
+        ./devtool install_deps_dev
 
     - name: Test
       run: |
@@ -37,7 +37,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        ./devtool install_dependencies_dev
+        ./devtool install_deps_dev
 
     - name: Run pre-commit checks and lint
       run: |
