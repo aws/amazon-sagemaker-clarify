@@ -1,1 +1,2 @@
 INFINITY = float("inf")
+UNIQUENESS_THRESHOLD: float = 0.05
