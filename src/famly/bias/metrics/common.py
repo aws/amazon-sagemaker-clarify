@@ -48,6 +48,8 @@ def CDD(feature: pd.Series, facet: pd.Series, label_index: pd.Series, group_vari
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
+    if group_variable is None or group_variable.empty:
+        return float("NAN")
     facet = facet.astype(bool)
     label_index = label_index.astype(bool)
     unique_groups = np.unique(group_variable)
