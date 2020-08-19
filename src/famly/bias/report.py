@@ -1,13 +1,13 @@
 """Bias detection in datasets"""
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, List, Optional, Callable, Tuple
 
-import numpy as np
 import pandas as pd
 
 import famly
 import famly.bias.metrics
+from famly.bias.metrics import common
 
 logger = logging.getLogger(__name__)
 
@@ -39,16 +39,15 @@ class FacetContinuousColumn(Column):
 
 
 class LabelColumn(Column):
-    def __init__(self, name: str, data: pd.Series, positive_label_value: Optional[Any] = None):
+    def __init__(self, name: str, data: pd.Series, positive_label_values: Optional[Any] = None):
         """
-        initalize the label data with name and postive value
+        initialize the label column with name, data  and positive values
         :param data: data series for the label column
-        :param positive_label_value: positive label value for target column
+        :param positive_label_values: positive label values for target column
         """
         super().__init__(name)
         self.data = data
-        # Todo add support for multilabels
-        self.positive_label_value = positive_label_value if positive_label_value else 1
+        self.positive_label_values = positive_label_values
 
 
 class ProblemType(Enum):
@@ -65,15 +64,6 @@ class StageType(Enum):
 
     PRE_TRAINING = "pre_training"
     POST_TRAINING = "post_training"
-
-
-class DataType(Enum):
-    """
-    Type of facet data series distribution
-    """
-
-    CATEGORICAL = 0
-    CONTINUOUS = 1
 
 
 def problem_type(labels: pd.Series) -> ProblemType:
@@ -143,30 +133,94 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
     return pd.IntervalIndex.from_breaks(thresholds)
 
 
-def _facet_datatype(facet: pd.Series) -> DataType:
+def _positive_predicted_index(
+    predicted_label_data: pd.Series, label_data: pd.Series, positive_label_values: Optional[Any]
+) -> List[pd.Series]:
     """
-    deterimine given facet data is categorical or continous using set of rules
-    :return: Enum {CATEGORICAL|CONTINUOUS}
+    creates a list of bool series for positive predicted label index based on the input data type,
+    list of positive label values or intervals
+
+    :param predicted_label_data: input data for predicted label column
+    :param label_datatype:  input data for the label column
+    :param positive_label_values: list of positive label values
+    :return: list of positive predicted label index series
     """
-    # if datatype is boolean or categorical we return data as categorical
-    data_type = DataType.CATEGORICAL
-    data_uniqueness_fraction = facet.nunique() / facet.count()
-    logger.info(f"facet uniqueness fraction: {data_uniqueness_fraction}")
-    if facet.dtype.name == "category":
-        return data_type
-    if facet.dtype.name in ["str", "string", "object"]:
-        # cast the dtype to int, if exception is raised data is categorical
-        casted_facet = facet.astype("int64", copy=True, errors="ignore")
-        if np.issubdtype(casted_facet.dtype, np.integer) and data_uniqueness_fraction >= 0.05:
-            data_type = DataType.CONTINOUS  # type: ignore
-    elif np.issubdtype(facet.dtype, np.floating):
-        data_type = DataType.CONTINUOUS
-    elif np.issubdtype(facet.dtype, np.integer):
-        # If data is more than 10% if unique values then it is continuous
-        # Todo: Needs to be enhanced, This rule doesn't always determine the datatype correctly
-        if data_uniqueness_fraction >= 0.05:
-            data_type = DataType.CONTINUOUS
-    return data_type
+    predicted_label_datatype = common.series_datatype(predicted_label_data)
+    label_datatype = common.series_datatype(label_data)
+    if predicted_label_datatype != label_datatype:
+        raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
+    if predicted_label_datatype == common.DataType.CONTINUOUS:
+        data_interval_indices = _interval_index(label_data, positive_label_values)
+        positive_predicted_index = [_continuous_data_idx(predicted_label_data, data_interval_indices)]
+    elif predicted_label_datatype == common.DataType.CATEGORICAL:
+        if positive_label_values:
+            positive_predicted_index = [_categorical_data_idx(predicted_label_data, positive_label_values)]
+        else:
+            positive_predicted_index = [predicted_label_data == val for val in label_data.unique()]
+    else:
+        raise RuntimeError("Predicted Label_column data is invalid or can't be classified")
+    # check if positive index boolean series has all False values
+    if positive_label_values:
+        for index in positive_predicted_index:
+            if (~index).all():
+                raise ValueError(
+                    "No Label values are present in the predicted Label Column,"
+                    "Positive Predicted Index Series contains all False values"
+                )
+    return positive_predicted_index
+
+
+def _positive_label_index(data: pd.Series, positive_values: Optional[Any]) -> Tuple[List[pd.Series], List[str]]:
+    """
+    creates a list of bool series for positive label index based on the input data type, list of positive
+    label values or intervals
+
+    :param data: input data for label column
+    :param positive_values: list of positive label values
+    :return: list of positive label index series, positive_label_values or intervals
+    """
+    data_type = common.series_datatype(data)
+    if data_type == common.DataType.CONTINUOUS:
+        data_interval_indices = _interval_index(data, positive_values)
+        positive_index = [_continuous_data_idx(data, data_interval_indices)]
+        label_values_or_intervals = [",".join(map(str, data_interval_indices))]
+    elif data_type == common.DataType.CATEGORICAL:
+        if positive_values:
+            positive_index = [_categorical_data_idx(data, positive_values)]
+            label_values_or_intervals = [",".join(map(str, positive_values))]
+        else:
+            positive_index = [data == val for val in data.unique()]
+            label_values_or_intervals = list(map(str, data.unique()))
+    else:
+        raise RuntimeError("Label_column data is invalid or can't be classified")
+    if isinstance(positive_index, list) and not list:
+        raise RuntimeError("positive label index can't be derived from the label data")
+    logger.debug(f"positive index: {positive_index}")
+    logger.debug(f"label values or Intervals: {label_values_or_intervals}",)
+    return positive_index, label_values_or_intervals
+
+
+def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
+    """
+    :param col: input data series
+    :param data_values: list of category values to generate boolean index
+    :returns: a boolean series where data_values are present in col as True
+   """
+    # create indexing series with boolean OR of facet values
+    index_key_series: pd.Series = (col == data_values[0])
+    for val in data_values[1:]:
+        index_key_series = index_key_series | (col == val)
+    return index_key_series
+
+
+def _continuous_data_idx(x: pd.Series, data_threshold_index: pd.IntervalIndex) -> pd.Series:
+    """
+    returns bool Series after checking threshold index for each value from input
+    :param x:
+    :param data_threshold_index: group of threshold intervals
+    :return: boolean Series of data against threshold interval index
+    """
+    return x.map(lambda y: any(data_threshold_index.contains(y)))
 
 
 def _categorical_metric_call_wrapper(
@@ -183,20 +237,9 @@ def _categorical_metric_call_wrapper(
     Dispatch calling of different metric functions with the correct arguments
     Calculate CI from a list of values or 1 vs all
     """
-
-    def facet_idx(col: pd.Series, _facet_values: List[Any]) -> pd.Series:
-        """
-        :returns: a boolean series where facet_values are present in col
-        """
-        # create indexing series with boolean OR of facet values
-        index_key_series: pd.Series = (col == _facet_values[0])
-        for val in _facet_values[1:]:
-            index_key_series = index_key_series | (col == val)
-        return index_key_series
-
     if facet_values:
         # Build index series from facet
-        facet = facet_idx(feature, facet_values)
+        facet = _categorical_data_idx(feature, facet_values)
         result = famly.bias.metrics.call_metric(
             metric,
             feature=feature,
@@ -223,7 +266,7 @@ def _categorical_metric_call_wrapper(
     return metric_result
 
 
-def _continous_metric_call_wrapper(
+def _continuous_metric_call_wrapper(
     metric: Callable,
     feature: pd.Series,
     facet_threshold_index: pd.IntervalIndex,
@@ -237,16 +280,7 @@ def _continous_metric_call_wrapper(
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
 
-    def facet_from_thresholds(x: pd.Series, _facet_threshold_index: pd.IntervalIndex) -> pd.Series:
-        """
-        returns bool Series after checking threshold index for each value from input
-        :param x:
-        :param _facet_threshold_index:
-        :return: boolean Series for facet
-        """
-        return x.map(lambda y: any(facet_threshold_index.contains(y)))
-
-    facet = facet_from_thresholds(feature, facet_threshold_index)
+    facet = _continuous_data_idx(feature, facet_threshold_index)
     result = famly.bias.metrics.call_metric(
         metric,
         feature=feature,
@@ -270,7 +304,7 @@ def bias_report(
     predicted_label_column: LabelColumn = None,
     metrics: List[Any] = ["all"],
     group_variable: Optional[pd.Series] = None,
-) -> Dict:
+) -> List[Dict]:
     """
     Run Full bias report on a dataset.:
     :param df: Dataset as a pandas.DataFrame
@@ -280,7 +314,7 @@ def bias_report(
     :param predicted_label_column: description of column with predicted labels
     :param metrics: list of metrics names to provide bias metrics
     :param group_variable: data series for the group variable
-    :return:
+    :return: list of dictionaries with metrics for different label values
     """
     if facet_column:
         assert facet_column.name in df.columns, "Facet column {} is not present in the dataset".format(
@@ -289,12 +323,11 @@ def bias_report(
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
-    if problem_type(label_column.data) != ProblemType.BINARY:
-        raise RuntimeError("Only binary classification problems are supported")
-
     data_series: pd.Series = df[facet_column.name]
     label_series: pd.Series = label_column.data
-    positive_label_index: pd.Series = label_column.data == label_column.positive_label_value
+    positive_label_index, label_values = _positive_label_index(
+        data=label_series, positive_values=label_column.positive_label_values
+    )
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
@@ -304,51 +337,70 @@ def bias_report(
             else fetch_metrics_to_run(famly.bias.metrics.POSTTRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(post_training_metrics)
-        positive_predicted_label_index = df[predicted_label_column.name] == predicted_label_column.positive_label_value
-        predicted_label_series = df[predicted_label_column.name]
+        predicted_label_series = predicted_label_column.data
+        positive_predicted_label_index = _positive_predicted_index(
+            predicted_label_data=predicted_label_series,
+            label_data=label_series,
+            positive_label_values=label_column.positive_label_values,
+        )
     else:
-        positive_predicted_label_index = None
+        positive_predicted_label_index = [None]
+        predicted_label_values = [None]
         predicted_label_series = None
-    pre_training_metrics = (
-        famly.bias.metrics.PRETRAINING_METRICS
-        if metrics == ["all"]
-        else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
-    )
-    metrics_to_run.extend(pre_training_metrics)
+        pre_training_metrics = (
+            famly.bias.metrics.PRETRAINING_METRICS
+            if metrics == ["all"]
+            else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
+        )
+        metrics_to_run.extend(pre_training_metrics)
 
-    facet_dtype = _facet_datatype(data_series)
-    result = dict()
+    facet_dtype = common.series_datatype(data_series)
+    metric_result = []
     data_series_cat: pd.Series  # Category series
-    if facet_dtype == DataType.CATEGORICAL:
+    # result values can be str for label_values or dict for metrics
+    result: Dict[str, Any]
+    if facet_dtype == common.DataType.CATEGORICAL:
         data_series_cat = data_series.astype("category")
-        for metric in metrics_to_run:
-            result[metric.__name__] = _categorical_metric_call_wrapper(
-                metric,
-                data_series_cat,
-                facet_column.protected_values,
-                label_series,
-                positive_label_index,
-                predicted_label_series,
-                positive_predicted_label_index,
-                group_variable,
-            )
-        return result
+        for val, label_index in zip(label_values, positive_label_index):
+            for predicted_label_index in positive_predicted_label_index:
+                result = dict()
+                for metric in metrics_to_run:
+                    result[metric.__name__] = _categorical_metric_call_wrapper(
+                        metric,
+                        data_series_cat,
+                        facet_column.protected_values,
+                        label_series,
+                        label_index,
+                        predicted_label_series,
+                        predicted_label_index,
+                        group_variable,
+                    )
+                result["label_value"] = val
+                metric_result.append(result)
+        logger.debug("metric_result:", metric_result)
+        return metric_result
 
-    elif facet_dtype == DataType.CONTINUOUS:
+    elif facet_dtype == common.DataType.CONTINUOUS:
         facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
         facet_continuous_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
-        for metric in metrics_to_run:
-            result[metric.__name__] = _continous_metric_call_wrapper(
-                metric,
-                data_series,
-                facet_continuous_column.interval_indices,
-                label_series,
-                positive_label_index,
-                predicted_label_series,
-                positive_predicted_label_index,
-                group_variable,
-            )
-        return result
+        for val, label_index in zip(label_values, positive_label_index):
+            for predicted_label_index in positive_predicted_label_index:
+                result = dict()
+                for metric in metrics_to_run:
+                    result[metric.__name__] = _continuous_metric_call_wrapper(
+                        metric,
+                        data_series,
+                        facet_continuous_column.interval_indices,
+                        label_series,
+                        label_index,
+                        predicted_label_series,
+                        predicted_label_index,
+                        group_variable,
+                    )
+                result["label_value"] = val
+                metric_result.append(result)
+        logger.debug("metric_result:", metric_result)
+        return metric_result
     else:
         raise RuntimeError("facet_column data is invalid or can't be classified")

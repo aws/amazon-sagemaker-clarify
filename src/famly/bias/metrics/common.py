@@ -1,5 +1,21 @@
+import logging
+from enum import Enum
+
 import pandas as pd
 import numpy as np
+
+from famly.bias.metrics.constants import UNIQUENESS_THRESHOLD
+
+logger = logging.getLogger(__name__)
+
+
+class DataType(Enum):
+    """
+    Type of facet data series distribution
+    """
+
+    CATEGORICAL = 0
+    CONTINUOUS = 1
 
 
 def require(condition: bool, message: str) -> None:
@@ -65,3 +81,30 @@ def CDD(feature: pd.Series, facet: pd.Series, label_index: pd.Series, group_vari
     wtd_mean_CDD = np.sum(counts * CDD) / np.sum(counts)
 
     return wtd_mean_CDD
+
+
+def series_datatype(data: pd.Series) -> DataType:
+    """
+    determine given data series is categorical or continuous using set of rules
+
+    :return: Enum {CATEGORICAL|CONTINUOUS}
+    """
+    # if datatype is boolean or categorical we return data as categorical
+    data_type = DataType.CATEGORICAL
+    data_uniqueness_fraction = data.nunique() / data.count()
+    logger.info(f"data uniqueness fraction: {data_uniqueness_fraction}")
+    if data.dtype.name == "category":
+        return data_type
+    if data.dtype.name in ["str", "string", "object"]:
+        # cast the dtype to int, if exception is raised data is categorical
+        casted_data = data.astype("int64", copy=True, errors="ignore")
+        if np.issubdtype(casted_data.dtype, np.integer) and data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
+            data_type = DataType.CONTINOUS  # type: ignore
+    elif np.issubdtype(data.dtype, np.floating):
+        data_type = DataType.CONTINUOUS
+    elif np.issubdtype(data.dtype, np.integer):
+        # Current rule: If data has more than 5% if unique values then it is continuous
+        # Todo: Needs to be enhanced, This rule doesn't always determine the datatype correctly
+        if data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
+            data_type = DataType.CONTINUOUS
+    return data_type
