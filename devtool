@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-install_dependencies_dev() {
+install_deps_dev() {
     python -m pip install --upgrade pip
     pip install -e .[test]
     if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
@@ -59,6 +59,9 @@ all() {
 set +x
 if [ $# -gt 0 ]
 then
+    SCRIPTPATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+    echo "CD -> $SCRIPTPATH"
+    cd $SCRIPTPATH
     $@
 else
     cat<<EOF
