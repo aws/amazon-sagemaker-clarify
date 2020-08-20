@@ -134,7 +134,7 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
 
 
 def _positive_predicted_index(
-    predicted_label_data: pd.Series, label_data: pd.Series, positive_label_values: Optional[Any]
+    predicted_label_data: pd.Series, label_data: pd.Series, positive_label_values: List[Any]
 ) -> List[pd.Series]:
     """
     creates a list of bool series for positive predicted label index based on the input data type,
@@ -152,25 +152,21 @@ def _positive_predicted_index(
     if predicted_label_datatype == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(label_data, positive_label_values)
         positive_predicted_index = [_continuous_data_idx(predicted_label_data, data_interval_indices)]
-    elif predicted_label_datatype == common.DataType.CATEGORICAL:
-        if positive_label_values:
-            positive_predicted_index = [_categorical_data_idx(predicted_label_data, positive_label_values)]
-        else:
-            positive_predicted_index = [predicted_label_data == val for val in label_data.unique()]
+    elif predicted_label_datatype == common.DataType.CATEGORICAL and positive_label_values:
+        positive_predicted_index = [_categorical_data_idx(predicted_label_data, positive_label_values)]
     else:
         raise RuntimeError("Predicted Label_column data is invalid or can't be classified")
     # check if positive index boolean series has all False values
-    if positive_label_values:
-        for index in positive_predicted_index:
-            if (~index).all():
-                raise ValueError(
-                    "No Label values are present in the predicted Label Column,"
-                    "Positive Predicted Index Series contains all False values"
-                )
+    for index in positive_predicted_index:
+        if (~index).all():
+            raise ValueError(
+                "No Label values are present in the predicted Label Column,"
+                "Positive Predicted Index Series contains all False values"
+            )
     return positive_predicted_index
 
 
-def _positive_label_index(data: pd.Series, positive_values: Optional[Any]) -> Tuple[List[pd.Series], List[str]]:
+def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[List[pd.Series], List[str]]:
     """
     creates a list of bool series for positive label index based on the input data type, list of positive
     label values or intervals
@@ -184,13 +180,9 @@ def _positive_label_index(data: pd.Series, positive_values: Optional[Any]) -> Tu
         data_interval_indices = _interval_index(data, positive_values)
         positive_index = [_continuous_data_idx(data, data_interval_indices)]
         label_values_or_intervals = [",".join(map(str, data_interval_indices))]
-    elif data_type == common.DataType.CATEGORICAL:
-        if positive_values:
-            positive_index = [_categorical_data_idx(data, positive_values)]
-            label_values_or_intervals = [",".join(map(str, positive_values))]
-        else:
-            positive_index = [data == val for val in data.unique()]
-            label_values_or_intervals = list(map(str, data.unique()))
+    elif data_type == common.DataType.CATEGORICAL and positive_values:
+        positive_index = [_categorical_data_idx(data, positive_values)]
+        label_values_or_intervals = [",".join(map(str, positive_values))]
     else:
         raise RuntimeError("Label_column data is invalid or can't be classified")
     if isinstance(positive_index, list) and not list:
@@ -320,6 +312,8 @@ def bias_report(
         assert facet_column.name in df.columns, "Facet column {} is not present in the dataset".format(
             facet_column.name
         )
+    if not label_column.positive_label_values:
+        raise ValueError("Positive label values or thresholds are empty for Label column")
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
@@ -375,7 +369,7 @@ def bias_report(
                         predicted_label_index,
                         group_variable,
                     )
-                result["label_value"] = val
+                result["label_value_or_threshold"] = val
                 metric_result.append(result)
         logger.debug("metric_result:", metric_result)
         return metric_result
@@ -398,7 +392,7 @@ def bias_report(
                         predicted_label_index,
                         group_variable,
                     )
-                result["label_value"] = val
+                result["label_value_or_threshold"] = val
                 metric_result.append(result)
         logger.debug("metric_result:", metric_result)
         return metric_result
