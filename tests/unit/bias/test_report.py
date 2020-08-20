@@ -30,7 +30,7 @@ def test_report_category_data():
         FacetColumn("x"),
         LabelColumn("y", df_cat["y"], [0]),
         StageType.PRE_TRAINING,
-        LabelColumn("yhat", df_cat["yhat"], [1]),
+        LabelColumn("yhat", df_cat["yhat"]),
         group_variable=df_cat["z"],
     )
     assert isinstance(pretraining_report, list)
@@ -67,7 +67,7 @@ def test_report_category_data():
             "description": "Total Variation Distance (TVD)",
             "value": {"a": 0.33333333333333337, "b": 0.0, "c": 0.33333333333333337},
         },
-        "label_value": "(0, 1]",
+        "label_value_or_threshold": "(0, 1]",
     }
     assert pretraining_report[0] == result
 
@@ -75,7 +75,7 @@ def test_report_category_data():
     posttraining_report = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"]),
+        LabelColumn("y", df_cat["y"], [0]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cat["yhat"]),
         metrics=["AD", "DI", "DPPL", "RD"],
@@ -94,7 +94,7 @@ def test_report_category_data():
             "value": {"a": -0.6666666666666667, "b": 1.0, "c": -0.6666666666666667},
         },
         "RD": {"description": "Recall Difference (RD)", "value": {"a": -1.0, "b": 1.0, "c": float("-inf")}},
-        "label_value": "(0, 1]",
+        "label_value_or_threshold": "(0, 1]",
     }
     assert posttraining_report[0] == expected_result_1
 
@@ -106,9 +106,9 @@ def test_report_continuous_data():
     pretraining_report = bias_report(
         df_cont,
         FacetColumn("x"),
-        LabelColumn("y", df_cont["y"]),
+        LabelColumn("y", df_cont["y"], [0]),
         StageType.PRE_TRAINING,
-        LabelColumn("yhat", df_cont["yhat"], [1]),
+        LabelColumn("yhat", df_cont["yhat"]),
         group_variable=df_cont["z"],
     )
     assert isinstance(pretraining_report, list)
@@ -129,16 +129,16 @@ def test_report_continuous_data():
         "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
         "LP": {"description": "L-p Norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
         "TVD": {"description": "Total Variation Distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
-        "label_value": "(0, 1]",
+        "label_value_or_threshold": "(0, 1]",
     }
     assert pretraining_report[0] == result
 
     posttraining_report = bias_report(
         df_cont,
         FacetColumn("x"),
-        LabelColumn("y", df_cont["y"]),
+        LabelColumn("y", df_cont["y"], [0]),
         StageType.POST_TRAINING,
-        LabelColumn("yhat", df_cont["yhat"], [0]),
+        LabelColumn("yhat", df_cont["yhat"]),
         group_variable=df_cont["z"],
     )
     assert isinstance(posttraining_report, list)
@@ -158,7 +158,7 @@ def test_report_continuous_data():
         },
         "RD": {"description": "Recall Difference (RD)", "value": {"(2, 3]": float("-inf")}},
         "TE": {"description": "Treatment Equality (TE)", "value": {"(2, 3]": float("inf")}},
-        "label_value": "(0, 1]",
+        "label_value_or_threshold": "(0, 1]",
     }
     assert posttraining_report[0] == expected_result_1
 
@@ -168,56 +168,6 @@ def test_label_values():
     Test bias metrics for multiple label values
     """
     df = dataframe([["a", "p", 1, "p"], ["b", "q", 1, "p"], ["b", "r", 1, "q"], ["c", "p", 0, "p"], ["c", "q", 0, "p"]])
-    # when no explicit label values are given for categorical data
-    report = bias_report(
-        df,
-        FacetColumn("x"),
-        LabelColumn("y", df["y"]),
-        StageType.PRE_TRAINING,
-        LabelColumn("yhat", df_cont["yhat"]),
-        metrics=["DPL", "CDDL"],
-        group_variable=df_cont["z"],
-    )
-
-    assert isinstance(report[0], dict)
-    assert len(report) > 0
-    expected_result = [
-        {
-            "CDDL": {
-                "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "value": {"a": -0.375, "b": 1.0, "c": -0.375},
-            },
-            "DPL": {
-                "description": "Difference in Positive Proportions in Labels (DPL)",
-                "value": {"a": -0.75, "b": 0.6666666666666666, "c": -0.16666666666666669},
-            },
-            "label_value": "p",
-        },
-        {
-            "CDDL": {
-                "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "value": {"a": 0.375, "b": -0.5, "c": 0.375},
-            },
-            "DPL": {
-                "description": "Difference in Positive Proportions in Labels (DPL)",
-                "value": {"a": 0.5, "b": -0.16666666666666669, "c": -0.16666666666666669},
-            },
-            "label_value": "q",
-        },
-        {
-            "CDDL": {
-                "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "value": {"a": 0.25, "b": 0.0, "c": 0.25},
-            },
-            "DPL": {
-                "description": "Difference in Positive Proportions in Labels (DPL)",
-                "value": {"a": 0.25, "b": -0.5, "c": 0.3333333333333333},
-            },
-            "label_value": "r",
-        },
-    ]
-    assert report == expected_result
-
     # when  explicit label values are given for categorical data
     # Pre training bias metrics
     pretraining_report = bias_report(
@@ -241,7 +191,7 @@ def test_label_values():
                 "description": "Difference in Positive Proportions in Labels (DPL)",
                 "value": {"a": -0.25, "b": 0.5, "c": -0.33333333333333337},
             },
-            "label_value": "p,q",
+            "label_value_or_threshold": "p,q",
         }
     ]
     assert pretraining_report == expected_result_1
@@ -274,7 +224,7 @@ def test_label_values():
                 "value": {"a": 0.0, "b": 0.0, "c": 0.0},
             },
             "RD": {"description": "Recall Difference (RD)", "value": {"a": 0.0, "b": 0.0, "c": 0.0}},
-            "label_value": "p,q",
+            "label_value_or_threshold": "p,q",
         }
     ]
     assert posttraining_report == expected_result_2
