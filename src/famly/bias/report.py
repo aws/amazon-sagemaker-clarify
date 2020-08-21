@@ -187,7 +187,7 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
     else:
         raise RuntimeError("Label_column data is invalid or can't be classified")
     logger.debug(f"positive index: {positive_index}")
-    logger.debug(f"label values or Intervals: {label_values_or_intervals}")
+    logger.debug(f"label values or intervals: {label_values_or_intervals}")
     return positive_index, label_values_or_intervals
 
 
@@ -255,7 +255,7 @@ def _categorical_metric_call_wrapper(
             group_variable=group_variable,
         )
     else:
-        raise ValueError("Facet values must be provided fetch the bias metrics")
+        raise ValueError("Facet values must be provided to compute the bias metrics")
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 

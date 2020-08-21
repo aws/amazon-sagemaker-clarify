@@ -97,7 +97,7 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
     logger.info(f"data uniqueness fraction: {data_uniqueness_fraction}")
     # Assumption: user will give single value for threshold currently
     # Todo: fix me if multiple thresholds for facet or label are supported
-    if data.dtype.name == "category" or (isinstance(values, list) and len(values) >= 2):
+    if data.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
         return data_type
     if data.dtype.name in ["str", "string", "object"]:
         # cast the dtype to int, if exception is raised data is categorical
