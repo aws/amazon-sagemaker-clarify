@@ -17,7 +17,7 @@ def dataframe(data: List[List[Any]]):
     return df
 
 
-df_cat = dataframe([["a", 1, 1, 1], ["b", 1, 1, 0], ["b", 0, 1, 0], ["c", 0, 0, 1]])
+df_cat = dataframe([["a", 1, 1, 1], ["b", 1, 1, 0], ["b", 0, 1, 0], ["b", 0, 0, 1]])
 df_cont = dataframe([[1, 1, 1, 1], [2, 1, 1, 0], [3, 0, 0, 0], [2, 0, 1, 1]])
 
 
@@ -35,41 +35,32 @@ def test_report_category_data():
     )
     assert isinstance(pretraining_report, list)
     assert len(pretraining_report) > 0
-    # Check that we have metric for each of the 3 classes vs the rest
-    for k, v in pretraining_report[0].items():
-        if isinstance(v, dict):
-            assert len(v["value"]) == 3
 
-    result = {
-        "CDDL": {
-            "description": "Conditional Demographic Disparity in Labels (CDDL)",
-            "value": {"a": -0.375, "b": 0.375, "c": 0.25},
+    result = [
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.375},
+            "CI": {"description": "Class Imbalance (CI)", "value": 0.5},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.6666666666666667},
+            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
+            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.584962500721156},
+            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
+            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
+            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "value_or_threshold": "a",
         },
-        "CI": {"description": "Class Imbalance (CI)", "value": {"a": 0.5, "b": 0.0, "c": 0.5}},
-        "DPL": {
-            "description": "Difference in Positive Proportions in Labels (DPL)",
-            "value": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.625},
+            "CI": {"description": "Class Imbalance (CI)", "value": -0.5},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.6666666666666667},
+            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
+            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": -0.5283208335737187},
+            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
+            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
+            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "value_or_threshold": "b",
         },
-        "JS": {
-            "description": "Jensen-Shannon Divergence (JS)",
-            "value": {"a": 0.2789960722619452, "b": 0.0, "c": 0.2789960722619452},
-        },
-        "KL": {
-            "description": "Kullback-Liebler Divergence (KL)",
-            "value": {"a": 1.584962500721156, "b": 0.0, "c": 1.584962500721156},
-        },
-        "KS": {
-            "description": "Kolmogorov-Smirnov Distance (KS)",
-            "value": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667},
-        },
-        "LP": {"description": "L-p Norm (LP)", "value": {"a": 0.6666666666666667, "b": 0.0, "c": 0.6666666666666667}},
-        "TVD": {
-            "description": "Total Variation Distance (TVD)",
-            "value": {"a": 0.33333333333333337, "b": 0.0, "c": 0.33333333333333337},
-        },
-        "label_value_or_threshold": "(0, 1]",
-    }
-    assert pretraining_report[0] == result
+    ]
+    assert pretraining_report == result
 
     # post training bias metrics
     posttraining_report = bias_report(
@@ -83,20 +74,29 @@ def test_report_category_data():
     )
     assert isinstance(posttraining_report, list)
     assert len(posttraining_report) > 0
-    expected_result_1 = {
-        "AD": {
-            "description": "Accuracy Difference (AD)",
-            "value": {"a": -0.6666666666666667, "b": 0.0, "c": 0.6666666666666666},
+    expected_result_1 = [
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.6666666666666667},
+            "DI": {"description": "Disparate Impact (DI)", "value": 3.0},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": -0.6666666666666667,
+            },
+            "RD": {"description": "Recall Difference (RD)", "value": -1.0},
+            "value_or_threshold": "a",
         },
-        "DI": {"description": "Disparate Impact (DI)", "value": {"a": 3.0, "b": 0.0, "c": 3.0}},
-        "DPPL": {
-            "description": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
-            "value": {"a": -0.6666666666666667, "b": 1.0, "c": -0.6666666666666667},
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": 0.6666666666666667},
+            "DI": {"description": "Disparate Impact (DI)", "value": 0.3333333333333333},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.6666666666666667,
+            },
+            "RD": {"description": "Recall Difference (RD)", "value": 1.0},
+            "value_or_threshold": "b",
         },
-        "RD": {"description": "Recall Difference (RD)", "value": {"a": -1.0, "b": 1.0, "c": float("-inf")}},
-        "label_value_or_threshold": "(0, 1]",
-    }
-    assert posttraining_report[0] == expected_result_1
+    ]
+    assert posttraining_report == expected_result_1
 
 
 def test_report_continuous_data():
@@ -113,25 +113,20 @@ def test_report_continuous_data():
     )
     assert isinstance(pretraining_report, list)
     assert len(pretraining_report) > 0
-    # Check that we have metric for each of the 3 classes vs the rest
-    for k, v in pretraining_report[0].items():
-        if isinstance(v, dict):
-            assert len(v["value"]) == 1
-    result = {
-        "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": {"(2, 3]": 0.25}},
-        "CI": {"description": "Class Imbalance (CI)", "value": {"(2, 3]": 0.5}},
-        "DPL": {
-            "description": "Difference in Positive Proportions in Labels (DPL)",
-            "value": {"(2, 3]": 0.6666666666666666},
-        },
-        "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": {"(2, 3]": 0.2789960722619452}},
-        "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": {"(2, 3]": 1.584962500721156},},
-        "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": {"(2, 3]": 0.6666666666666667}},
-        "LP": {"description": "L-p Norm (LP)", "value": {"(2, 3]": 0.6666666666666667}},
-        "TVD": {"description": "Total Variation Distance (TVD)", "value": {"(2, 3]": 0.33333333333333337}},
-        "label_value_or_threshold": "(0, 1]",
-    }
-    assert pretraining_report[0] == result
+    result = [
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.25},
+            "CI": {"description": "Class Imbalance (CI)", "value": 0.5},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.6666666666666666},
+            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
+            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.584962500721156},
+            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
+            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
+            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "value_or_threshold": "(2, 3]",
+        }
+    ]
+    assert pretraining_report == result
 
     posttraining_report = bias_report(
         df_cont,
@@ -143,24 +138,22 @@ def test_report_continuous_data():
     )
     assert isinstance(posttraining_report, list)
     assert len(posttraining_report) > 0
-    # Check that we have metric for each of the 3 classes vs the rest
-    for k, v in posttraining_report[0].items():
-        if isinstance(v, dict):
-            assert len(v["value"]) == 1
-    expected_result_1 = {
-        "AD": {"description": "Accuracy Difference (AD)", "value": {"(2, 3]": -0.6666666666666667}},
-        "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": {"(2, 3]": (float("-inf"), 0.0)}},
-        "DI": {"description": "Disparate Impact (DI)", "value": {"(2, 3]": 0.0}},
-        "DLR": {"description": "Difference in Label Rates (DLR)", "value": {"(2, 3]": (float("-inf"), -1.0)}},
-        "DPPL": {
-            "description": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
-            "value": {"(2, 3]": 0.6666666666666666},
-        },
-        "RD": {"description": "Recall Difference (RD)", "value": {"(2, 3]": float("-inf")}},
-        "TE": {"description": "Treatment Equality (TE)", "value": {"(2, 3]": float("inf")}},
-        "label_value_or_threshold": "(0, 1]",
-    }
-    assert posttraining_report[0] == expected_result_1
+    expected_result_1 = [
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.6666666666666667},
+            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), 0.0)},
+            "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
+            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (float("-inf"), -1.0)},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.6666666666666666,
+            },
+            "RD": {"description": "Recall Difference (RD)", "value": float("-inf")},
+            "TE": {"description": "Treatment Equality (TE)", "value": float("inf")},
+            "value_or_threshold": "(2, 3]",
+        }
+    ]
+    assert posttraining_report == expected_result_1
 
 
 def test_label_values():
@@ -183,16 +176,20 @@ def test_label_values():
     assert isinstance(pretraining_report[0], dict)
     expected_result_1 = [
         {
-            "CDDL": {
-                "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "value": {"a": -0.3, "b": 0.3, "c": -0.4},
-            },
-            "DPL": {
-                "description": "Difference in Positive Proportions in Labels (DPL)",
-                "value": {"a": -0.25, "b": 0.5, "c": -0.33333333333333337},
-            },
-            "label_value_or_threshold": "p,q",
-        }
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.3},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.25},
+            "value_or_threshold": "a",
+        },
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.3},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
+            "value_or_threshold": "b",
+        },
+        {
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.4},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.33333333333333337},
+            "value_or_threshold": "c",
+        },
     ]
     assert pretraining_report == expected_result_1
 
@@ -210,22 +207,38 @@ def test_label_values():
     assert isinstance(posttraining_report[0], dict)
     expected_result_2 = [
         {
-            "AD": {
-                "description": "Accuracy Difference (AD)",
-                "value": {"a": -0.25, "b": 0.5, "c": -0.33333333333333337},
-            },
-            "DI": {"description": "Disparate Impact (DI)", "value": {"a": 1.0, "b": 1.0, "c": 1.0}},
-            "DLR": {
-                "description": "Difference in Label Rates (DLR)",
-                "value": {"a": (-0.25, 0), "b": (0.5, 0), "c": (-0.33333333333333337, 0)},
-            },
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.25},
+            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
+            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (-0.25, 0)},
             "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
-                "value": {"a": 0.0, "b": 0.0, "c": 0.0},
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.0,
             },
-            "RD": {"description": "Recall Difference (RD)", "value": {"a": 0.0, "b": 0.0, "c": 0.0}},
-            "label_value_or_threshold": "p,q",
-        }
+            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "value_or_threshold": "a",
+        },
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": 0.5},
+            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
+            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (0.5, 0)},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.0,
+            },
+            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "value_or_threshold": "b",
+        },
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.33333333333333337},
+            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
+            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (-0.33333333333333337, 0)},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.0,
+            },
+            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "value_or_threshold": "c",
+        },
     ]
     assert posttraining_report == expected_result_2
 
