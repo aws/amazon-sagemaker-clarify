@@ -125,12 +125,13 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
     :param thresholds: list of int or float values defining the threshold splits
     :return: pd.IntervalIndex
     """
-    # Fix: use mean as threshold when no input is provided.
-    thresholds = [int(facet.mean())] if not thresholds else thresholds
+    if not thresholds:
+        raise ValueError("Threshold values must be provided for continuous data")
     facet_max, facet_min = facet.max(), facet.min()
+    threshold_intervals = thresholds.copy()
     # add  max value if not exists in threshold limits
-    thresholds.append(facet_max) if facet_max not in thresholds else thresholds
-    return pd.IntervalIndex.from_breaks(thresholds)
+    threshold_intervals.append(facet_max) if facet_max not in thresholds else threshold_intervals
+    return pd.IntervalIndex.from_breaks(threshold_intervals)
 
 
 def _positive_predicted_index(
@@ -145,8 +146,8 @@ def _positive_predicted_index(
     :param positive_label_values: list of positive label values
     :return: list of positive predicted label index series
     """
-    predicted_label_datatype = common.series_datatype(predicted_label_data)
-    label_datatype = common.series_datatype(label_data)
+    predicted_label_datatype = common.series_datatype(predicted_label_data, positive_label_values)
+    label_datatype = common.series_datatype(label_data, positive_label_values)
     if predicted_label_datatype != label_datatype:
         raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
@@ -174,7 +175,7 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
     :param positive_values: list of positive label values
     :return: list of positive label index series, positive_label_values or intervals
     """
-    data_type = common.series_datatype(data)
+    data_type = common.series_datatype(data, positive_values)
     if data_type == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(data, positive_values)
         positive_index = _continuous_data_idx(data, data_interval_indices)
@@ -338,7 +339,7 @@ def bias_report(
         )
         metrics_to_run.extend(pre_training_metrics)
 
-    facet_dtype = common.series_datatype(data_series)
+    facet_dtype = common.series_datatype(data_series, facet_column.protected_values)
     data_series_cat: pd.Series  # Category series
     # result values can be str for label_values or dict for metrics
     result: Dict[str, Any]
@@ -351,7 +352,6 @@ def bias_report(
             if not facet_column.protected_values
             else [facet_column.protected_values]
         )
-        print(facet_values_list)
         for facet_values in facet_values_list:
             result = dict()
             for metric in metrics_to_run:
@@ -365,8 +365,7 @@ def bias_report(
                     positive_predicted_label_index,
                     group_variable,
                 )
-            result["value_or_threshold"] = ",".join(facet_values)
-            print(result)
+            result["value_or_threshold"] = ",".join(map(str, facet_values))
             metrics_result.append(result)
         logger.debug("metric_result:", metrics_result)
         return metrics_result

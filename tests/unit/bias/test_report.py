@@ -105,7 +105,7 @@ def test_report_continuous_data():
     # pre training bias metrics
     pretraining_report = bias_report(
         df_cont,
-        FacetColumn("x"),
+        FacetColumn("x", [2]),
         LabelColumn("y", df_cont["y"], [0]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df_cont["yhat"]),
@@ -130,7 +130,7 @@ def test_report_continuous_data():
 
     posttraining_report = bias_report(
         df_cont,
-        FacetColumn("x"),
+        FacetColumn("x", [2]),
         LabelColumn("y", df_cont["y"], [0]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cont["yhat"]),
