@@ -126,11 +126,12 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
     :return: pd.IntervalIndex
     """
     if not thresholds:
-        raise ValueError("Threshold values must be provided for continuous data")
+        raise ValueError("Threshold values must be provided for continuous features")
     facet_max, facet_min = facet.max(), facet.min()
     threshold_intervals = thresholds.copy()
     # add  max value if not exists in threshold limits
-    threshold_intervals.append(facet_max) if facet_max not in thresholds else threshold_intervals
+    if abs(facet_max) not in thresholds:
+        threshold_intervals.append(facet_max)
     return pd.IntervalIndex.from_breaks(threshold_intervals)
 
 
@@ -185,8 +186,6 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
         label_values_or_intervals = ",".join(map(str, positive_values))
     else:
         raise RuntimeError("Label_column data is invalid or can't be classified")
-    if isinstance(positive_index, list) and not list:
-        raise RuntimeError("positive label index can't be derived from the label data")
     logger.debug(f"positive index: {positive_index}")
     logger.debug(f"label values or Intervals: {label_values_or_intervals}")
     return positive_index, label_values_or_intervals
@@ -232,7 +231,7 @@ def _categorical_metric_call_wrapper(
     if facet_values:
         # Build index series from facet
         facet = _categorical_data_idx(feature, facet_values)
-        result = famly.bias.metrics.call_metric(
+        metric_values = famly.bias.metrics.call_metric(
             metric,
             feature=feature,
             facet=facet,
@@ -242,9 +241,8 @@ def _categorical_metric_call_wrapper(
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
-        metric_values = result
     else:
-        raise ValueError("Facet values have to passed to fetch the bias metrics")
+        raise ValueError("Facet values must be provided fetch the bias metrics")
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 
@@ -264,7 +262,7 @@ def _continuous_metric_call_wrapper(
     """
 
     facet = _continuous_data_idx(feature, facet_threshold_index)
-    result = famly.bias.metrics.call_metric(
+    metric_values = famly.bias.metrics.call_metric(
         metric,
         feature=feature,
         facet=facet,
@@ -274,7 +272,6 @@ def _continuous_metric_call_wrapper(
         positive_predicted_label_index=positive_predicted_label_index,
         group_variable=group_variable,
     )
-    metric_values = result
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 
