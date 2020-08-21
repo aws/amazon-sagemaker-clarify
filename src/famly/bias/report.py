@@ -191,6 +191,19 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
     return positive_index, label_values_or_intervals
 
 
+def label_value_or_threshold(label_series: pd.Series, positive_values: List[str]) -> str:
+    """
+    Fetch label values or threshold intervals for the input label data and label values
+    :param label_series: label column data
+    :param positive_values: list of positive label values
+    :return: string with category values or threshold indices seperated with ','
+    """
+    if not positive_values:
+        raise ValueError("Positive label values or thresholds are empty for Label column")
+    _, value_or_threshold = _positive_label_index(data=label_series, positive_values=positive_values)
+    return value_or_threshold
+
+
 def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
     """
     :param col: input data series
