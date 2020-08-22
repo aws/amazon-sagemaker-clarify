@@ -125,12 +125,14 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
     :param thresholds: list of int or float values defining the threshold splits
     :return: pd.IntervalIndex
     """
-    # Fix: use mean as threshold when no input is provided.
-    thresholds = [int(facet.mean())] if not thresholds else thresholds
+    if not thresholds:
+        raise ValueError("Threshold values must be provided for continuous features")
     facet_max, facet_min = facet.max(), facet.min()
+    threshold_intervals = thresholds.copy()
     # add  max value if not exists in threshold limits
-    thresholds.append(facet_max) if facet_max not in thresholds else thresholds
-    return pd.IntervalIndex.from_breaks(thresholds)
+    if abs(facet_max) not in thresholds:
+        threshold_intervals.append(facet_max)
+    return pd.IntervalIndex.from_breaks(threshold_intervals)
 
 
 def _positive_predicted_index(
@@ -145,8 +147,8 @@ def _positive_predicted_index(
     :param positive_label_values: list of positive label values
     :return: list of positive predicted label index series
     """
-    predicted_label_datatype = common.series_datatype(predicted_label_data)
-    label_datatype = common.series_datatype(label_data)
+    predicted_label_datatype = common.series_datatype(predicted_label_data, positive_label_values)
+    label_datatype = common.series_datatype(label_data, positive_label_values)
     if predicted_label_datatype != label_datatype:
         raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
@@ -174,7 +176,7 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
     :param positive_values: list of positive label values
     :return: list of positive label index series, positive_label_values or intervals
     """
-    data_type = common.series_datatype(data)
+    data_type = common.series_datatype(data, positive_values)
     if data_type == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(data, positive_values)
         positive_index = _continuous_data_idx(data, data_interval_indices)
@@ -184,11 +186,22 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
         label_values_or_intervals = ",".join(map(str, positive_values))
     else:
         raise RuntimeError("Label_column data is invalid or can't be classified")
-    if isinstance(positive_index, list) and not list:
-        raise RuntimeError("positive label index can't be derived from the label data")
     logger.debug(f"positive index: {positive_index}")
-    logger.debug(f"label values or Intervals: {label_values_or_intervals}",)
+    logger.debug(f"label values or intervals: {label_values_or_intervals}")
     return positive_index, label_values_or_intervals
+
+
+def label_value_or_threshold(label_series: pd.Series, positive_values: List[str]) -> str:
+    """
+    Fetch label values or threshold intervals for the input label data and label values
+    :param label_series: label column data
+    :param positive_values: list of positive label values
+    :return: string with category values or threshold indices seperated with ','
+    """
+    if not positive_values:
+        raise ValueError("Positive label values or thresholds are empty for Label column")
+    _, value_or_threshold = _positive_label_index(data=label_series, positive_values=positive_values)
+    return value_or_threshold
 
 
 def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
@@ -231,7 +244,7 @@ def _categorical_metric_call_wrapper(
     if facet_values:
         # Build index series from facet
         facet = _categorical_data_idx(feature, facet_values)
-        result = famly.bias.metrics.call_metric(
+        metric_values = famly.bias.metrics.call_metric(
             metric,
             feature=feature,
             facet=facet,
@@ -241,18 +254,8 @@ def _categorical_metric_call_wrapper(
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
-        metric_values = {",".join(map(str, facet_values)): result}
     else:
-        # Do one vs all for every value
-        metric_values = famly.bias.metrics.metric_one_vs_all(
-            metric,
-            feature,
-            label=label,
-            positive_label_index=positive_label_index,
-            predicted_label=predicted_label,
-            positive_predicted_label_index=positive_predicted_label_index,
-            group_variable=group_variable,
-        )
+        raise ValueError("Facet values must be provided to compute the bias metrics")
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 
@@ -272,7 +275,7 @@ def _continuous_metric_call_wrapper(
     """
 
     facet = _continuous_data_idx(feature, facet_threshold_index)
-    result = famly.bias.metrics.call_metric(
+    metric_values = famly.bias.metrics.call_metric(
         metric,
         feature=feature,
         facet=facet,
@@ -282,7 +285,6 @@ def _continuous_metric_call_wrapper(
         positive_predicted_label_index=positive_predicted_label_index,
         group_variable=group_variable,
     )
-    metric_values = {",".join(map(str, facet_threshold_index)): result}
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 
@@ -347,27 +349,36 @@ def bias_report(
         )
         metrics_to_run.extend(pre_training_metrics)
 
-    facet_dtype = common.series_datatype(data_series)
+    facet_dtype = common.series_datatype(data_series, facet_column.protected_values)
     data_series_cat: pd.Series  # Category series
     # result values can be str for label_values or dict for metrics
     result: Dict[str, Any]
+    metrics_result = []
     if facet_dtype == common.DataType.CATEGORICAL:
         data_series_cat = data_series.astype("category")
-        result = dict()
-        for metric in metrics_to_run:
-            result[metric.__name__] = _categorical_metric_call_wrapper(
-                metric,
-                data_series_cat,
-                facet_column.protected_values,
-                label_series,
-                positive_label_index,
-                predicted_label_series,
-                positive_predicted_label_index,
-                group_variable,
-            )
-        result["label_value_or_threshold"] = label_values
-        logger.debug("metric_result:", result)
-        return [result]
+        # pass the values for metric one vs all case
+        facet_values_list = (
+            [[val] for val in list(data_series.unique())]
+            if not facet_column.protected_values
+            else [facet_column.protected_values]
+        )
+        for facet_values in facet_values_list:
+            result = dict()
+            for metric in metrics_to_run:
+                result[metric.__name__] = _categorical_metric_call_wrapper(
+                    metric,
+                    data_series_cat,
+                    facet_values,
+                    label_series,
+                    positive_label_index,
+                    predicted_label_series,
+                    positive_predicted_label_index,
+                    group_variable,
+                )
+            result["value_or_threshold"] = ",".join(map(str, facet_values))
+            metrics_result.append(result)
+        logger.debug("metric_result:", metrics_result)
+        return metrics_result
 
     elif facet_dtype == common.DataType.CONTINUOUS:
         facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
@@ -385,8 +396,9 @@ def bias_report(
                 positive_predicted_label_index,
                 group_variable,
             )
-        result["label_value_or_threshold"] = label_values
-        logger.debug("metric_result:", result)
-        return [result]
+        result["value_or_threshold"] = ",".join(map(str, facet_interval_indices))
+        metrics_result = [result]
+        logger.debug("metric_result:", metrics_result)
+        return metrics_result
     else:
         raise RuntimeError("facet_column data is invalid or can't be classified")

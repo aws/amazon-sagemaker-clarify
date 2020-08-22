@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-
+from typing import List, Optional
 import pandas as pd
 import numpy as np
 
@@ -83,17 +83,21 @@ def CDD(feature: pd.Series, facet: pd.Series, label_index: pd.Series, group_vari
     return wtd_mean_CDD
 
 
-def series_datatype(data: pd.Series) -> DataType:
+def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> DataType:
     """
     determine given data series is categorical or continuous using set of rules
 
+    :param data: data for facet/label/predicted_label columns
+    :param values: list of facet or label values provided by user
     :return: Enum {CATEGORICAL|CONTINUOUS}
     """
     # if datatype is boolean or categorical we return data as categorical
     data_type = DataType.CATEGORICAL
     data_uniqueness_fraction = data.nunique() / data.count()
     logger.info(f"data uniqueness fraction: {data_uniqueness_fraction}")
-    if data.dtype.name == "category":
+    # Assumption: user will give single value for threshold currently
+    # Todo: fix me if multiple thresholds for facet or label are supported
+    if data.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
         return data_type
     if data.dtype.name in ["str", "string", "object"]:
         # cast the dtype to int, if exception is raised data is categorical
