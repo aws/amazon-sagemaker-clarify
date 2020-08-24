@@ -286,24 +286,24 @@ def test_LP():
 def test_DI():
     # Binary Facet, Binary Label
     facetF = dfB[0] == "F"
-    assert DI(dfB[0], facetF, dfB_pred_label, dfB_pos_pred_label_idx) == approx(10 / 7)
+    assert DI(dfB[0], facetF, dfB_pos_pred_label_idx) == approx(10 / 7)
 
     facetM = dfB[0] == "M"
-    assert DI(dfB[0], facetM, dfB_pred_label, dfB_pos_pred_label_idx) == approx(7 / 10)
+    assert DI(dfB[0], facetM, dfB_pos_pred_label_idx) == approx(7 / 10)
 
     predicted_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
     positive_predicted_labels_index_zero_for_M = predicted_labels_zero_for_M == 1
-    assert DI(dfB[0], facetF, predicted_labels_zero_for_M, positive_predicted_labels_index_zero_for_M) == INFINITY
+    assert DI(dfB[0], facetF, positive_predicted_labels_index_zero_for_M) == INFINITY
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
-        DI(dfB[0], dfB[0] == None, dfB_pred_label, positive_predicted_labels_index_zero_for_M)
+        DI(dfB[0], dfB[0] == None, positive_predicted_labels_index_zero_for_M)
     assert str(e.value) == "DI: Facet set is empty"
 
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
         x = Series(["A", "A"])
         pred = Series([0, 1])
-        DI(x, x == "A", pred, pred == 1)
+        DI(x, x == "A", pred == 1)
     assert str(e.value) == "DI: Negated facet set is empty"
 
 
@@ -328,46 +328,46 @@ def test_DCR():
 def test_RD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert RD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-2 / 3)
+    assert RD(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-2 / 3)
 
     facet = dfB[0] == "M"
-    assert RD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(2 / 3)
+    assert RD(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(2 / 3)
 
 
 def test_DRR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
 
 def test_AD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert AD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-13 / 35)
+    assert AD(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-13 / 35)
 
     facet = dfB[0] == "M"
-    assert AD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(13 / 35)
+    assert AD(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(13 / 35)
 
 
 def test_PD():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[0] == approx(-1 / 2)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[0] == approx(1 / 2)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 2)
 
 
 def test_TE():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert TE(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 2)
+    assert TE(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 2)
 
     facet = dfB[0] == "M"
-    assert TE(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 2)
+    assert TE(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 2)
 
 
 def test_FT():

@@ -23,13 +23,13 @@ def require(condition: bool, message: str) -> None:
         raise RuntimeError(message)
 
 
-def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_index: pd.Series) -> float:
+def DPL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     facet = facet.astype(bool)
     positive_label_index = positive_label_index.astype(bool)
     na = len(feature[~facet])
     nd = len(feature[facet])
-    na_pos = len(label[~facet & positive_label_index])
-    nd_pos = len(label[facet & positive_label_index])
+    na_pos = len(feature[~facet & positive_label_index])
+    nd_pos = len(feature[facet & positive_label_index])
     if na == 0:
         raise ValueError("DPL: negative facet set is empty.")
     if nd == 0:

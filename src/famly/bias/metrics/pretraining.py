@@ -45,17 +45,16 @@ def CI(feature: pd.Series, facet: pd.Series) -> float:
 
 
 @registry.pretraining
-def DPL(feature: pd.Series, facet: pd.Series, label: pd.Series, positive_label_index: pd.Series) -> float:
+def DPL(feature: pd.Series, facet: pd.Series, positive_label_index: pd.Series) -> float:
     """
     Difference in Positive Proportions in Labels (DPL)
 
     :param feature: input feature
     :param facet: boolean column indicating sensitive group
-    :param label: pandas series of labels (binary, multicategory, or continuous)
     :param positive_label_index: boolean column indicating positive labels
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    return common.DPL(feature, facet, label, positive_label_index)
+    return common.DPL(feature, facet, positive_label_index)
 
 
 @registry.pretraining
