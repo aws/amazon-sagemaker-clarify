@@ -1,5 +1,6 @@
 """Bias detection in datasets"""
 import logging
+import math
 from enum import Enum
 from typing import Any, Dict, List, Optional, Callable, Tuple
 
@@ -102,19 +103,27 @@ def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: L
     return metrics_to_run
 
 
-def _metric_description(metric: Callable, metric_values: dict) -> dict:
+def _metric_description(metric: Callable, metric_value: Any) -> dict:
     """
     returns a dict with metric description and computed metric values
     :param metric: metric function name
-    :param metric_values: dict with facet value (key) and its results
+    :param metric_value: computed metric result {float | Tuple[float] for DCO,DLR}
     :return: metric result dict
     {"description": "Class Imbalance (CI)",
     "value": {1: -0.9288888888888889, 0: 0.9288888888888889}
+    "error": "CI metric can't be computed for the given data" (only when value is None)
     }
     """
     if not metric.description:  # type: ignore
         raise KeyError(f"Description is not found for the registered metric: {metric}")
-    return {"description": metric.description, "value": metric_values}  # type: ignore
+    # For Nan values
+    if isinstance(metric_value, float) and math.isnan(metric_value):
+        metric_value = None
+
+    metric_dict = {"description": metric.description, "value": metric_value}  # type: ignore
+    if not metric_value:
+        metric_dict.update({"error": f"ValueError: {metric.__name__} metric can't be computed for the given data"})
+    return metric_dict
 
 
 def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
@@ -244,16 +253,20 @@ def _categorical_metric_call_wrapper(
     if facet_values:
         # Build index series from facet
         facet = _categorical_data_idx(feature, facet_values)
-        metric_values = famly.bias.metrics.call_metric(
-            metric,
-            feature=feature,
-            facet=facet,
-            label=label,
-            positive_label_index=positive_label_index,
-            predicted_label=predicted_label,
-            positive_predicted_label_index=positive_predicted_label_index,
-            group_variable=group_variable,
-        )
+        try:
+            metric_values = famly.bias.metrics.call_metric(
+                metric,
+                feature=feature,
+                facet=facet,
+                label=label,
+                positive_label_index=positive_label_index,
+                predicted_label=predicted_label,
+                positive_predicted_label_index=positive_predicted_label_index,
+                group_variable=group_variable,
+            )
+        except Exception as exc:
+            logger.info(f"{metric.__name__} metrics failed with error: {exc}")
+            metric_values = None
     else:
         raise ValueError("Facet values must be provided to compute the bias metrics")
     metric_result = _metric_description(metric, metric_values)
@@ -275,16 +288,21 @@ def _continuous_metric_call_wrapper(
     """
 
     facet = _continuous_data_idx(feature, facet_threshold_index)
-    metric_values = famly.bias.metrics.call_metric(
-        metric,
-        feature=feature,
-        facet=facet,
-        label=label,
-        positive_label_index=positive_label_index,
-        predicted_label=predicted_label,
-        positive_predicted_label_index=positive_predicted_label_index,
-        group_variable=group_variable,
-    )
+    metric_error = ""
+    try:
+        metric_values = famly.bias.metrics.call_metric(
+            metric,
+            feature=feature,
+            facet=facet,
+            label=label,
+            positive_label_index=positive_label_index,
+            predicted_label=predicted_label,
+            positive_predicted_label_index=positive_predicted_label_index,
+            group_variable=group_variable,
+        )
+    except Exception as exc:
+        logger.info(f"{metric.__name__} metrics failed with error: {exc}")
+        metric_values = None
     metric_result = _metric_description(metric, metric_values)
     return metric_result
 
