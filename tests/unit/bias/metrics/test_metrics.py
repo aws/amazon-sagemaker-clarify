@@ -158,18 +158,18 @@ dfFT = datasetFT()
 
 
 def test_CI():
-    facet = dfB[0] == "F"
-    assert CI(dfB[0], facet) == approx(-1 / 6)
+    sensitive_facet_index = dfB[0] == "F"
+    assert CI(dfB[0], sensitive_facet_index) == approx(-1 / 6)
 
-    facet = dfB[0] == "M"
-    assert CI(dfB[0], facet) == approx(1 / 6)
+    sensitive_facet_index = dfB[0] == "M"
+    assert CI(dfB[0], sensitive_facet_index) == approx(1 / 6)
 
     # Continuous Facet, Binary Label
-    facet = dfC[0] > 1.0
-    assert CI(dfC[0], facet) == approx(-1 / 3)
+    sensitive_facet_index = dfC[0] > 1.0
+    assert CI(dfC[0], sensitive_facet_index) == approx(-1 / 3)
 
-    facet = dfC[0] < 1.0
-    assert CI(dfC[0], facet) == approx(1 / 3)
+    sensitive_facet_index = dfC[0] < 1.0
+    assert CI(dfC[0], sensitive_facet_index) == approx(1 / 3)
 
     # Multicategory Facet, Binary Label
 
@@ -256,124 +256,123 @@ def test_LP():
 #    )
 #    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
 #    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
-#
+
 #    response = metric_one_vs_all(CDDL, x, positive_label_index=positive_label_index, group_variable=group_variable)
 #    assert response["F"] == approx(0.3982142857)
 #    assert response["M"] == approx(-0.3982142857)
-#
-#    # Multicategory Facet, Binary Label
-#    facet = dfM[0]
+
+# Multicategory Facet, Binary Label
+#    sensitive_facet_index = dfM[0]
 #    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
 #    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
-#
+
 #    response = metric_one_vs_all(KS, dfM[0], positive_label_index=positive_label_index, group_variable=group_variable)
 #    assert response["M"] < 1.0 and response["M"] > -1.0
 #    assert response["F"] < 1.0 and response["F"] > -1.0
 #    assert response["O"] < 1.0 and response["O"] > -1.0
-#
-#    # Multicategory Facet, Multicategory Label
+
+# Multicategory Facet, Multicategory Label
 #    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 #    labels = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
 #    response = metric_one_vs_all(KS, dfM[0], labels=labels, group_variable=group_variable)
-#
+
 #    for cat in facet.unique():
 #        assert response[cat][0] < 1.0 and response[cat][0] > -1.0
 #        assert response[cat][1] < 1.0 and response[cat][1] > -1.0
 #        assert response[cat][2] < 1.0 and response[cat][2] > -1.0
-#
 
 
 def test_DI():
     # Binary Facet, Binary Label
-    facetF = dfB[0] == "F"
-    assert DI(dfB[0], facetF, dfB_pred_label, dfB_pos_pred_label_idx) == approx(10 / 7)
+    sensitive_facet_index_f = dfB[0] == "F"
+    assert DI(dfB[0], sensitive_facet_index_f, dfB_pos_pred_label_idx) == approx(10 / 7)
 
-    facetM = dfB[0] == "M"
-    assert DI(dfB[0], facetM, dfB_pred_label, dfB_pos_pred_label_idx) == approx(7 / 10)
+    sensitive_facet_index_m = dfB[0] == "M"
+    assert DI(dfB[0], sensitive_facet_index_m, dfB_pos_pred_label_idx) == approx(7 / 10)
 
     predicted_labels_zero_for_M = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1])
     positive_predicted_labels_index_zero_for_M = predicted_labels_zero_for_M == 1
-    assert DI(dfB[0], facetF, predicted_labels_zero_for_M, positive_predicted_labels_index_zero_for_M) == INFINITY
+    assert DI(dfB[0], sensitive_facet_index_f, positive_predicted_labels_index_zero_for_M) == INFINITY
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
-        DI(dfB[0], dfB[0] == None, dfB_pred_label, positive_predicted_labels_index_zero_for_M)
+        DI(dfB[0], dfB[0] == None, positive_predicted_labels_index_zero_for_M)
     assert str(e.value) == "DI: Facet set is empty"
 
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
         x = Series(["A", "A"])
         pred = Series([0, 1])
-        DI(x, x == "A", pred, pred == 1)
+        DI(x, x == "A", pred == 1)
     assert str(e.value) == "DI: Negated facet set is empty"
 
 
 def test_DCA():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert DCO(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 4)
+    sensitive_facet_index = dfB[0] == "F"
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 4)
 
-    facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 4)
+    sensitive_facet_index = dfB[0] == "M"
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 4)
 
 
 def test_DCR():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert DCO(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
+    sensitive_facet_index = dfB[0] == "F"
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
-    facet = dfB[0] == "M"
-    assert DCO(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
+    sensitive_facet_index = dfB[0] == "M"
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
 
 def test_RD():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert RD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-2 / 3)
+    sensitive_facet_index = dfB[0] == "F"
+    assert RD(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-2 / 3)
 
-    facet = dfB[0] == "M"
-    assert RD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(2 / 3)
+    sensitive_facet_index = dfB[0] == "M"
+    assert RD(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(2 / 3)
 
 
 def test_DRR():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
+    sensitive_facet_index = dfB[0] == "F"
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
-    facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
+    sensitive_facet_index = dfB[0] == "M"
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
 
 def test_AD():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert AD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-13 / 35)
+    sensitive_facet_index = dfB[0] == "F"
+    assert AD(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-13 / 35)
 
-    facet = dfB[0] == "M"
-    assert AD(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(13 / 35)
+    sensitive_facet_index = dfB[0] == "M"
+    assert AD(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(13 / 35)
 
 
 def test_PD():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[0] == approx(-1 / 2)
+    sensitive_facet_index = dfB[0] == "F"
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 2)
 
-    facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx)[0] == approx(1 / 2)
+    sensitive_facet_index = dfB[0] == "M"
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 2)
 
 
 def test_TE():
     # Binary Facet, Binary Label
-    facet = dfB[0] == "F"
-    assert TE(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 2)
+    sensitive_facet_index = dfB[0] == "F"
+    assert TE(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 2)
 
-    facet = dfB[0] == "M"
-    assert TE(dfB[0], facet, dfB_label, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 2)
+    sensitive_facet_index = dfB[0] == "M"
+    assert TE(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 2)
 
 
 def test_FT():
     dfFT = datasetFT()
-    facet = dfFT[0]
+    sensitive_facet_index = dfFT[0]
 
     predicted = pd.Series([1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1])
 
-    assert FT(dfFT, facet, predicted) == approx(-0.23076923076923078)
+    assert FT(dfFT, sensitive_facet_index, predicted) == approx(-0.23076923076923078)
