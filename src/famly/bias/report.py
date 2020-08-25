@@ -229,6 +229,7 @@ def _continuous_data_idx(x: pd.Series, data_threshold_index: pd.IntervalIndex) -
 
 def _categorical_metric_call_wrapper(
     metric: Callable,
+    df: pd.DataFrame,
     feature: pd.Series,
     facet_values: Optional[List[Any]],
     label: pd.Series,
@@ -246,6 +247,7 @@ def _categorical_metric_call_wrapper(
         facet = _categorical_data_idx(feature, facet_values)
         metric_values = famly.bias.metrics.call_metric(
             metric,
+            df=df,
             feature=feature,
             facet=facet,
             label=label,
@@ -262,6 +264,7 @@ def _categorical_metric_call_wrapper(
 
 def _continuous_metric_call_wrapper(
     metric: Callable,
+    df: pd.DataFrame,
     feature: pd.Series,
     facet_threshold_index: pd.IntervalIndex,
     label: pd.Series,
@@ -277,6 +280,7 @@ def _continuous_metric_call_wrapper(
     facet = _continuous_data_idx(feature, facet_threshold_index)
     metric_values = famly.bias.metrics.call_metric(
         metric,
+        df=df,
         feature=feature,
         facet=facet,
         label=label,
@@ -367,6 +371,7 @@ def bias_report(
             for metric in metrics_to_run:
                 result[metric.__name__] = _categorical_metric_call_wrapper(
                     metric,
+                    df,
                     data_series_cat,
                     facet_values,
                     label_series,
@@ -388,6 +393,7 @@ def bias_report(
         for metric in metrics_to_run:
             result[metric.__name__] = _continuous_metric_call_wrapper(
                 metric,
+                df,
                 data_series,
                 facet_continuous_column.interval_indices,
                 label_series,
