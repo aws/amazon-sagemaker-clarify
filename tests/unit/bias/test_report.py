@@ -38,25 +38,45 @@ def test_report_category_data():
 
     result = [
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.375},
-            "CI": {"description": "Class Imbalance (CI)", "value": 0.5},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.6666666666666667},
-            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
-            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.584962500721156},
-            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
-            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
-            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "metrics": [
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.5},
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": -0.6666666666666667,
+                },
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.584962500721156},
+                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
+                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
+                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
+                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.6666666666666667},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": -0.375,
+                },
+            ],
             "value_or_threshold": "a",
         },
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.625},
-            "CI": {"description": "Class Imbalance (CI)", "value": -0.5},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.6666666666666667},
-            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
-            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": -0.5283208335737187},
-            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
-            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
-            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "metrics": [
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": -0.5},
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": 0.6666666666666667,
+                },
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.5283208335737187},
+                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
+                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
+                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
+                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.6666666666666667},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": 0.625,
+                },
+            ],
             "value_or_threshold": "b",
         },
     ]
@@ -76,23 +96,29 @@ def test_report_category_data():
     assert len(posttraining_report) > 0
     expected_result_1 = [
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.6666666666666667},
-            "DI": {"description": "Disparate Impact (DI)", "value": 3.0},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": -0.6666666666666667,
-            },
-            "RD": {"description": "Recall Difference (RD)", "value": -1.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": -0.6666666666666667,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 3.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": -1.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.6666666666666667},
+            ],
             "value_or_threshold": "a",
         },
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": 0.6666666666666667},
-            "DI": {"description": "Disparate Impact (DI)", "value": 0.3333333333333333},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.6666666666666667,
-            },
-            "RD": {"description": "Recall Difference (RD)", "value": 1.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.6666666666666667,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.3333333333333333},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": 1.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.6666666666666667},
+            ],
             "value_or_threshold": "b",
         },
     ]
@@ -115,14 +141,16 @@ def test_report_continuous_data():
     assert len(pretraining_report) > 0
     result = [
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.2},
-            "CI": {"description": "Class Imbalance (CI)", "value": 0.6},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
-            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.20983242268450672},
-            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.0},
-            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.5},
-            "LP": {"description": "L-p Norm (LP)", "value": 0.5},
-            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.25},
+            "metrics": [
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
+                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.20983242268450672},
+                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.5},
+                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.25},
+                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.5},
+                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": 0.2},
+            ],
             "value_or_threshold": "(2, 3]",
         }
     ]
@@ -140,18 +168,29 @@ def test_report_continuous_data():
     assert len(posttraining_report) > 0
     expected_result_1 = [
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
-            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},
-            "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
-            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (float("-inf"), 1.0)},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.75,
-            },
-            "CDDPL": {"description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)", "value": 0.2},
-            "FT": {"description": "Flip Test (FT)", "value": 0.0},
-            "RD": {"description": "Recall Difference (RD)", "value": float("-inf")},
-            "TE": {"description": "Treatment Equality (TE)", "value": float("inf")},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.75,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
+                {
+                    "description": "Difference in Conditional Outcomes (DCO)",
+                    "name": "DCO",
+                    "value": (float("-inf"), -1.0),
+                },
+                {"description": "Recall Difference (RD)", "name": "RD", "value": float("-inf")},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (float("-inf"), 1.0)},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
+                {
+                    "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
+                    "name": "CDDPL",
+                    "value": 0.2,
+                },
+                {"description": "Treatment Equality (TE)", "name": "TE", "value": float("inf")},
+                {"description": "Flip Test (FT)", "name": "FT", "value": 0.0},
+            ],
             "value_or_threshold": "(2, 3]",
         }
     ]
@@ -178,18 +217,28 @@ def test_label_values():
     assert isinstance(pretraining_report[0], dict)
     expected_result_1 = [
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.3},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.25},
+            "metrics": [
+                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": -0.25},
+                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.3},
+            ],
             "value_or_threshold": "a",
         },
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.3},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
+            "metrics": [
+                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
+                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": 0.3},
+            ],
             "value_or_threshold": "b",
         },
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": -0.4},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": -0.33333333333333337},
+            "metrics": [
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": -0.33333333333333337,
+                },
+                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.4},
+            ],
             "value_or_threshold": "c",
         },
     ]
@@ -209,36 +258,45 @@ def test_label_values():
     assert isinstance(posttraining_report[0], dict)
     expected_result_2 = [
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.25},
-            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
-            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (-0.25, 0)},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.0,
-            },
-            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.0,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (-0.25, 0)},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.25},
+            ],
             "value_or_threshold": "a",
         },
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": 0.5},
-            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
-            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (0.5, 0)},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.0,
-            },
-            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.0,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (0.5, 0)},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.5},
+            ],
             "value_or_threshold": "b",
         },
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.33333333333333337},
-            "DI": {"description": "Disparate Impact (DI)", "value": 1.0},
-            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (-0.33333333333333337, 0)},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.0,
-            },
-            "RD": {"description": "Recall Difference (RD)", "value": 0.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.0,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (-0.33333333333333337, 0)},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.33333333333333337},
+            ],
             "value_or_threshold": "c",
         },
     ]
@@ -277,14 +335,17 @@ def test_partial_bias_report():
     assert isinstance(pretraining_report, list)
     expected_result_1 = [
         {
-            "CDDL": {
-                "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "error": "Group variable is empty or not provided",
-                "value": None,
-            },
-            "CI": {"description": "Class Imbalance (CI)", "value": 0.6},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
-            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.0},
+            "metrics": [
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
+                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "error": "Group variable is empty or not provided",
+                    "name": "CDDL",
+                    "value": None,
+                },
+            ],
             "value_or_threshold": "(2, 3]",
         }
     ]
@@ -302,19 +363,27 @@ def test_partial_bias_report():
     assert isinstance(posttraining_report, list)
     expected_result_2 = [
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
-            "CDDPL": {
-                "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
-                "error": "Group variable is empty or not provided",
-                "value": None,
-            },
-            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},
-            "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
-            "DPPL": {
-                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.75,
-            },
-            "FT": {"description": "Flip Test (FT)", "value": 0.0},
+            "metrics": [
+                {
+                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "name": "DPPL",
+                    "value": 0.75,
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
+                {
+                    "description": "Difference in Conditional Outcomes (DCO)",
+                    "name": "DCO",
+                    "value": (float("-inf"), -1.0),
+                },
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
+                {
+                    "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
+                    "error": "Group variable is empty or not provided",
+                    "name": "CDDPL",
+                    "value": None,
+                },
+                {"description": "Flip Test (FT)", "name": "FT", "value": 0.0},
+            ],
             "value_or_threshold": "(2, 3]",
         }
     ]

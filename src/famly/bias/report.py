@@ -110,8 +110,8 @@ def _metric_description(metric: Callable, metric_value: Any, metric_error: str) 
     :param metric_value: computed metric result {float | Tuple[float] for DCO,DLR}
     :return: metric result dict
     {"description": "Class Imbalance (CI)",
-    "value": {1: -0.9288888888888889, 0: 0.9288888888888889}
-    "error": "CI metric can't be computed for the given data" (only when value is None)
+    "name": "CI",
+    "value": -0.9288888888888889
     }
     """
     if not metric.description:  # type: ignore
@@ -120,7 +120,7 @@ def _metric_description(metric: Callable, metric_value: Any, metric_error: str) 
     if isinstance(metric_value, float) and math.isnan(metric_value):
         metric_value = None
 
-    metric_dict = {"description": metric.description, "value": metric_value}  # type: ignore
+    metric_dict = {"name": metric.__name__, "description": metric.description, "value": metric_value}  # type: ignore
     if metric_value is None:
         metric_dict.update({"error": f"{metric_error}"})
     return metric_dict
@@ -267,9 +267,9 @@ def _categorical_metric_call_wrapper(
                 positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
-        except ValueError as exc:
+        except Exception as exc:
             logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-            metric_values, metric_error = None, exc
+            metric_values, metric_error = None, str(exc)
     else:
         raise ValueError("Facet values must be provided to compute the bias metrics")
     metric_result = _metric_description(metric, metric_values, metric_error)
@@ -304,9 +304,9 @@ def _continuous_metric_call_wrapper(
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
-    except ValueError as exc:
+    except Exception as exc:
         logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-        metric_values, metric_error = None, exc
+        metric_values, metric_error = None, str(exc)
     metric_result = _metric_description(metric, metric_values, metric_error)
     return metric_result
 
@@ -375,6 +375,7 @@ def bias_report(
     data_series_cat: pd.Series  # Category series
     # result values can be str for label_values or dict for metrics
     result: Dict[str, Any]
+    facet_metric_dict: Dict[str, Any]
     metrics_result = []
     if facet_dtype == common.DataType.CATEGORICAL:
         data_series_cat = data_series.astype("category")
@@ -385,9 +386,11 @@ def bias_report(
             else [facet_column.sensitive_values]
         )
         for facet_values in facet_values_list:
-            result = dict()
+            # list of metrics with values
+            facet_metric_dict = dict()
+            metrics_list = []
             for metric in metrics_to_run:
-                result[metric.__name__] = _categorical_metric_call_wrapper(
+                result = _categorical_metric_call_wrapper(
                     metric,
                     df,
                     data_series_cat,
@@ -398,8 +401,10 @@ def bias_report(
                     positive_predicted_label_index,
                     group_variable,
                 )
-            result["value_or_threshold"] = ",".join(map(str, facet_values))
-            metrics_result.append(result)
+                metrics_list.append(result)
+            facet_metric_dict["value_or_threshold"] = ",".join(map(str, facet_values))
+            facet_metric_dict["metrics"] = metrics_list
+            metrics_result.append(facet_metric_dict)
         logger.debug("metric_result:", metrics_result)
         return metrics_result
 
@@ -407,9 +412,11 @@ def bias_report(
         facet_interval_indices = _interval_index(data_series, facet_column.sensitive_values)
         facet_continuous_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
-        result = dict()
+        # list of metrics with values
+        metrics_list = []
+        facet_metric_dict = dict()
         for metric in metrics_to_run:
-            result[metric.__name__] = _continuous_metric_call_wrapper(
+            result = _continuous_metric_call_wrapper(
                 metric,
                 df,
                 data_series,
@@ -420,9 +427,10 @@ def bias_report(
                 positive_predicted_label_index,
                 group_variable,
             )
-        result["value_or_threshold"] = ",".join(map(str, facet_interval_indices))
-        metrics_result = [result]
-        logger.debug("metric_result:", metrics_result)
-        return metrics_result
+            metrics_list.append(result)
+        facet_metric_dict["metrics"] = metrics_list
+        facet_metric_dict["value_or_threshold"] = ",".join(map(str, facet_interval_indices))
+        logger.debug("metric_result:", facet_metric_dict)
+        return [facet_metric_dict]
     else:
         raise RuntimeError("facet_column data is invalid or can't be classified")
