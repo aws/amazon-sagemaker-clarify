@@ -279,7 +279,7 @@ def test_partial_bias_report():
         {
             "CDDL": {
                 "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                "error": "ValueError: CDDL metric can't be computed for the given " "data",
+                "error": "Group variable is empty or not provided",
                 "value": None,
             },
             "CI": {"description": "Class Imbalance (CI)", "value": 0.6},
@@ -305,7 +305,7 @@ def test_partial_bias_report():
             "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
             "CDDPL": {
                 "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
-                "error": "ValueError: CDDPL metric can't be computed for the given " "data",
+                "error": "Group variable is empty or not provided",
                 "value": None,
             },
             "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},

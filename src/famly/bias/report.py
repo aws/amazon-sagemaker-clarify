@@ -103,7 +103,7 @@ def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: L
     return metrics_to_run
 
 
-def _metric_description(metric: Callable, metric_value: Any) -> dict:
+def _metric_description(metric: Callable, metric_value: Any, metric_error: str) -> dict:
     """
     returns a dict with metric description and computed metric values
     :param metric: metric function name
@@ -122,7 +122,7 @@ def _metric_description(metric: Callable, metric_value: Any) -> dict:
 
     metric_dict = {"description": metric.description, "value": metric_value}  # type: ignore
     if metric_value is None:
-        metric_dict.update({"error": f"ValueError: {metric.__name__} metric can't be computed for the given data"})
+        metric_dict.update({"error": f"{metric_error}"})
     return metric_dict
 
 
@@ -254,6 +254,7 @@ def _categorical_metric_call_wrapper(
     if facet_values:
         try:
             # Build index series from facet
+            metric_error = ""
             sensitive_facet_index = _categorical_data_idx(feature, facet_values)
             metric_values = famly.bias.metrics.call_metric(
                 metric,
@@ -268,10 +269,10 @@ def _categorical_metric_call_wrapper(
             )
         except ValueError as exc:
             logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-            metric_values = None
+            metric_values, metric_error = None, exc
     else:
         raise ValueError("Facet values must be provided to compute the bias metrics")
-    metric_result = _metric_description(metric, metric_values)
+    metric_result = _metric_description(metric, metric_values, metric_error)
     return metric_result
 
 
@@ -289,8 +290,8 @@ def _continuous_metric_call_wrapper(
     """
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
-
     try:
+        metric_error = ""
         sensitive_facet_index = _continuous_data_idx(feature, facet_threshold_index)
         metric_values = famly.bias.metrics.call_metric(
             metric,
@@ -305,8 +306,8 @@ def _continuous_metric_call_wrapper(
         )
     except ValueError as exc:
         logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-        metric_values = None
-    metric_result = _metric_description(metric, metric_values)
+        metric_values, metric_error = None, exc
+    metric_result = _metric_description(metric, metric_values, metric_error)
     return metric_result
 
 
