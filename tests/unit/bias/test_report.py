@@ -18,7 +18,7 @@ def dataframe(data: List[List[Any]]):
 
 
 df_cat = dataframe([["a", 1, 1, 1], ["b", 1, 1, 0], ["b", 0, 1, 0], ["b", 0, 0, 1]])
-df_cont = dataframe([[1, 1, 1, 1], [2, 1, 1, 0], [3, 0, 0, 0], [2, 0, 1, 1]])
+df_cont = dataframe([[1, 1, 1, 1], [2, 1, 1, 0], [3, 0, 0, 0], [2, 0, 1, 1], [0, 0, 1, 1]])
 
 
 def test_report_category_data():
@@ -115,14 +115,14 @@ def test_report_continuous_data():
     assert len(pretraining_report) > 0
     result = [
         {
-            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.25},
-            "CI": {"description": "Class Imbalance (CI)", "value": 0.5},
-            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.6666666666666666},
-            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.2789960722619452},
-            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.584962500721156},
-            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.6666666666666667},
-            "LP": {"description": "L-p Norm (LP)", "value": 0.6666666666666667},
-            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.33333333333333337},
+            "CDDL": {"description": "Conditional Demographic Disparity in Labels (CDDL)", "value": 0.2},
+            "CI": {"description": "Class Imbalance (CI)", "value": 0.6},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
+            "JS": {"description": "Jensen-Shannon Divergence (JS)", "value": 0.20983242268450672},
+            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.0},
+            "KS": {"description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.5},
+            "LP": {"description": "L-p Norm (LP)", "value": 0.5},
+            "TVD": {"description": "Total Variation Distance (TVD)", "value": 0.25},
             "value_or_threshold": "(2, 3]",
         }
     ]
@@ -140,14 +140,15 @@ def test_report_continuous_data():
     assert len(posttraining_report) > 0
     expected_result_1 = [
         {
-            "AD": {"description": "Accuracy Difference (AD)", "value": -0.6666666666666667},
-            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), 0.0)},
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
+            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},
             "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
             "DLR": {"description": "Difference in Label Rates (DLR)", "value": (float("-inf"), -1.0)},
             "DPPL": {
                 "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
-                "value": 0.6666666666666666,
+                "value": 0.75,
             },
+            "FT": {"description": "Flip Test (FT)", "value": 0.0},
             "RD": {"description": "Recall Difference (RD)", "value": float("-inf")},
             "TE": {"description": "Treatment Equality (TE)", "value": float("inf")},
             "value_or_threshold": "(2, 3]",
