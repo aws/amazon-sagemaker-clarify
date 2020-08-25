@@ -219,7 +219,7 @@ def DLR(
         rr_d = INFINITY
 
     dar = ar_a - ar_d
-    drr = rr_a - rr_d
+    drr = rr_d - rr_a
 
     if ar_a == ar_d and ar_a == INFINITY:
         dar = 0

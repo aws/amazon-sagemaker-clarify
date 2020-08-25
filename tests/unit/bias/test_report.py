@@ -143,7 +143,7 @@ def test_report_continuous_data():
             "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
             "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},
             "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
-            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (float("-inf"), -1.0)},
+            "DLR": {"description": "Difference in Label Rates (DLR)", "value": (float("-inf"), 1.0)},
             "DPPL": {
                 "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
                 "value": 0.75,

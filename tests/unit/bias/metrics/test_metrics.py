@@ -337,10 +337,10 @@ def test_RD():
 def test_DRR():
     # Binary Facet, Binary Label
     facet = dfB[0] == "F"
-    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
     facet = dfB[0] == "M"
-    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
+    assert DLR(dfB[0], facet, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
 
 def test_AD():
