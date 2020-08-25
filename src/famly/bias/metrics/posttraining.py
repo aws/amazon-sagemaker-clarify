@@ -382,21 +382,19 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
-# @registry.posttraining
-# FIXME: Registering this metric with post training metrics results in failure
-def FT(dataset: pd.DataFrame, facet: pd.Series, predicted_labels: pd.Series) -> float:
+@registry.posttraining
+def FT(df: pd.DataFrame, facet: pd.Series, positive_predicted_label_index: pd.Series) -> float:
     """
     Flip Test (FT)
 
-    :param dataset: array of data points
-    :param facet: boolean column indicating sensitive group
-    :param predicted_labels: boolean column of predicted positive values for target column
-    :param verbose: optional boolean value
+    :param df: array of data points
+    :param facet: boolean facet column indicating sensitive group
+    :param positive_predicted_label_index: boolean column of predicted positive values for target column
     :return: FT difference metric
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
-    predicted_labels = predicted_labels.astype(bool)
+    predicted_labels = positive_predicted_label_index.astype(bool)
     facet = facet.astype(bool)
 
     if len(facet[facet]) == 0:
@@ -404,21 +402,22 @@ def FT(dataset: pd.DataFrame, facet: pd.Series, predicted_labels: pd.Series) -> 
     if len(facet[~facet]) == 0:
         raise ValueError("FT: Negated Facet set is empty")
 
-    dataset = np.array(dataset)
+    dataset = np.array(df)
 
     data_a = (
-        [el for idx, el in enumerate(dataset) if ~facet[idx]],
-        [el for idx, el in enumerate(predicted_labels) if ~facet[idx]],
-        [el for idx, el in enumerate(facet) if ~facet[idx]],
+        [el for idx, el in enumerate(dataset) if ~facet.iat[idx]],
+        [el for idx, el in enumerate(predicted_labels) if ~facet.iat[idx]],
+        [el for idx, el in enumerate(facet) if ~facet.iat[idx]],
     )
     data_d = (
-        [el for idx, el in enumerate(dataset) if facet[idx]],
-        [el for idx, el in enumerate(predicted_labels) if facet[idx]],
-        [el for idx, el in enumerate(facet) if facet[idx]],
+        [el for idx, el in enumerate(dataset) if facet.iat[idx]],
+        [el for idx, el in enumerate(predicted_labels) if facet.iat[idx]],
+        [el for idx, el in enumerate(facet) if facet.iat[idx]],
     )
+    n_neighbors = 5 if np.array(data_a[0]).size > 16 else 1
 
     knn = KNeighborsClassifier(
-        n_neighbors=5,
+        n_neighbors=n_neighbors,
         weights="uniform",
         algorithm="auto",
         leaf_size=30,
