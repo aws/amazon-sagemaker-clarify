@@ -121,7 +121,7 @@ def _metric_description(metric: Callable, metric_value: Any) -> dict:
         metric_value = None
 
     metric_dict = {"description": metric.description, "value": metric_value}  # type: ignore
-    if not metric_value:
+    if metric_value is None:
         metric_dict.update({"error": f"ValueError: {metric.__name__} metric can't be computed for the given data"})
     return metric_dict
 
@@ -252,9 +252,9 @@ def _categorical_metric_call_wrapper(
     Calculate CI from a list of values or 1 vs all
     """
     if facet_values:
-        # Build index series from facet
-        facet = _categorical_data_idx(feature, facet_values)
         try:
+            # Build index series from facet
+            facet = _categorical_data_idx(feature, facet_values)
             metric_values = famly.bias.metrics.call_metric(
                 metric,
                 df=df,
@@ -266,7 +266,7 @@ def _categorical_metric_call_wrapper(
                 positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
-        except Exception as exc:
+        except ValueError as exc:
             logger.info(f"{metric.__name__} metrics failed with error: {exc}")
             metric_values = None
     else:
@@ -290,8 +290,8 @@ def _continuous_metric_call_wrapper(
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
 
-    facet = _continuous_data_idx(feature, facet_threshold_index)
     try:
+        facet = _continuous_data_idx(feature, facet_threshold_index)
         metric_values = famly.bias.metrics.call_metric(
             metric,
             df=df,
@@ -303,7 +303,7 @@ def _continuous_metric_call_wrapper(
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
-    except Exception as exc:
+    except ValueError as exc:
         logger.info(f"{metric.__name__} metrics failed with error: {exc}")
         metric_values = None
     metric_result = _metric_description(metric, metric_values)

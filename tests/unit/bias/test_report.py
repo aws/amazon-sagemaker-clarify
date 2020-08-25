@@ -148,6 +148,7 @@ def test_report_continuous_data():
                 "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
                 "value": 0.75,
             },
+            "CDDPL": {"description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)", "value": 0.2},
             "FT": {"description": "Flip Test (FT)", "value": 0.0},
             "RD": {"description": "Recall Difference (RD)", "value": float("-inf")},
             "TE": {"description": "Treatment Equality (TE)", "value": float("inf")},
@@ -257,6 +258,67 @@ def test_fetch_metrics_to_run():
     input_metrics_2 = ["DPPL", "DI", "DCO", "RD"]
     metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_2)
     assert metrics_to_run == [DPPL, DI, DCO, RD]
+
+
+def test_partial_bias_report():
+    """
+    Test that bias report is generated in for partial metrics when errors occur to compute some metrics
+    """
+    df = dataframe([[1, 1, 1, 1], [2, 1, 1, 0], [3, 0, 0, 0], [2, 0, 1, 1], [0, 0, 1, 1]])
+    # pre training bias metrics
+    pretraining_report = bias_report(
+        df,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont["y"], [0]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"]),
+        metrics=["CI", "CDDL", "DPL", "KL"],
+    )
+    assert isinstance(pretraining_report, list)
+    expected_result_1 = [
+        {
+            "CDDL": {
+                "description": "Conditional Demographic Disparity in Labels (CDDL)",
+                "error": "ValueError: CDDL metric can't be computed for the given " "data",
+                "value": None,
+            },
+            "CI": {"description": "Class Imbalance (CI)", "value": 0.6},
+            "DPL": {"description": "Difference in Positive Proportions in Labels (DPL)", "value": 0.5},
+            "KL": {"description": "Kullback-Liebler Divergence (KL)", "value": 1.0},
+            "value_or_threshold": "(2, 3]",
+        }
+    ]
+    assert pretraining_report == expected_result_1
+
+    # post training bias metrics
+    posttraining_report = bias_report(
+        df,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont["y"], [0]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"]),
+        metrics=["AD", "CDDPL", "DCO", "DI", "DPPL", "FT"],
+    )
+    assert isinstance(posttraining_report, list)
+    expected_result_2 = [
+        {
+            "AD": {"description": "Accuracy Difference (AD)", "value": -0.75},
+            "CDDPL": {
+                "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
+                "error": "ValueError: CDDPL metric can't be computed for the given " "data",
+                "value": None,
+            },
+            "DCO": {"description": "Difference in Conditional Outcomes (DCO)", "value": (float("-inf"), -1.0)},
+            "DI": {"description": "Disparate Impact (DI)", "value": 0.0},
+            "DPPL": {
+                "description": '"Difference in Positive Proportions in Predicted ' 'Labels (DPPL)")',
+                "value": 0.75,
+            },
+            "FT": {"description": "Flip Test (FT)", "value": 0.0},
+            "value_or_threshold": "(2, 3]",
+        }
+    ]
+    assert posttraining_report == expected_result_2
 
 
 def test_problem_type():
