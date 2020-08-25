@@ -39,5 +39,5 @@ def metric_one_vs_all(metric: Callable[..., float], feature: pd.Series, **kwargs
     categories = feature.unique()
     results = {}
     for category in categories:
-        results[category] = call_metric(metric, feature=feature, facet=(feature == category), **kwargs)
+        results[category] = call_metric(metric, feature=feature, sensitive_facet_index=(feature == category), **kwargs)
     return results
