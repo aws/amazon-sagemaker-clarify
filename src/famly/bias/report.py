@@ -18,14 +18,14 @@ class Column:
 
 
 class FacetColumn(Column):
-    def __init__(self, name: str, protected_values: Optional[List[Any]] = None):
+    def __init__(self, name: str, sensitive_values: Optional[List[Any]] = None):
         """
         initialize facet column name and  facet_values if present
         :param name: str
-        :param protected_values: list of values indicating categories or threshold
+        :param sensitive_values: list of values indicating categories or threshold
         """
         super().__init__(name)
-        self.protected_values = protected_values
+        self.sensitive_values = sensitive_values
 
 
 class FacetContinuousColumn(Column):
@@ -244,12 +244,12 @@ def _categorical_metric_call_wrapper(
     """
     if facet_values:
         # Build index series from facet
-        facet = _categorical_data_idx(feature, facet_values)
+        sensitive_facet_index = _categorical_data_idx(feature, facet_values)
         metric_values = famly.bias.metrics.call_metric(
             metric,
             df=df,
             feature=feature,
-            facet=facet,
+            sensitive_facet_index=sensitive_facet_index,
             label=label,
             positive_label_index=positive_label_index,
             predicted_label=predicted_label,
@@ -277,12 +277,12 @@ def _continuous_metric_call_wrapper(
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
 
-    facet = _continuous_data_idx(feature, facet_threshold_index)
+    sensitive_facet_index = _continuous_data_idx(feature, facet_threshold_index)
     metric_values = famly.bias.metrics.call_metric(
         metric,
         df=df,
         feature=feature,
-        facet=facet,
+        sensitive_facet_index=sensitive_facet_index,
         label=label,
         positive_label_index=positive_label_index,
         predicted_label=predicted_label,
@@ -353,7 +353,7 @@ def bias_report(
         )
         metrics_to_run.extend(pre_training_metrics)
 
-    facet_dtype = common.series_datatype(data_series, facet_column.protected_values)
+    facet_dtype = common.series_datatype(data_series, facet_column.sensitive_values)
     data_series_cat: pd.Series  # Category series
     # result values can be str for label_values or dict for metrics
     result: Dict[str, Any]
@@ -363,8 +363,8 @@ def bias_report(
         # pass the values for metric one vs all case
         facet_values_list = (
             [[val] for val in list(data_series.unique())]
-            if not facet_column.protected_values
-            else [facet_column.protected_values]
+            if not facet_column.sensitive_values
+            else [facet_column.sensitive_values]
         )
         for facet_values in facet_values_list:
             result = dict()
@@ -386,7 +386,7 @@ def bias_report(
         return metrics_result
 
     elif facet_dtype == common.DataType.CONTINUOUS:
-        facet_interval_indices = _interval_index(data_series, facet_column.protected_values)
+        facet_interval_indices = _interval_index(data_series, facet_column.sensitive_values)
         facet_continuous_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
         result = dict()
