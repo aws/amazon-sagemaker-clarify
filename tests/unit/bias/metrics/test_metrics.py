@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CI, DCA, DCR, DI, DAR, DRR, DPL, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CI, DCO, DI, DLR, DPL, FT, JS, KL, LP, RD, TE
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -309,19 +309,19 @@ def test_DI():
 def test_DCA():
     # Binary Facet, Binary Label
     sensitive_facet_index = dfB[0] == "F"
-    assert DCA(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 4)
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 4)
 
     sensitive_facet_index = dfB[0] == "M"
-    assert DCA(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 4)
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 4)
 
 
 def test_DCR():
     # Binary Facet, Binary Label
     sensitive_facet_index = dfB[0] == "F"
-    assert DCR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 3)
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
     sensitive_facet_index = dfB[0] == "M"
-    assert DCR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 3)
+    assert DCO(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
 
 def test_RD():
@@ -336,10 +336,10 @@ def test_RD():
 def test_DRR():
     # Binary Facet, Binary Label
     sensitive_facet_index = dfB[0] == "F"
-    assert DRR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 3)
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(1 / 3)
 
     sensitive_facet_index = dfB[0] == "M"
-    assert DRR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 3)
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[1] == approx(-1 / 3)
 
 
 def test_AD():
@@ -351,13 +351,13 @@ def test_AD():
     assert AD(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(13 / 35)
 
 
-def test_DAR():
+def test_PD():
     # Binary Facet, Binary Label
     sensitive_facet_index = dfB[0] == "F"
-    assert DAR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 2)
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(-1 / 2)
 
     sensitive_facet_index = dfB[0] == "M"
-    assert DAR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(1 / 2)
+    assert DLR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx)[0] == approx(1 / 2)
 
 
 def test_TE():
