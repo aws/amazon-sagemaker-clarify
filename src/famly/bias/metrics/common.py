@@ -1,8 +1,9 @@
 import logging
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import pandas as pd
 import numpy as np
+from famly.bias.metrics.constants import INFINITY
 
 from famly.bias.metrics.constants import UNIQUENESS_THRESHOLD
 
@@ -114,3 +115,133 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
         if data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
             data_type = DataType.CONTINUOUS
     return data_type
+
+
+def DCO(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> Tuple[float, float]:
+    """
+    Difference in Conditional Outcomes (DCO)
+
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
+    """
+    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+
+    if len(feature[sensitive_facet_index]) == 0:
+        raise ValueError("DCO: Facet set is empty")
+    if len(feature[~sensitive_facet_index]) == 0:
+        raise ValueError("DCO: Negated Facet set is empty")
+
+    na0 = len(feature[~positive_label_index & ~sensitive_facet_index])
+    na0hat = len(feature[~positive_predicted_label_index & ~sensitive_facet_index])
+    nd0 = len(feature[~positive_label_index & sensitive_facet_index])
+    nd0hat = len(feature[~positive_predicted_label_index & sensitive_facet_index])
+
+    na1 = len(feature[positive_label_index & ~sensitive_facet_index])
+    na1hat = len(feature[positive_predicted_label_index & ~sensitive_facet_index])
+    nd1 = len(feature[positive_label_index & sensitive_facet_index])
+    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
+
+    if na0hat != 0:
+        rr_a = na0 / na0hat
+    else:
+        rr_a = INFINITY
+
+    if nd0hat != 0:
+        rr_d = nd0 / nd0hat
+    else:
+        rr_d = INFINITY
+
+    if na1hat != 0:
+        ca = na1 / na1hat
+    else:
+        ca = INFINITY
+
+    if nd1hat != 0:
+        cd = nd1 / nd1hat
+    else:
+        cd = INFINITY
+
+    dca = ca - cd
+    dcr = rr_d - rr_a
+
+    if ca == cd and ca == INFINITY:
+        dca = 0
+    if rr_a == rr_d and rr_a == INFINITY:
+        dcr = 0
+
+    return dca, dcr
+
+
+def DLR(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> Tuple[float, float]:
+    """
+    Difference in Label Rates (DLR)
+
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
+    """
+    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    positive_label_index = positive_label_index.astype(bool)
+    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+
+    if len(feature[sensitive_facet_index]) == 0:
+        raise ValueError("DLR: Facet set is empty")
+    if len(feature[~sensitive_facet_index]) == 0:
+        raise ValueError("DLR: Negated Facet set is empty")
+
+    TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
+    na1hat = len(feature[positive_predicted_label_index & (~sensitive_facet_index)])
+    TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
+    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
+
+    TN_a = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & (~sensitive_facet_index)])
+    na0hat = len(feature[(~positive_predicted_label_index) & (~sensitive_facet_index)])
+    TN_d = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & sensitive_facet_index])
+    nd0hat = len(feature[(~positive_predicted_label_index) & sensitive_facet_index])
+
+    if na1hat != 0:
+        ar_a = TP_a / na1hat
+    else:
+        ar_a = INFINITY
+
+    if nd1hat != 0:
+        ar_d = TP_d / nd1hat
+    else:
+        ar_d = INFINITY
+
+    if na0hat != 0:
+        rr_a = TN_a / na0hat
+    else:
+        rr_a = INFINITY
+
+    if nd0hat != 0:
+        rr_d = TN_d / nd0hat
+    else:
+        rr_d = INFINITY
+
+    dar = ar_a - ar_d
+    drr = rr_d - rr_a
+
+    if ar_a == ar_d and ar_a == INFINITY:
+        dar = 0
+    if rr_a == rr_d and rr_a == INFINITY:
+        drr = 0
+
+    return dar, drr
