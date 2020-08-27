@@ -68,6 +68,8 @@ class StageType(Enum):
 
 
 class MetricResult:
+    """Metric Result with name, description and computed metric values"""
+
     def __init__(self, name: str, description: str, values: Any):
         self.name = name
         self.description = description
@@ -75,12 +77,16 @@ class MetricResult:
 
 
 class MetricError(MetricResult):
-    def __init__(self, name: str, description: str, values: Any, error: str):
+    """Metric Result with name, description and computed metric value and error"""
+
+    def __init__(self, name: str, description: str, values: Any = None, error: str = None):
         super().__init__(name, description, values)
         self.error = error
 
 
 class FacetMetric:
+    """Facet metric with value_or_threshold and list MetricResult objects"""
+
     def __init__(self, value_or_threshold: str, metrics: List[MetricResult]):
         self.value_or_threshold = value_or_threshold
         self.metrics = metrics
