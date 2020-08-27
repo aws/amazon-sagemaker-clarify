@@ -293,8 +293,7 @@ def AD(
     return ad
 
 
-# FIXME, CDDPL needs to be looked into
-# @registry.posttraining
+@registry.posttraining
 def CDDPL(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,

@@ -51,7 +51,7 @@ def CDD(
     :return: the weighted average of demographic disparity on all subgroups
     """
     if group_variable is None or group_variable.empty:
-        return float("NAN")
+        raise ValueError("Group variable is empty or not provided")
     sensitive_facet_index = sensitive_facet_index.astype(bool)
     label_index = label_index.astype(bool)
     unique_groups = np.unique(group_variable)
