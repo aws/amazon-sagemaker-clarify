@@ -128,6 +128,7 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
     return data_type
 
 
+# Todo: Fix the function to avoid redundant calls for DCA and DCR
 def DCO(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,
@@ -193,6 +194,7 @@ def DCO(
     return dca, dcr
 
 
+# Todo: Fix the function to avoid redundant calls for DAR and DRR
 def DLR(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,

@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from famly.bias.report import (
     ProblemType,
     problem_type,
@@ -390,8 +391,8 @@ def test_partial_bias_report():
 
 def test_metric_descriptions():
     """
-        test the list of callable metrics have descriptions present
-        """
+    Test the list of callable metrics have descriptions present
+    """
     pretraining_metrics = PRETRAINING_METRICS
     postraining_metrics = POSTTRAINING_METRICS
 
@@ -419,15 +420,39 @@ def test_metric_descriptions():
     expected_result_2 = {
         "AD": "Accuracy Difference (AD)",
         "CDDPL": "Conditional Demographic Disparity in Predicted Labels (CDDPL)",
-        "DCO": "Difference in Conditional Outcomes (DCO)",
+        "DAR": "Difference in Acceptance Rates (DAR)",
+        "DCA": "Difference in Conditional Acceptance (DCA)",
+        "DCR": "Difference in Conditional Rejection (DCR)",
         "DI": "Disparate Impact (DI)",
-        "DLR": "Difference in Label Rates (DLR)",
         "DPPL": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
+        "DRR": "Difference in Rejection Rates (DRR)",
         "FT": "Flip Test (FT)",
         "RD": "Recall Difference (RD)",
         "TE": "Treatment Equality (TE)",
     }
     assert posttraining_metric_descriptions == expected_result_2
+
+
+def test_predicted_label_values():
+    """
+    Tests whether exception is raised when predicted label values are differnt from positive label values
+    """
+    df = dataframe([["a", "p", 1, "p"], ["b", "q", 1, "p"], ["b", "r", 1, "q"], ["c", "p", 0, "p"], ["c", "q", 0, "p"]])
+    # when  explicit label values are given for categorical data
+    # Pre training bias metrics
+    with pytest.raises(
+        ValueError,
+        match="Positive predicted label values or threshold should" " be empty or same as label values or thresholds",
+    ):
+        pretraining_report = bias_report(
+            df,
+            FacetColumn("x"),
+            LabelColumn("y", df["y"], ["p", "q"]),
+            StageType.PRE_TRAINING,
+            LabelColumn("yhat", df["yhat"], ["q"]),
+            metrics=["DPL", "CDDL"],
+            group_variable=df["z"],
+        )
 
 
 def test_problem_type():

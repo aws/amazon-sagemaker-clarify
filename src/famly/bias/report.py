@@ -70,7 +70,7 @@ class StageType(Enum):
 class MetricResult:
     """Metric Result with name, description and computed metric values"""
 
-    def __init__(self, name: str, description: str, value: Any):
+    def __init__(self, name: str, description: str, value: Optional[float]):
         self.name = name
         self.description = description
         self.value = value
@@ -79,7 +79,7 @@ class MetricResult:
 class MetricError(MetricResult):
     """Metric Result with name, description and computed metric value and error"""
 
-    def __init__(self, name: str, description: str, value: Any = None, error: Exception = None):
+    def __init__(self, name: str, description: str, value: float = None, error: Exception = None):
         super().__init__(name, description, value)
         self.error = str(error)
 
