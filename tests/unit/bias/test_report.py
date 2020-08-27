@@ -9,6 +9,7 @@ from famly.bias.report import (
     StageType,
 )
 from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
+from famly.bias.metrics import common
 from typing import List, Any
 
 
@@ -385,6 +386,48 @@ def test_partial_bias_report():
         }
     ]
     assert posttraining_report == expected_result_2
+
+
+def test_metric_descriptions():
+    """
+        test the list of callable metrics have descriptions present
+        """
+    pretraining_metrics = PRETRAINING_METRICS
+    postraining_metrics = POSTTRAINING_METRICS
+
+    pretraining_metric_descriptions = {}
+    for metric in pretraining_metrics:
+        description = common.metric_description(metric)
+        pretraining_metric_descriptions.update({metric.__name__: description})
+    expected_result_1 = {
+        "CDDL": "Conditional Demographic Disparity in Labels (CDDL)",
+        "CI": "Class Imbalance (CI)",
+        "DPL": "Difference in Positive Proportions in Labels (DPL)",
+        "JS": "Jensen-Shannon Divergence (JS)",
+        "KL": "Kullback-Liebler Divergence (KL)",
+        "KS": "Kolmogorov-Smirnov Distance (KS)",
+        "LP": "L-p Norm (LP)",
+        "TVD": "Total Variation Distance (TVD)",
+    }
+    assert pretraining_metric_descriptions == expected_result_1
+
+    # post training metrics
+    posttraining_metric_descriptions = {}
+    for metric in postraining_metrics:
+        description = common.metric_description(metric)
+        posttraining_metric_descriptions.update({metric.__name__: description})
+    expected_result_2 = {
+        "AD": "Accuracy Difference (AD)",
+        "CDDPL": "Conditional Demographic Disparity in Predicted Labels (CDDPL)",
+        "DCO": "Difference in Conditional Outcomes (DCO)",
+        "DI": "Disparate Impact (DI)",
+        "DLR": "Difference in Label Rates (DLR)",
+        "DPPL": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
+        "FT": "Flip Test (FT)",
+        "RD": "Recall Difference (RD)",
+        "TE": "Treatment Equality (TE)",
+    }
+    assert posttraining_metric_descriptions == expected_result_2
 
 
 def test_problem_type():
