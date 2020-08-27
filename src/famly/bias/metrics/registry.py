@@ -38,7 +38,6 @@ def __register(metrics, function):
     # assign first line of docstring as description
     if not function.__doc__:
         raise ValueError("Metric function doesn't have a docstring")
-    function.description = function.__doc__.lstrip().split("\n")[0]
     metrics.append(function)
 
 

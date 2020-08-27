@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Callable
 import pandas as pd
 import numpy as np
 
@@ -21,6 +21,17 @@ class DataType(Enum):
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
+
+
+def metric_description(metric: Callable[..., float]) -> str:
+    """
+    fetch metric description from doc strings
+    :param metric: metric callable function
+    :return: short description of metric
+    """
+    if not metric.__doc__:
+        logger.exception(f"Description is not found for the registered metric: {metric}")
+    return metric.__doc__.lstrip().split("\n")[0]  # type: ignore
 
 
 def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
