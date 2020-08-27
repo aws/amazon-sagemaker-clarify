@@ -178,10 +178,10 @@ def test_report_continuous_data():
                 {
                     "description": "Difference in Conditional Outcomes (DCO)",
                     "name": "DCO",
-                    "value": (float("-inf"), -1.0),
+                    "value": [float("-inf"), -1.0],
                 },
                 {"description": "Recall Difference (RD)", "name": "RD", "value": float("-inf")},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (float("-inf"), 1.0)},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [float("-inf"), 1.0]},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
                 {
                     "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
@@ -266,7 +266,7 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (-0.25, 0)},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [-0.25, 0]},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.25},
             ],
             "value_or_threshold": "a",
@@ -280,7 +280,7 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (0.5, 0)},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [0.5, 0]},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.5},
             ],
             "value_or_threshold": "b",
@@ -294,7 +294,7 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": (-0.33333333333333337, 0)},
+                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [-0.33333333333333337, 0]},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.33333333333333337},
             ],
             "value_or_threshold": "c",
@@ -373,7 +373,7 @@ def test_partial_bias_report():
                 {
                     "description": "Difference in Conditional Outcomes (DCO)",
                     "name": "DCO",
-                    "value": (float("-inf"), -1.0),
+                    "value": [float("-inf"), -1.0],
                 },
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
                 {
