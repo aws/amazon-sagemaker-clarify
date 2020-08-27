@@ -340,7 +340,7 @@ def bias_report(
     if isinstance(predicted_label_column, LabelColumn) and predicted_label_column.positive_label_values:
         if predicted_label_column.positive_label_values != label_column.positive_label_values:
             raise ValueError(
-                "Positive predicted label values or threshold should be empty" " or same as label values pr thresholds"
+                "Positive predicted label values or threshold should be empty or same as label values or thresholds"
             )
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
