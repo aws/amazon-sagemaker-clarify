@@ -70,40 +70,29 @@ class StageType(Enum):
 class MetricResult:
     """Metric Result with name, description and computed metric values"""
 
-    def __init__(self, name: str, description: str, values: Any):
+    def __init__(self, name: str, description: str, value: Any):
         self.name = name
         self.description = description
-        self.value = values
+        self.value = value
 
 
 class MetricError(MetricResult):
     """Metric Result with name, description and computed metric value and error"""
 
-    def __init__(self, name: str, description: str, values: Any = None, error: str = None):
-        super().__init__(name, description, values)
-        self.error = error
+    def __init__(self, name: str, description: str, value: Any = None, error: Exception = None):
+        super().__init__(name, description, value)
+        self.error = str(error)
 
 
-class FacetMetric:
-    """Facet metric with value_or_threshold and list MetricResult objects"""
+class FacetReport:
+    """Facet Report with facet value_or_threshold and list MetricResult objects"""
 
-    def __init__(self, value_or_threshold: str, metrics: List[MetricResult]):
-        self.value_or_threshold = value_or_threshold
+    def __init__(self, facet_value_or_threshold: str, metrics: List[MetricResult]):
+        self.value_or_threshold = facet_value_or_threshold
         self.metrics = metrics
 
     def toJson(self):
         return json.loads(json.dumps(self, default=lambda o: o.__dict__))
-
-
-def _metric_description(metric: Callable[..., float]) -> str:
-    """
-    fetch metric description from doc strings
-    :param metric: metric callable function
-    :return: short description of metric
-    """
-    if not metric.__doc__:
-        raise KeyError(f"Description is not found for the registered metric: {metric}")
-    return metric.__doc__.lstrip().split("\n")[0]
 
 
 def problem_type(labels: pd.Series) -> ProblemType:
@@ -271,8 +260,8 @@ def _categorical_metric_call_wrapper(
         try:
             # Build index series from facet
             sensitive_facet_index = _categorical_data_idx(feature, facet_values)
-            metric_description = _metric_description(metric)
-            metric_values = famly.bias.metrics.call_metric(
+            metric_description = common.metric_description(metric)
+            metric_value = famly.bias.metrics.call_metric(
                 metric,
                 df=df,
                 feature=feature,
@@ -284,12 +273,12 @@ def _categorical_metric_call_wrapper(
                 group_variable=group_variable,
             )
         except Exception as exc:
-            logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-            metric_values, metric_error = None, str(exc)
-            return MetricError(metric.__name__, metric_description, metric_values, metric_error)
+            logger.exception(f"{metric.__name__} metrics failed with error: {exc}")
+            metric_value, metric_error = None, exc
+            return MetricError(metric.__name__, metric_description, metric_value, metric_error)
     else:
         raise ValueError("Facet values must be provided to compute the bias metrics")
-    return MetricResult(metric.__name__, metric_description, metric_values)
+    return MetricResult(metric.__name__, metric_description, metric_value)
 
 
 def _continuous_metric_call_wrapper(
@@ -307,10 +296,9 @@ def _continuous_metric_call_wrapper(
     Dispatch calling of different metric functions with the correct arguments and bool facet data
     """
     try:
-        metric_error = ""
         sensitive_facet_index = _continuous_data_idx(feature, facet_threshold_index)
-        metric_description = _metric_description(metric)
-        metric_values = famly.bias.metrics.call_metric(
+        metric_description = common.metric_description(metric)
+        metric_value = famly.bias.metrics.call_metric(
             metric,
             df=df,
             feature=feature,
@@ -322,10 +310,10 @@ def _continuous_metric_call_wrapper(
             group_variable=group_variable,
         )
     except Exception as exc:
-        logger.info(f"{metric.__name__} metrics failed with error: {exc}")
-        metric_values, metric_error = None, str(exc)
-        return MetricError(metric.__name__, metric_description, metric_values, metric_error)
-    return MetricResult(metric.__name__, metric_description, metric_values)
+        logger.exception(f"{metric.__name__} metrics failed with error: {exc}")
+        metric_value, metric_error = None, exc
+        return MetricError(metric.__name__, metric_description, metric_value, metric_error)
+    return MetricResult(metric.__name__, metric_description, metric_value)
 
 
 def bias_report(
@@ -392,7 +380,7 @@ def bias_report(
     data_series_cat: pd.Series  # Category series
     # result values can be str for label_values or dict for metrics
     result: MetricResult
-    facet_metric: FacetMetric
+    facet_metric: FacetReport
     metrics_result = []
     if facet_dtype == common.DataType.CATEGORICAL:
         data_series_cat = data_series.astype("category")
@@ -418,7 +406,7 @@ def bias_report(
                     group_variable,
                 )
                 metrics_list.append(result)
-            facet_metric = FacetMetric(value_or_threshold=",".join(map(str, facet_values)), metrics=metrics_list)
+            facet_metric = FacetReport(facet_value_or_threshold=",".join(map(str, facet_values)), metrics=metrics_list)
             metrics_result.append(facet_metric.toJson())
         logger.debug("metric_result:", metrics_result)
         return metrics_result
@@ -442,7 +430,9 @@ def bias_report(
                 group_variable,
             )
             metrics_list.append(result)
-        facet_metric = FacetMetric(value_or_threshold=",".join(map(str, facet_interval_indices)), metrics=metrics_list)
+        facet_metric = FacetReport(
+            facet_value_or_threshold=",".join(map(str, facet_interval_indices)), metrics=metrics_list
+        )
         metrics_result.append(facet_metric.toJson())
         logger.debug("metric_result:", metrics_result)
         return metrics_result
