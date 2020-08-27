@@ -274,8 +274,7 @@ def _categorical_metric_call_wrapper(
             )
         except Exception as exc:
             logger.exception(f"{metric.__name__} metrics failed with error: {exc}")
-            metric_value, metric_error = None, exc
-            return MetricError(metric.__name__, metric_description, metric_value, metric_error)
+            return MetricError(metric.__name__, metric_description, error=exc)
     else:
         raise ValueError("Facet values must be provided to compute the bias metrics")
     return MetricResult(metric.__name__, metric_description, metric_value)
@@ -311,8 +310,7 @@ def _continuous_metric_call_wrapper(
         )
     except Exception as exc:
         logger.exception(f"{metric.__name__} metrics failed with error: {exc}")
-        metric_value, metric_error = None, exc
-        return MetricError(metric.__name__, metric_description, metric_value, metric_error)
+        return MetricError(metric.__name__, metric_description, error=exc)
     return MetricResult(metric.__name__, metric_description, metric_value)
 
 
