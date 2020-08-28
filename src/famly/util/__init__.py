@@ -37,7 +37,7 @@ def GaussianFilter(input_array: np.array, sigma: int = 1) -> np.array:
     return np.convolve(input_array, gauss_filter, "same")
 
 
-def pdf(xs) -> dict:
+def compute_pdf(xs) -> dict:
     """
     Probability distribution function
     :param xs: input sequence
@@ -49,7 +49,7 @@ def pdf(xs) -> dict:
     return result_pdf
 
 
-def pdfs_aligned_nonzero(*args) -> List[np.array]:
+def compute_aligned_pdfs(*args) -> List[np.array]:
     """
     Convert a list of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
     :return: pair of numpy arrays of the same size with the aligned pdfs
@@ -57,7 +57,7 @@ def pdfs_aligned_nonzero(*args) -> List[np.array]:
     num_pdfs = len(args)
     pdfs = []
     for x in args:
-        pdfs.append(pdf(x))
+        pdfs.append(compute_pdf(x))
 
     def keys(_xs):
         return seq(_xs).map(lambda x: x[0])

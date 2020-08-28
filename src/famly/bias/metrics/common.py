@@ -6,7 +6,7 @@ import numpy as np
 from famly.bias.metrics.constants import INFINITY
 
 from famly.bias.metrics.constants import UNIQUENESS_THRESHOLD
-from famly.util import pdfs_aligned_nonzero
+from famly.util import compute_aligned_pdfs
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +276,7 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     sensitive_facet_index = sensitive_facet_index.astype(bool)
     xs_a = label[~sensitive_facet_index]
     xs_d = label[sensitive_facet_index]
-    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    (Pa, Pd) = compute_aligned_pdfs(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
         return np.nan
     kl = np.sum(Pa * np.log(Pa / Pd))
@@ -298,7 +298,7 @@ def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     sensitive_facet_index = sensitive_facet_index.astype(bool)
     xs_a = label[~sensitive_facet_index]
     xs_d = label[sensitive_facet_index]
-    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, label)
+    (Pa, Pd, P) = compute_aligned_pdfs(xs_a, xs_d, label)
     if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
         return np.nan
     res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
@@ -326,7 +326,7 @@ def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> f
     sensitive_facet_index = sensitive_facet_index.astype(bool)
     xs_a = label[~sensitive_facet_index]
     xs_d = label[sensitive_facet_index]
-    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
+    (Pa, Pd) = compute_aligned_pdfs(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
         return np.nan
     res = np.linalg.norm(Pa - Pd, norm_order)

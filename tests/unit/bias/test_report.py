@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-import json
 from famly.bias.report import (
     ProblemType,
     problem_type,
@@ -195,7 +194,6 @@ def test_report_continuous_data():
             "value_or_threshold": "(2, 3]",
         }
     ]
-    print(json.dumps(posttraining_report, allow_nan=True))
     assert posttraining_report == expected_result_1
 
 
@@ -315,7 +313,6 @@ def test_fetch_metrics_to_run():
 
     input_metrics_1 = ["CI", "DPL", "KL", "KS"]
     metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_1)
-    print(metrics_to_run, PRETRAINING_METRICS)
     assert metrics_to_run == [CI, DPL, KL, KS]
 
     input_metrics_2 = ["DPPL", "DI", "DCA", "DCR", "RD"]
