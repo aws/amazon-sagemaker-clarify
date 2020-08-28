@@ -15,7 +15,7 @@ repos:
       args: ['--in-place', '--expand-star-imports', '--ignore-init-module-imports', '--remove-all-unused-imports']
 
 -   repo: https://github.com/psf/black
-    rev: stable
+    rev: 20.8b1
     hooks:
     -   id: black
         args: [--line-length=120]

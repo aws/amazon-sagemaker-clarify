@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 from famly.bias.report import (
     ProblemType,
     problem_type,
@@ -8,7 +9,7 @@ from famly.bias.report import (
     fetch_metrics_to_run,
     StageType,
 )
-from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCO, RD
+from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from famly.bias.metrics import common
 from typing import List, Any
 
@@ -176,13 +177,11 @@ def test_report_continuous_data():
                     "value": 0.75,
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
-                {
-                    "description": "Difference in Conditional Outcomes (DCO)",
-                    "name": "DCO",
-                    "value": [float("-inf"), -1.0],
-                },
+                {"description": "Difference in Conditional Acceptance (DCA)", "name": "DCA", "value": float("-inf")},
+                {"description": "Difference in Conditional Rejection (DCR)", "name": "DCR", "value": -1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": float("-inf")},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [float("-inf"), 1.0]},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": float("-inf")},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 1.0},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
                 {
                     "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
@@ -252,7 +251,7 @@ def test_label_values():
         LabelColumn("y", df["y"], ["p", "q"]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df["yhat"]),
-        metrics=["AD", "DI", "DPPL", "RD", "DLR"],
+        metrics=["AD", "DI", "DPPL", "RD", "DAR", "DRR"],
         group_variable=df["z"],
     )
 
@@ -267,7 +266,8 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [-0.25, 0]},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": -0.25},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.25},
             ],
             "value_or_threshold": "a",
@@ -281,7 +281,8 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [0.5, 0]},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": 0.5},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.5},
             ],
             "value_or_threshold": "b",
@@ -295,7 +296,8 @@ def test_label_values():
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
                 {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
-                {"description": "Difference in Label Rates (DLR)", "name": "DLR", "value": [-0.33333333333333337, 0]},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": -0.33333333333333337},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.33333333333333337},
             ],
             "value_or_threshold": "c",
@@ -314,9 +316,9 @@ def test_fetch_metrics_to_run():
     print(metrics_to_run, PRETRAINING_METRICS)
     assert metrics_to_run == [CI, DPL, KL, KS]
 
-    input_metrics_2 = ["DPPL", "DI", "DCO", "RD"]
+    input_metrics_2 = ["DPPL", "DI", "DCA", "DCR", "RD"]
     metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_2)
-    assert metrics_to_run == [DPPL, DI, DCO, RD]
+    assert metrics_to_run == [DPPL, DI, DCA, DCR, RD]
 
 
 def test_partial_bias_report():
@@ -359,7 +361,7 @@ def test_partial_bias_report():
         LabelColumn("y", df_cont["y"], [0]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cont["yhat"]),
-        metrics=["AD", "CDDPL", "DCO", "DI", "DPPL", "FT"],
+        metrics=["AD", "CDDPL", "DCA", "DI", "DPPL", "FT"],
     )
     assert isinstance(posttraining_report, list)
     expected_result_2 = [
@@ -371,11 +373,7 @@ def test_partial_bias_report():
                     "value": 0.75,
                 },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
-                {
-                    "description": "Difference in Conditional Outcomes (DCO)",
-                    "name": "DCO",
-                    "value": [float("-inf"), -1.0],
-                },
+                {"description": "Difference in Conditional Acceptance (DCA)", "name": "DCA", "value": float("-inf")},
                 {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
                 {
                     "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
@@ -393,8 +391,8 @@ def test_partial_bias_report():
 
 def test_metric_descriptions():
     """
-        test the list of callable metrics have descriptions present
-        """
+    Test the list of callable metrics have descriptions present
+    """
     pretraining_metrics = PRETRAINING_METRICS
     postraining_metrics = POSTTRAINING_METRICS
 
@@ -422,15 +420,39 @@ def test_metric_descriptions():
     expected_result_2 = {
         "AD": "Accuracy Difference (AD)",
         "CDDPL": "Conditional Demographic Disparity in Predicted Labels (CDDPL)",
-        "DCO": "Difference in Conditional Outcomes (DCO)",
+        "DAR": "Difference in Acceptance Rates (DAR)",
+        "DCA": "Difference in Conditional Acceptance (DCA)",
+        "DCR": "Difference in Conditional Rejection (DCR)",
         "DI": "Disparate Impact (DI)",
-        "DLR": "Difference in Label Rates (DLR)",
         "DPPL": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
+        "DRR": "Difference in Rejection Rates (DRR)",
         "FT": "Flip Test (FT)",
         "RD": "Recall Difference (RD)",
         "TE": "Treatment Equality (TE)",
     }
     assert posttraining_metric_descriptions == expected_result_2
+
+
+def test_predicted_label_values():
+    """
+    Tests whether exception is raised when predicted label values are differnt from positive label values
+    """
+    df = dataframe([["a", "p", 1, "p"], ["b", "q", 1, "p"], ["b", "r", 1, "q"], ["c", "p", 0, "p"], ["c", "q", 0, "p"]])
+    # when  explicit label values are given for categorical data
+    # Pre training bias metrics
+    with pytest.raises(
+        ValueError,
+        match="Positive predicted label values or threshold should" " be empty or same as label values or thresholds",
+    ):
+        pretraining_report = bias_report(
+            df,
+            FacetColumn("x"),
+            LabelColumn("y", df["y"], ["p", "q"]),
+            StageType.PRE_TRAINING,
+            LabelColumn("yhat", df["yhat"], ["q"]),
+            metrics=["DPL", "CDDL"],
+            group_variable=df["z"],
+        )
 
 
 def test_problem_type():

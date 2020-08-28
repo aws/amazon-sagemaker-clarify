@@ -6,7 +6,7 @@ EXTRAS_REQUIRE = {
     "test": [
         "tox",
         "flake8",
-        "black",
+        "black == 20.8b1",
         "mock",
         "pre-commit",
         "pytest",
