@@ -79,7 +79,7 @@ class MetricResult:
 class MetricError(MetricResult):
     """Metric Result with name, description and computed metric value and error"""
 
-    def __init__(self, name: str, description: str, value: float = None, error: Exception = None):
+    def __init__(self, name: str, description: str, value: Optional[float] = None, error: Exception = None):
         super().__init__(name, description, value)
         self.error = str(error)
 
