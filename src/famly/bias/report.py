@@ -223,9 +223,9 @@ def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
     :param col: input data series
     :param data_values: list of category values to generate boolean index
     :returns: a boolean series where data_values are present in col as True
-   """
+    """
     # create indexing series with boolean OR of facet values
-    index_key_series: pd.Series = (col == data_values[0])
+    index_key_series: pd.Series = col == data_values[0]
     for val in data_values[1:]:
         index_key_series = index_key_series | (col == val)
     return index_key_series

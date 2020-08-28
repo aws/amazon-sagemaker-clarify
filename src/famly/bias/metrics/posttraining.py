@@ -12,7 +12,11 @@ log = logging.getLogger(__name__)
 
 
 @registry.posttraining
-def DPPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series,) -> float:
+def DPPL(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
     r"""
     "Difference in Positive Proportions in Predicted Labels (DPPL)")
 
@@ -30,7 +34,11 @@ def DPPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicte
 
 
 @registry.posttraining
-def DI(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series,) -> float:
+def DI(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
     r"""
     Disparate Impact (DI)
 
