@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CI, DCA, DCR, DI, DAR, DRR, DPL, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CI, DCA, DCR, DI, DAR, DRR, DPL, FT, JS, KL, LP, RD, TE, common
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -119,6 +119,26 @@ def datasetFT():
     return pd.DataFrame(X)
 
 
+def datasetPDF() -> pd.DataFrame:
+    X = np.array(
+        [
+            ["a", 0, False, True],
+            ["b", 0, False, False],
+            ["b", 1, True, False],
+            ["c", 1, True, True],
+            ["a", 2, True, True],
+            ["a", 1, True, True],
+            ["b", 0, False, False],
+            ["c", 1, True, True],
+            ["b", 2, True, False],
+            ["c", 2, True, True],
+            ["b", 0, False, False],
+            ["b", 2, True, False],
+        ]
+    )
+    return pd.DataFrame(X, columns=["x", "label", "positive_label_index", "sensitive_facet_index"])
+
+
 def datasetFTMult():
     X = np.array(
         [
@@ -188,40 +208,82 @@ def test_DPL():
 
 
 def test_KL():
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
-    assert res == approx(1.3219280948873624)
+    res = KL(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
+    assert res == approx(-0.366516)
 
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = KL(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
     # No facet selection
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
+    res = KL(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
     assert res is np.nan
+
+    # multi-facet, multi-category case
+    df_pdf: pd.DataFrame = datasetPDF()
+    sensitive_facet_index: pd.Series = df_pdf["x"] == "a"
+    sensitive_facet_index += df_pdf["x"] == "c"
+
+    positive_label_index: pd.Series = df_pdf["label"] == "1"
+    positive_label_index += df_pdf["label"] == "2"
+    res = KL(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.2938933)
+
+    res = common.KL(df_pdf["label"], sensitive_facet_index)
+    assert res == approx(0.36620409)
 
 
 def test_JS():
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
+    res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
     assert res == approx(0.3019448800171307)
 
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
     # No facet selection
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
+    res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
     assert res is np.nan
+
+    # multi-facet, multi-category case
+    df_pdf: pd.DataFrame = datasetPDF()
+    sensitive_facet_index: pd.Series = df_pdf["x"] == "a"
+    sensitive_facet_index += df_pdf["x"] == "c"
+
+    positive_label_index: pd.Series = df_pdf["label"] == "1"
+    positive_label_index += df_pdf["label"] == "2"
+    res = JS(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.06465997)
+
+    res = common.JS(df_pdf["label"], sensitive_facet_index)
+    assert res == approx(0.087208023)
+
     return
 
 
 def test_LP():
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
+    res = LP(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
     assert res == approx(0.6)
 
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = LP(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
     # No facet selection
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
+    res = LP(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
     assert res is np.nan
+
+    # multi-facet, multi-category case
+    df_pdf: pd.DataFrame = datasetPDF()
+    sensitive_facet_index: pd.Series = df_pdf["x"] == "a"
+    sensitive_facet_index += df_pdf["x"] == "c"
+
+    positive_label_index: pd.Series = df_pdf["label"] == "1"
+    positive_label_index += df_pdf["label"] == "2"
+    res = LP(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.471404520)
+
+    res = common.LP(df_pdf["label"], sensitive_facet_index)
+    assert res == approx(0.4714045207)
+
+    return
 
 
 #

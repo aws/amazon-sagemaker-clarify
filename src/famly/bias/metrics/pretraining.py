@@ -2,10 +2,8 @@
 Pre training metrics
 """
 import logging
-from famly.util import pdfs_aligned_nonzero
 from . import registry, common
 import pandas as pd
-import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -58,51 +56,39 @@ def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_ind
 
 
 @registry.pretraining
-def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
+def KL(positive_label_index: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Kullback-Liebler Divergence (KL)
+
+    Use this function for binary label categories.
 
     .. math::
         KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
 
-    :param label: input feature
+    :param positive_label_index: boolean column indicating positive labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kullback and Leibler (KL) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
-    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
-    if len(Pa) == 0 or len(Pd) == 0:
-        return np.nan
-    kl = np.sum(Pa * np.log2(Pa / Pd))
-    return kl
+    return common.KL(positive_label_index.astype(bool), sensitive_facet_index.astype(bool))
 
 
 @registry.pretraining
-def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
+def JS(positive_label_index: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Jensen-Shannon Divergence (JS)
-
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
+    Use this function for binary label categories.
 
-    :param label: input feature
+    :param positive_label_index: boolean column indicating positive labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Jensen-Shannon (JS) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
-    (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, label)
-    if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
-        return np.nan
-    res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
-    return res
+    return common.JS(positive_label_index.astype(bool), sensitive_facet_index.astype(bool))
 
 
 @registry.pretraining
-def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
+def LP(positive_label_index: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     L-p Norm (LP)
 
@@ -110,55 +96,47 @@ def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
 
     .. math::
         Lp(Pa, Pd) = [\sum_{x} |Pa(x)-Pd(x)|^p]^{1/p}
+    Use this function for binary label categories.
 
-    :param label: input feature
+    :param positive_label_index: boolean column indicating positive labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Returns the LP norm of the difference between class distributions
     """
-    return LP_norm(label, sensitive_facet_index, 2)
-
-
-def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> float:
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
-    (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
-    if len(Pa) == 0 or len(Pd) == 0:
-        return np.nan
-    res = np.linalg.norm(Pa - Pd, norm_order)
-    return res
+    return common.LP_norm(positive_label_index.astype(bool), sensitive_facet_index.astype(bool), 2)
 
 
 @registry.pretraining
-def TVD(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
+def TVD(positive_label_index: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Total Variation Distance (TVD)
 
     .. math::
         TVD = 0.5 * L1(Pa, Pd) \geq 0
+    Use this function for binary label categories.
 
-    :param label: input feature
+    :param positive_label_index: boolean column indicating positive labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: total variation distance metric
     """
-    Lp_res = LP_norm(label, sensitive_facet_index, 1)
+    Lp_res = common.LP_norm(positive_label_index.astype(bool), sensitive_facet_index.astype(bool), 1)
     tvd = 0.5 * Lp_res
     return tvd
 
 
 @registry.pretraining
-def KS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
+def KS(positive_label_index: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Kolmogorov-Smirnov Distance (KS)
 
     .. math::
         KS = max(\left | Pa-Pd \right |) \geq 0
+    Use this function for binary label categories.
 
-    :param label: input feature
+    :param positive_label_index: boolean column indicating positive labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kolmogorov-Smirnov metric
     """
-    return LP_norm(label, sensitive_facet_index, 1)
+    return common.LP_norm(positive_label_index.astype(bool), sensitive_facet_index.astype(bool), 1)
 
 
 @registry.pretraining

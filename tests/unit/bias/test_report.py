@@ -1,5 +1,6 @@
 import pandas as pd
 import pytest
+import json
 from famly.bias.report import (
     ProblemType,
     problem_type,
@@ -47,7 +48,7 @@ def test_report_category_data():
                     "name": "DPL",
                     "value": -0.6666666666666667,
                 },
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.584962500721156},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.3662040962227032},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
@@ -68,7 +69,7 @@ def test_report_category_data():
                     "name": "DPL",
                     "value": 0.6666666666666667,
                 },
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.5283208335737187},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0986122886681098},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
@@ -146,7 +147,7 @@ def test_report_continuous_data():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
                 {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.20983242268450672},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.5},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.25},
@@ -194,6 +195,7 @@ def test_report_continuous_data():
             "value_or_threshold": "(2, 3]",
         }
     ]
+    print(json.dumps(posttraining_report, allow_nan=True))
     assert posttraining_report == expected_result_1
 
 
@@ -341,7 +343,7 @@ def test_partial_bias_report():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
                 {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
                 {
                     "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
                     "error": "Group variable is empty or not provided",
