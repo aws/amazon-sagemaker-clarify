@@ -4,7 +4,6 @@ Post training metrics
 import logging
 import pandas as pd
 import numpy as np
-from typing import Tuple
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
 from . import registry, common
@@ -13,7 +12,11 @@ log = logging.getLogger(__name__)
 
 
 @registry.posttraining
-def DPPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series,) -> float:
+def DPPL(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
     r"""
     "Difference in Positive Proportions in Predicted Labels (DPPL)")
 
@@ -31,7 +34,11 @@ def DPPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicte
 
 
 @registry.posttraining
-def DI(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series,) -> float:
+def DI(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
     r"""
     Disparate Impact (DI)
 
@@ -65,69 +72,43 @@ def DI(feature: pd.Series, sensitive_facet_index: pd.Series, positive_predicted_
 
 
 @registry.posttraining
-def DCO(
+def DCA(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
-) -> Tuple[float, float]:
+) -> float:
     """
-    Difference in Conditional Outcomes (DCO)
+    Difference in Conditional Acceptance (DCA)
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
+    :return: Difference in Conditional Acceptance between advantaged and disadvantaged classes
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    dca, _ = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
+    return dca
 
-    if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("DCO: Facet set is empty")
-    if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("DCO: Negated Facet set is empty")
 
-    na0 = len(feature[~positive_label_index & ~sensitive_facet_index])
-    na0hat = len(feature[~positive_predicted_label_index & ~sensitive_facet_index])
-    nd0 = len(feature[~positive_label_index & sensitive_facet_index])
-    nd0hat = len(feature[~positive_predicted_label_index & sensitive_facet_index])
+@registry.posttraining
+def DCR(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    """
+    Difference in Conditional Rejection (DCR)
 
-    na1 = len(feature[positive_label_index & ~sensitive_facet_index])
-    na1hat = len(feature[positive_predicted_label_index & ~sensitive_facet_index])
-    nd1 = len(feature[positive_label_index & sensitive_facet_index])
-    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
-
-    if na0hat != 0:
-        rr_a = na0 / na0hat
-    else:
-        rr_a = INFINITY
-
-    if nd0hat != 0:
-        rr_d = nd0 / nd0hat
-    else:
-        rr_d = INFINITY
-
-    if na1hat != 0:
-        ca = na1 / na1hat
-    else:
-        ca = INFINITY
-
-    if nd1hat != 0:
-        cd = nd1 / nd1hat
-    else:
-        cd = INFINITY
-
-    dca = ca - cd
-    dcr = rr_d - rr_a
-
-    if ca == cd and ca == INFINITY:
-        dca = 0
-    if rr_a == rr_d and rr_a == INFINITY:
-        dcr = 0
-
-    return dca, dcr
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Difference in Conditional Rejection between advantaged and disadvantaged classes
+    """
+    _, dcr = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
+    return dcr
 
 
 @registry.posttraining
@@ -173,69 +154,44 @@ def RD(
 
 
 @registry.posttraining
-def DLR(
+def DAR(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
-) -> Tuple[float, float]:
+) -> float:
     """
-    Difference in Label Rates (DLR)
+    Difference in Acceptance Rates (DAR)
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
+    :return: Difference in Acceptance Rates
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
 
-    if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("DLR: Facet set is empty")
-    if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("DLR: Negated Facet set is empty")
+    dar, _ = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
+    return dar
 
-    TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
-    na1hat = len(feature[positive_predicted_label_index & (~sensitive_facet_index)])
-    TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
-    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
 
-    TN_a = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & (~sensitive_facet_index)])
-    na0hat = len(feature[(~positive_predicted_label_index) & (~sensitive_facet_index)])
-    TN_d = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & sensitive_facet_index])
-    nd0hat = len(feature[(~positive_predicted_label_index) & sensitive_facet_index])
+@registry.posttraining
+def DRR(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    """
+    Difference in Rejection Rates (DRR)
 
-    if na1hat != 0:
-        ar_a = TP_a / na1hat
-    else:
-        ar_a = INFINITY
-
-    if nd1hat != 0:
-        ar_d = TP_d / nd1hat
-    else:
-        ar_d = INFINITY
-
-    if na0hat != 0:
-        rr_a = TN_a / na0hat
-    else:
-        rr_a = INFINITY
-
-    if nd0hat != 0:
-        rr_d = TN_d / nd0hat
-    else:
-        rr_d = INFINITY
-
-    dar = ar_a - ar_d
-    drr = rr_d - rr_a
-
-    if ar_a == ar_d and ar_a == INFINITY:
-        dar = 0
-    if rr_a == rr_d and rr_a == INFINITY:
-        drr = 0
-
-    return dar, drr
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Difference in Rejection Rates
+    """
+    _, drr = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
+    return drr
 
 
 @registry.posttraining

@@ -48,12 +48,12 @@ class Dataset:
 
     @abstractmethod
     def train(self) -> pd.DataFrame:
-        """"
+        """ "
         :returns: the dataframe for the train dataset
         """
 
     def test(self) -> pd.DataFrame:
-        """"
+        """ "
         :returns: the dataframe for the test dataset
         """
         return pd.DataFrame()
