@@ -15,6 +15,7 @@ EXTRAS_REQUIRE = {
         "coverage",
         "nbconvert",
         "jupyter",
+        "jupyter_contrib_nbextensions",
         "seaborn",
         "mypy",
         "lxml",
