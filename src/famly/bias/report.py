@@ -9,6 +9,7 @@ import pandas as pd
 import famly
 import famly.bias.metrics
 from famly.bias.metrics import common
+from .metrics.registry import ProblemType
 
 logger = logging.getLogger(__name__)
 
@@ -49,15 +50,6 @@ class LabelColumn(Column):
         super().__init__(name)
         self.data = data
         self.positive_label_values = positive_label_values
-
-
-class ProblemType(Enum):
-    """Type of problem deduced from the label values"""
-
-    BINARY = 0
-    REGRESSION = 1
-    MULTICLASS = 2
-    OTHER = 3
 
 
 class StageType(Enum):
@@ -117,18 +109,28 @@ def _column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: List[str]):
+def fetch_metrics_to_run(metric_names: List[str], stage_type: StageType, problem_type: ProblemType):
     """
     Validates the list of metric names passed and returns the callable methods for them
     :param full_metrics:
     :param metric_names:
     :return: List[Callable..] methods
     """
-    full_metrics_names = [f.__name__ for f in full_metrics]
-    if not (set(metric_names).issubset(set(full_metrics_names))):
-        raise ValueError("Invalid metric_name: metrics should be one of the registered metrics" f"{full_metrics_names}")
-    metrics_to_run = [metric for metric in full_metrics if metric.__name__ in metric_names]
-    return metrics_to_run
+    metrics: List[Callable[..., Any]] = []
+    if stage_type == StageType.PRE_TRAINING:
+        if problem_type == ProblemType.BINARY:
+            metrics = famly.bias.metrics.PRETRAINING_BINARY_METRICS
+        elif problem_type == ProblemType.MULTICLASS:
+            metrics = famly.bias.metrics.PRETRAINING_MULTI_CLASS_METRICS
+    elif stage_type == StageType.POST_TRAINING:
+        if problem_type == ProblemType.BINARY:
+            metrics = famly.bias.metrics.POSTTRAINING_BINARY_METRICS
+        elif problem_type == ProblemType.MULTICLASS:
+            metrics = famly.bias.metrics.POSTTRAINING_MULTI_CLASS_METRICS
+    if metric_names == ["all"]:
+        return metrics
+    else:
+        return [metric for metric in metrics if metric.__name__ in metric_names]
 
 
 def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
@@ -247,9 +249,7 @@ def _categorical_metric_call_wrapper(
     feature: pd.Series,
     facet_values: Optional[List[Any]],
     label: pd.Series,
-    positive_label_index: pd.Series,
     predicted_label: pd.Series,
-    positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
     """
@@ -267,9 +267,7 @@ def _categorical_metric_call_wrapper(
                 feature=feature,
                 sensitive_facet_index=sensitive_facet_index,
                 label=label,
-                positive_label_index=positive_label_index,
                 predicted_label=predicted_label,
-                positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
         except Exception as exc:
@@ -286,9 +284,7 @@ def _continuous_metric_call_wrapper(
     feature: pd.Series,
     facet_threshold_index: pd.IntervalIndex,
     label: pd.Series,
-    positive_label_index: pd.Series,
     predicted_label: pd.Series,
-    positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
     """
@@ -303,9 +299,7 @@ def _continuous_metric_call_wrapper(
             feature=feature,
             sensitive_facet_index=sensitive_facet_index,
             label=label,
-            positive_label_index=positive_label_index,
             predicted_label=predicted_label,
-            positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
     except Exception as exc:
@@ -322,16 +316,18 @@ def bias_report(
     predicted_label_column: LabelColumn = None,
     metrics: List[Any] = ["all"],
     group_variable: Optional[pd.Series] = None,
+    problem_type: ProblemType = ProblemType.BINARY,
 ) -> List[Dict]:
     """
     Run Full bias report on a dataset.:
     :param df: Dataset as a pandas.DataFrame
     :param facet_column: description of column to consider for Bias analysis
     :param label_column: description of column which has the labels.
-    :param stage_type: pre_training or post_training for which bias metrics is computed
+    :param stage_type: pre_training or post_training for which bias metrics are computed
     :param predicted_label_column: description of column with predicted labels
     :param metrics: list of metrics names to provide bias metrics
     :param group_variable: data series for the group variable
+    :param problem_type: binary or multiclass problem for which bias metrics are computed
     :return: list of dictionaries with metrics for different label values
     """
     if facet_column:
@@ -350,33 +346,25 @@ def bias_report(
 
     data_series: pd.Series = df[facet_column.name]
     label_series: pd.Series = label_column.data
-    positive_label_index, label_values = _positive_label_index(
-        data=label_series, positive_values=label_column.positive_label_values
-    )
+    if problem_type == ProblemType.BINARY:
+        label_series, label_values = _positive_label_index(
+            data=label_series, positive_values=label_column.positive_label_values
+        )
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
-        post_training_metrics = (
-            famly.bias.metrics.POSTTRAINING_METRICS
-            if metrics == ["all"]
-            else fetch_metrics_to_run(famly.bias.metrics.POSTTRAINING_METRICS, metrics)
-        )
+        post_training_metrics = fetch_metrics_to_run(metrics, stage_type, problem_type)
         metrics_to_run.extend(post_training_metrics)
         predicted_label_series = predicted_label_column.data
-        positive_predicted_label_index = _positive_predicted_index(
-            predicted_label_data=predicted_label_series,
-            label_data=label_series,
-            positive_label_values=label_column.positive_label_values,
-        )
+        if problem_type == ProblemType.BINARY:
+            predicted_label_series = _positive_predicted_index(
+                predicted_label_data=predicted_label_series,
+                label_data=label_column.data,
+                positive_label_values=label_column.positive_label_values,
+            )
     else:
-        positive_predicted_label_index = [None]
-        predicted_label_values = [None]
         predicted_label_series = None
-        pre_training_metrics = (
-            famly.bias.metrics.PRETRAINING_METRICS
-            if metrics == ["all"]
-            else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
-        )
+        pre_training_metrics = fetch_metrics_to_run(metrics, stage_type, problem_type)
         metrics_to_run.extend(pre_training_metrics)
 
     facet_dtype = common.series_datatype(data_series, facet_column.sensitive_values)
@@ -403,9 +391,7 @@ def bias_report(
                     data_series_cat,
                     facet_values,
                     label_series,
-                    positive_label_index,
                     predicted_label_series,
-                    positive_predicted_label_index,
                     group_variable,
                 )
                 metrics_list.append(result)
@@ -427,9 +413,7 @@ def bias_report(
                 data_series,
                 facet_continuous_column.interval_indices,
                 label_series,
-                positive_label_index,
                 predicted_label_series,
-                positive_predicted_label_index,
                 group_variable,
             )
             metrics_list.append(result)

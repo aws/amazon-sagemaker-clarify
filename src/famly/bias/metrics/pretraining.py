@@ -7,10 +7,13 @@ from . import registry, common
 import pandas as pd
 import numpy as np
 
+from famly.bias.metrics import require
+from .registry import ProblemType
+
 log = logging.getLogger(__name__)
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.BINARY)
 def CI(feature: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Class Imbalance (CI)
@@ -31,33 +34,33 @@ def CI(feature: pd.Series, sensitive_facet_index: pd.Series) -> float:
     We define CI = (np − p)/(np + p). Where np is the number of instances in the not sensitive group
     and p is number of instances in the sensitive group.
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
     pos = len(feature[sensitive_facet_index])
     neg = len(feature[~sensitive_facet_index])
     q = pos + neg
     if neg == 0:
-        raise ValueError("CI: negated facet set is empty. Check that x[~facet] has non-zero length.")
+        raise ValueError("Negated facet set is empty")
     if pos == 0:
-        raise ValueError("CI: facet set is empty. Check that x[facet] has non-zero length.")
+        raise ValueError("Facet set is empty")
     assert q != 0
     ci = float(neg - pos) / q
     return ci
 
 
-@registry.pretraining
-def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
+@registry.pretraining(problem_type=ProblemType.BINARY)
+def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, label: pd.Series) -> float:
     """
     Difference in Positive Proportions in Labels (DPL)
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
+    :param label: boolean column indicating positive labels
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    return common.DPL(feature, sensitive_facet_index, positive_label_index)
+    return common.DPL(feature, sensitive_facet_index, label)
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.MULTICLASS)
 def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Kullback-Liebler Divergence (KL)
@@ -69,7 +72,7 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kullback and Leibler (KL) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
     xs_a = label[sensitive_facet_index]
     xs_d = label[~sensitive_facet_index]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
@@ -79,7 +82,7 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     return kl
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.MULTICLASS)
 def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Jensen-Shannon Divergence (JS)
@@ -91,7 +94,7 @@ def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Jensen-Shannon (JS) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
     xs_a = label[sensitive_facet_index]
     xs_d = label[~sensitive_facet_index]
     (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, label)
@@ -101,7 +104,7 @@ def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     return res
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.MULTICLASS)
 def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     L-p Norm (LP)
@@ -119,7 +122,7 @@ def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
 
 
 def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> float:
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
     xs_a = label[sensitive_facet_index]
     xs_d = label[~sensitive_facet_index]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
@@ -129,7 +132,7 @@ def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> f
     return res
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.MULTICLASS)
 def TVD(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Total Variation Distance (TVD)
@@ -146,7 +149,7 @@ def TVD(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     return tvd
 
 
-@registry.pretraining
+@registry.pretraining(problem_type=ProblemType.MULTICLASS)
 def KS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     r"""
     Kolmogorov-Smirnov Distance (KS)
@@ -161,10 +164,8 @@ def KS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     return LP_norm(label, sensitive_facet_index, 1)
 
 
-@registry.pretraining
-def CDDL(
-    feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series, group_variable: pd.Series
-) -> float:
+@registry.pretraining(problem_type=ProblemType.BINARY)
+def CDDL(feature: pd.Series, sensitive_facet_index: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
     r"""
     Conditional Demographic Disparity in Labels (CDDL)
 
@@ -174,8 +175,8 @@ def CDDL(
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
-    :param positive_label_index: boolean column indicating positive labels
+    :param label: boolean column indicating positive labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
-    return common.CDD(feature, sensitive_facet_index, positive_label_index, group_variable)
+    return common.CDD(feature, sensitive_facet_index, label, group_variable)

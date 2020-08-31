@@ -1,7 +1,6 @@
 import pandas as pd
 import pytest
 from famly.bias.report import (
-    ProblemType,
     problem_type,
     bias_report,
     FacetColumn,
@@ -9,7 +8,21 @@ from famly.bias.report import (
     fetch_metrics_to_run,
     StageType,
 )
-from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
+from famly.bias.metrics import (
+    PRETRAINING_BINARY_METRICS,
+    PRETRAINING_MULTI_CLASS_METRICS,
+    POSTTRAINING_BINARY_METRICS,
+    CI,
+    DPL,
+    KL,
+    KS,
+    DPPL,
+    DI,
+    DCA,
+    DCR,
+    RD,
+    ProblemType,
+)
 from famly.bias.metrics import common
 from typing import List, Any
 
@@ -312,12 +325,16 @@ def test_fetch_metrics_to_run():
     """
 
     input_metrics_1 = ["CI", "DPL", "KL", "KS"]
-    metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_1)
-    print(metrics_to_run, PRETRAINING_METRICS)
-    assert metrics_to_run == [CI, DPL, KL, KS]
+    metrics_to_run = fetch_metrics_to_run(
+        input_metrics_1, stage_type=StageType.PRE_TRAINING, problem_type=ProblemType.MULTICLASS
+    )
+    print(metrics_to_run, PRETRAINING_BINARY_METRICS)
+    assert metrics_to_run == [KL, KS]
 
     input_metrics_2 = ["DPPL", "DI", "DCA", "DCR", "RD"]
-    metrics_to_run = fetch_metrics_to_run(POSTTRAINING_METRICS, input_metrics_2)
+    metrics_to_run = fetch_metrics_to_run(
+        input_metrics_2, stage_type=StageType.POST_TRAINING, problem_type=ProblemType.BINARY
+    )
     assert metrics_to_run == [DPPL, DI, DCA, DCR, RD]
 
 
@@ -393,11 +410,12 @@ def test_metric_descriptions():
     """
     Test the list of callable metrics have descriptions present
     """
-    pretraining_metrics = PRETRAINING_METRICS
-    postraining_metrics = POSTTRAINING_METRICS
+    pretraining_binary_metrics = PRETRAINING_BINARY_METRICS
+    pretraining_multiclass_metrics = PRETRAINING_MULTI_CLASS_METRICS
+    postraining_binary_metrics = POSTTRAINING_BINARY_METRICS
 
     pretraining_metric_descriptions = {}
-    for metric in pretraining_metrics:
+    for metric in pretraining_binary_metrics:
         description = common.metric_description(metric)
         pretraining_metric_descriptions.update({metric.__name__: description})
     expected_result_1 = {
@@ -412,9 +430,22 @@ def test_metric_descriptions():
     }
     assert pretraining_metric_descriptions == expected_result_1
 
+    pretraining_metric_descriptions = {}
+    for metric in pretraining_multiclass_metrics:
+        description = common.metric_description(metric)
+        pretraining_metric_descriptions.update({metric.__name__: description})
+    expected_result_1 = {
+        "JS": "Jensen-Shannon Divergence (JS)",
+        "KL": "Kullback-Liebler Divergence (KL)",
+        "KS": "Kolmogorov-Smirnov Distance (KS)",
+        "LP": "L-p Norm (LP)",
+        "TVD": "Total Variation Distance (TVD)",
+    }
+    assert pretraining_metric_descriptions == expected_result_1
+
     # post training metrics
     posttraining_metric_descriptions = {}
-    for metric in postraining_metrics:
+    for metric in postraining_binary_metrics:
         description = common.metric_description(metric)
         posttraining_metric_descriptions.update({metric.__name__: description})
     expected_result_2 = {

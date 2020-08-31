@@ -181,7 +181,7 @@ def test_CI():
 
 def test_DPL():
     df = pd.DataFrame({"x": ["a", "a", "b", "b"], "y": [1, 1, 0, 1]})
-    res = metric_one_vs_all(DPL, df["x"], label=df["y"], positive_label_index=(df["y"] == 1))
+    res = metric_one_vs_all(DPL, df["x"], label=df["y"] == 1, positive_label_index=(df["y"] == 1))
     assert res["a"] == -0.5
     assert res["b"] == 0.5
     return
@@ -371,8 +371,8 @@ def test_TE():
 
 def test_FT():
     dfFT = datasetFT()
-    sensitive_facet_index = dfFT[0]
+    sensitive_facet_index = dfFT[0] == 1
 
     predicted = pd.Series([1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1])
 
-    assert FT(dfFT, sensitive_facet_index, predicted) == approx(-0.23076923076923078)
+    assert FT(dfFT, sensitive_facet_index, predicted == 1) == approx(-0.23076923076923078)

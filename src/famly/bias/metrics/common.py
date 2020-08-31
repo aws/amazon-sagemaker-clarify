@@ -21,7 +21,7 @@ class DataType(Enum):
 
 def require(condition: bool, message: str) -> None:
     if not condition:
-        raise RuntimeError(message)
+        raise ValueError(message)
 
 
 def metric_description(metric: Callable[..., float]) -> str:
@@ -35,48 +35,46 @@ def metric_description(metric: Callable[..., float]) -> str:
     return metric.__doc__.lstrip().split("\n")[0]  # type: ignore
 
 
-def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
+def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, label: pd.Series) -> float:
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
+    require(label.dtype == bool, "label must of dtype bool")
     na = len(feature[~sensitive_facet_index])
     nd = len(feature[sensitive_facet_index])
-    na_pos = len(feature[~sensitive_facet_index & positive_label_index])
-    nd_pos = len(feature[sensitive_facet_index & positive_label_index])
+    na_pos = len(feature[~sensitive_facet_index & label])
+    nd_pos = len(feature[sensitive_facet_index & label])
     if na == 0:
-        raise ValueError("DPL: negative facet set is empty.")
+        raise ValueError("Negative facet set is empty.")
     if nd == 0:
-        raise ValueError("DPL: facet set is empty.")
+        raise ValueError("Facet set is empty.")
     qa = na_pos / na
     qd = nd_pos / nd
     dpl = qa - qd
     return dpl
 
 
-def CDD(
-    feature: pd.Series, sensitive_facet_index: pd.Series, label_index: pd.Series, group_variable: pd.Series
-) -> float:
+def CDD(feature: pd.Series, sensitive_facet_index: pd.Series, label: pd.Series, group_variable: pd.Series) -> float:
     """
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
-    :param label_index: boolean column indicating positive labels or predicted labels
+    :param label: boolean column indicating positive labels or predicted labels
     :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
     if group_variable is None or group_variable.empty:
         raise ValueError("Group variable is empty or not provided")
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    label_index = label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
+    require(label.dtype == bool, "label must of dtype bool")
     unique_groups = np.unique(group_variable)
 
     # Global demographic disparity (DD)]
-    denomA = len(feature[label_index])
+    denomA = len(feature[label])
 
     if denomA == 0:
-        raise ValueError("CDD: No positive labels in set")
-    denomD = len(feature[~label_index])
+        raise ValueError("No positive labels in set")
+    denomD = len(feature[~label])
 
     if denomD == 0:
-        raise ValueError("CDD: No negative labels in set")
+        raise ValueError("No negative labels in set")
 
     # Conditional demographic disparity (CDD)
     # FIXME: appending to numpy arrays is inefficient
@@ -84,11 +82,11 @@ def CDD(
     counts = np.array([])
     for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
-        numA = len(label_index[label_index & sensitive_facet_index & (group_variable == subgroup_variable)])
-        denomA = len(feature[label_index & (group_variable == subgroup_variable)])
+        numA = len(feature[label & sensitive_facet_index & (group_variable == subgroup_variable)])
+        denomA = len(feature[label & (group_variable == subgroup_variable)])
         A = numA / denomA if denomA != 0 else 0
-        numD = len(label_index[(~label_index) & sensitive_facet_index & (group_variable == subgroup_variable)])
-        denomD = len(feature[(~label_index) & (group_variable == subgroup_variable)])
+        numD = len(feature[(~label) & sensitive_facet_index & (group_variable == subgroup_variable)])
+        denomD = len(feature[(~label) & (group_variable == subgroup_variable)])
         D = numD / denomD if denomD != 0 else 0
         CDD = np.append(CDD, D - A)
 
@@ -132,8 +130,8 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
 def DCO(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,
-    positive_label_index: pd.Series,
-    positive_predicted_label_index: pd.Series,
+    label: pd.Series,
+    predicted_label: pd.Series,
 ) -> Tuple[float, float]:
     """
     Difference in Conditional Outcomes (DCO)
@@ -144,24 +142,24 @@ def DCO(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Difference in Conditional Outcomes (Acceptance and Rejection) between advantaged and disadvantaged classes
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
+    require(predicted_label.dtype == bool, "predicted_label must of dtype bool")
+    require(label.dtype == bool, "label must of dtype bool")
 
     if len(feature[sensitive_facet_index]) == 0:
         raise ValueError("DCO: Facet set is empty")
     if len(feature[~sensitive_facet_index]) == 0:
         raise ValueError("DCO: Negated Facet set is empty")
 
-    na0 = len(feature[~positive_label_index & ~sensitive_facet_index])
-    na0hat = len(feature[~positive_predicted_label_index & ~sensitive_facet_index])
-    nd0 = len(feature[~positive_label_index & sensitive_facet_index])
-    nd0hat = len(feature[~positive_predicted_label_index & sensitive_facet_index])
+    na0 = len(feature[~label & ~sensitive_facet_index])
+    na0hat = len(feature[~predicted_label & ~sensitive_facet_index])
+    nd0 = len(feature[~label & sensitive_facet_index])
+    nd0hat = len(feature[~predicted_label & sensitive_facet_index])
 
-    na1 = len(feature[positive_label_index & ~sensitive_facet_index])
-    na1hat = len(feature[positive_predicted_label_index & ~sensitive_facet_index])
-    nd1 = len(feature[positive_label_index & sensitive_facet_index])
-    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
+    na1 = len(feature[label & ~sensitive_facet_index])
+    na1hat = len(feature[predicted_label & ~sensitive_facet_index])
+    nd1 = len(feature[label & sensitive_facet_index])
+    nd1hat = len(feature[predicted_label & sensitive_facet_index])
 
     if na0hat != 0:
         rr_a = na0 / na0hat
@@ -198,8 +196,8 @@ def DCO(
 def DLR(
     feature: pd.Series,
     sensitive_facet_index: pd.Series,
-    positive_label_index: pd.Series,
-    positive_predicted_label_index: pd.Series,
+    label: pd.Series,
+    predicted_label: pd.Series,
 ) -> Tuple[float, float]:
     """
     Difference in Label Rates (DLR)
@@ -210,24 +208,24 @@ def DLR(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Difference in Label Rates (aka Difference in Acceptance Rates AND Difference in Rejected Rates)
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must of dtype bool")
+    require(label.dtype == bool, "label must of dtype bool")
+    require(predicted_label.dtype == bool, "predicted_label must of dtype bool")
 
     if len(feature[sensitive_facet_index]) == 0:
         raise ValueError("DLR: Facet set is empty")
     if len(feature[~sensitive_facet_index]) == 0:
         raise ValueError("DLR: Negated Facet set is empty")
 
-    TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
-    na1hat = len(feature[positive_predicted_label_index & (~sensitive_facet_index)])
-    TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
-    nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
+    TP_a = len(feature[label & predicted_label & (~sensitive_facet_index)])
+    na1hat = len(feature[predicted_label & (~sensitive_facet_index)])
+    TP_d = len(feature[label & predicted_label & sensitive_facet_index])
+    nd1hat = len(feature[predicted_label & sensitive_facet_index])
 
-    TN_a = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & (~sensitive_facet_index)])
-    na0hat = len(feature[(~positive_predicted_label_index) & (~sensitive_facet_index)])
-    TN_d = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & sensitive_facet_index])
-    nd0hat = len(feature[(~positive_predicted_label_index) & sensitive_facet_index])
+    TN_a = len(feature[(~label) & (~predicted_label) & (~sensitive_facet_index)])
+    na0hat = len(feature[(~predicted_label) & (~sensitive_facet_index)])
+    TN_d = len(feature[(~label) & (~predicted_label) & sensitive_facet_index])
+    nd0hat = len(feature[(~predicted_label) & sensitive_facet_index])
 
     if na1hat != 0:
         ar_a = TP_a / na1hat
