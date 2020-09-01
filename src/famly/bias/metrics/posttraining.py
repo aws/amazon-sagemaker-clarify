@@ -1,6 +1,6 @@
 """
 Post training metrics
-The metrics defined in this file must be computed before training the model.
+The metrics defined in this file must be computed after training the model.
 """
 import logging
 import pandas as pd

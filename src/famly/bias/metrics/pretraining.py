@@ -4,9 +4,9 @@ The metrics defined in this file can be computed before training the model.
 
 Note:
     Some metrics signatures include label as an argument, while others include positive_label_index. positive_label_index
-    is a boolean column that indicates positive labels. In case of multiclass labels, positive_label_index can be computed
-    by collapsing the multiple class of labels into two categories.
-    The metrics that consume positive_label_index require it to be of type 'bool'. The metrics that consume label do not share that requirement.
+    is a boolean column that indicates positive labels. In case of multi-class labels, positive_label_index can be computed
+    by collapsing the multiple classes of labels into two categories.
+    The metrics that consume positive_label_index require it to be of type 'bool'. The metrics that consume label can work with other data types as well.
 """
 import logging
 from famly.util import pdfs_aligned_nonzero

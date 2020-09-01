@@ -246,9 +246,7 @@ def _categorical_metric_call_wrapper(
     df: pd.DataFrame,
     feature: pd.Series,
     facet_values: Optional[List[Any]],
-    label: pd.Series,
     positive_label_index: pd.Series,
-    predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
@@ -266,9 +264,8 @@ def _categorical_metric_call_wrapper(
                 df=df,
                 feature=feature,
                 sensitive_facet_index=sensitive_facet_index,
-                label=label,
+                label=positive_label_index,
                 positive_label_index=positive_label_index,
-                predicted_label=predicted_label,
                 positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
@@ -285,9 +282,7 @@ def _continuous_metric_call_wrapper(
     df: pd.DataFrame,
     feature: pd.Series,
     facet_threshold_index: pd.IntervalIndex,
-    label: pd.Series,
     positive_label_index: pd.Series,
-    predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
@@ -302,9 +297,8 @@ def _continuous_metric_call_wrapper(
             df=df,
             feature=feature,
             sensitive_facet_index=sensitive_facet_index,
-            label=label,
+            label=positive_label_index,
             positive_label_index=positive_label_index,
-            predicted_label=predicted_label,
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
@@ -328,7 +322,7 @@ def bias_report(
 
     The report computes the bias metric for multi-facet, and multi-class inputs by
     computing the sensitive_facet_index, positive_label_index, and positive_predicted_label_index by collapsing the
-    multiple categories into two, as indicted by the facet_column, label_column, and predicted_label_column respectively.
+    multiple categories into two, as indicated by the facet_column, label_column, and predicted_label_column respectively.
 
     :param df: Dataset as a pandas.DataFrame
     :param facet_column: description of column to consider for Bias analysis
@@ -407,8 +401,6 @@ def bias_report(
                     data_series_cat,
                     facet_values,
                     positive_label_index,
-                    positive_label_index,
-                    positive_predicted_label_index,
                     positive_predicted_label_index,
                     group_variable,
                 )
@@ -431,8 +423,6 @@ def bias_report(
                 data_series,
                 facet_continuous_column.interval_indices,
                 positive_label_index,
-                positive_label_index,
-                positive_predicted_label_index,
                 positive_predicted_label_index,
                 group_variable,
             )

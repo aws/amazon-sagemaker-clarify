@@ -21,7 +21,7 @@ class DataType(Enum):
 
 def require(condition: bool, message: str) -> None:
     if not condition:
-        raise RuntimeError(message)
+        raise ValueError(message)
 
 
 def metric_description(metric: Callable[..., float]) -> str:
