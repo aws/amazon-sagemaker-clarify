@@ -1,9 +1,17 @@
 """
-Pre training metrics
+Pre-training metrics
+The metrics defined in this file can be computed before training the model.
+
+Note:
+    Some metrics signatures include label as an argument, while others include positive_label_index. positive_label_index
+    is a boolean column that indicates positive labels. In case of multiclass labels, positive_label_index can be computed
+    by collapsing the multiple class of labels into two categories.
+    The metrics that consume positive_label_index require it to be of type 'bool'. The metrics that consume label do not share that requirement.
 """
 import logging
 from famly.util import pdfs_aligned_nonzero
 from . import registry, common
+from .common import require
 import pandas as pd
 import numpy as np
 
@@ -31,7 +39,7 @@ def CI(feature: pd.Series, sensitive_facet_index: pd.Series) -> float:
     We define CI = (np − p)/(np + p). Where np is the number of instances in the not sensitive group
     and p is number of instances in the sensitive group.
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     pos = len(feature[sensitive_facet_index])
     neg = len(feature[~sensitive_facet_index])
     q = pos + neg
@@ -54,6 +62,8 @@ def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_ind
     :param positive_label_index: boolean column indicating positive labels
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
     return common.DPL(feature, sensitive_facet_index, positive_label_index)
 
 
@@ -69,13 +79,13 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kullback and Leibler (KL) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    xs_a = label[~sensitive_facet_index]
+    xs_d = label[sensitive_facet_index]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
-        return np.nan
-    kl = np.sum(Pa * np.log2(Pa / Pd))
+        raise ValueError("No instance of common facet found, dataset may be too small")
+    kl = np.sum(Pa * np.log(Pa / Pd))
     return kl
 
 
@@ -91,12 +101,12 @@ def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Jensen-Shannon (JS) divergence metric
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    xs_a = label[~sensitive_facet_index]
+    xs_d = label[sensitive_facet_index]
     (Pa, Pd, P) = pdfs_aligned_nonzero(xs_a, xs_d, label)
     if len(Pa) == 0 or len(Pd) == 0 or len(P) == 0:
-        return np.nan
+        raise ValueError("No instance of common facet found, dataset may be too small")
     res = 0.5 * (np.sum(Pa * np.log(Pa / P)) + np.sum(Pd * np.log(Pd / P)))
     return res
 
@@ -119,12 +129,12 @@ def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
 
 
 def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> float:
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    xs_a = label[sensitive_facet_index]
-    xs_d = label[~sensitive_facet_index]
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    xs_a = label[~sensitive_facet_index]
+    xs_d = label[sensitive_facet_index]
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
-        return np.nan
+        raise ValueError("No instance of common facet found, dataset may be too small")
     res = np.linalg.norm(Pa - Pd, norm_order)
     return res
 

@@ -1,5 +1,6 @@
 """
 Post training metrics
+The metrics defined in this file must be computed before training the model.
 """
 import logging
 import pandas as pd
@@ -7,6 +8,7 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY
 from . import registry, common
+from .common import require
 
 log = logging.getLogger(__name__)
 
@@ -53,18 +55,18 @@ def DI(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     na1hat = len(feature[positive_predicted_label_index & (~sensitive_facet_index)])
     na = len(feature[~sensitive_facet_index])
     if na == 0:
-        raise ValueError("DI: Negated facet set is empty")
+        raise ValueError("Negated facet set is empty")
     qa = na1hat / na
     nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
     nd = len(feature[sensitive_facet_index])
     if nd == 0:
-        raise ValueError("DI: Facet set is empty")
+        raise ValueError("Facet set is empty")
     qd = nd1hat / nd
     if qa == 0:
         return INFINITY
@@ -127,14 +129,14 @@ def RD(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Recall Difference between advantaged and disadvantaged classes
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("RD: Facet set is empty")
+        raise ValueError("Facet set is empty")
     if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("RD: Negated Facet set is empty")
+        raise ValueError("Negated Facet set is empty")
 
     TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
     FN_a = len(feature[positive_label_index & (~positive_predicted_label_index) & (~sensitive_facet_index)])
@@ -210,14 +212,14 @@ def AD(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Accuracy Difference between advantaged and disadvantaged classes
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("AD: Facet set is empty")
+        raise ValueError("Facet set is empty")
     if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("AD: Negated Facet set is empty")
+        raise ValueError("Negated Facet set is empty")
 
     idx_tp_a = positive_label_index & positive_predicted_label_index & ~sensitive_facet_index
     TP_a = len(feature[idx_tp_a])
@@ -288,14 +290,14 @@ def TE(
     :return: Returns the difference in ratios between false negatives and false positives for the advantaged
         and disadvantaged classes
     """
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
-    positive_label_index = positive_label_index.astype(bool)
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("TE: Facet set is empty")
+        raise ValueError("Facet set is empty")
     if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("TE: Negated Facet set is empty")
+        raise ValueError("Negated Facet set is empty")
 
     FP_a = len(feature[(~positive_label_index) & positive_predicted_label_index & (~sensitive_facet_index)])
     FN_a = len(feature[positive_label_index & (~positive_predicted_label_index) & (~sensitive_facet_index)])
@@ -336,13 +338,15 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
-    positive_predicted_label_index = positive_predicted_label_index.astype(bool)
-    sensitive_facet_index = sensitive_facet_index.astype(bool)
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(df[sensitive_facet_index]) == 0:
-        raise ValueError("FT: Facet set is empty")
+        raise ValueError("Facet set is empty")
     if len(df[~sensitive_facet_index]) == 0:
-        raise ValueError("FT: Negated Facet set is empty")
+        raise ValueError("Negated Facet set is empty")
+    if len(df.columns) != len(df.select_dtypes([np.number]).columns):
+        raise ValueError("FlipTest does not support non-numeric columns")
 
     dataset = np.array(df)
 
