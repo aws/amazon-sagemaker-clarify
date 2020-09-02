@@ -47,7 +47,7 @@ def test_report_category_data():
                     "name": "DPL",
                     "value": -0.6666666666666667,
                 },
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.584962500721156},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.3662040962227032},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
@@ -68,7 +68,7 @@ def test_report_category_data():
                     "name": "DPL",
                     "value": 0.6666666666666667,
                 },
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.5283208335737187},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0986122886681098},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
@@ -146,7 +146,7 @@ def test_report_continuous_data():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
                 {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.20983242268450672},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.5},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.25},
@@ -313,7 +313,6 @@ def test_fetch_metrics_to_run():
 
     input_metrics_1 = ["CI", "DPL", "KL", "KS"]
     metrics_to_run = fetch_metrics_to_run(PRETRAINING_METRICS, input_metrics_1)
-    print(metrics_to_run, PRETRAINING_METRICS)
     assert metrics_to_run == [CI, DPL, KL, KS]
 
     input_metrics_2 = ["DPPL", "DI", "DCA", "DCR", "RD"]
@@ -341,7 +340,7 @@ def test_partial_bias_report():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
                 {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0},
+                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
                 {
                     "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
                     "error": "Group variable is empty or not provided",

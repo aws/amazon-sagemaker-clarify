@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CI, DCA, DCR, DI, DAR, DRR, DPL, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -6,6 +6,27 @@ import pandas as pd
 from pandas import Series
 import numpy as np
 import pytest
+
+
+DATASET_PDF = pd.DataFrame(
+    np.array(
+        [
+            ["a", 0, False, True],
+            ["b", 0, False, False],
+            ["b", 1, True, False],
+            ["c", 1, True, True],
+            ["a", 2, True, True],
+            ["a", 1, True, True],
+            ["b", 0, False, False],
+            ["c", 1, True, True],
+            ["b", 2, True, False],
+            ["c", 2, True, True],
+            ["b", 0, False, False],
+            ["b", 2, True, False],
+        ]
+    ),
+    columns=["x", "label", "positive_label_index", "sensitive_facet_index"],
+)
 
 
 def dfBinary():
@@ -89,30 +110,30 @@ def dfContinuous():
 def datasetFT():
     X = np.array(
         [
-            [0, 0, 0, 0, 1, 1, 1],
-            [1, 0, 0, 0, 1, 0, 1],
-            [1, 0, 1, 0, 1, 0, 1],
-            [0, 0, 0, 0, 0, 1, 1],
-            [1, 0, 0, 1, 1, 0, 1],
-            [0, 0, 1, 0, 1, 1, 1],
-            [1, 0, 0, 0, 1, 1, 1],
-            [1, 1, 0, 0, 1, 1, 1],
-            [0, 0, 1, 0, 1, 1, 1],
-            [1, 0, 1, 1, 1, 1, 0],
-            [1, 0, 0, 0, 1, 1, 0],
-            [1, 0, 1, 0, 1, 1, 1],
-            [1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 1, 1, 1],
-            [0, 0, 1, 0, 1, 0, 1],
-            [0, 0, 1, 0, 1, 1, 1],
-            [0, 1, 0, 1, 0, 0, 1],
-            [1, 0, 0, 0, 0, 1, 1],
-            [0, 0, 1, 0, 0, 1, 1],
-            [1, 0, 0, 0, 1, 1, 0],
-            [1, 0, 1, 0, 0, 1, 1],
-            [0, 1, 0, 0, 0, 1, 1],
-            [1, 0, 1, 0, 1, 0, 1],
-            [0, 0, 0, 1, 1, 1, 0],
+            [0, 0, 0, 0, True, 1, 1],
+            [1, 0, 0, 0, True, 0, 1],
+            [1, 0, 1, 0, True, 0, 1],
+            [0, 0, 0, 0, False, 1, 1],
+            [1, 0, 0, 1, True, 0, 1],
+            [0, 0, 1, 0, True, 1, 1],
+            [1, 0, 0, 0, True, 1, 1],
+            [1, 1, 0, 0, True, 1, 1],
+            [0, 0, 1, 0, True, 1, 1],
+            [1, 0, 1, 1, True, 1, 0],
+            [1, 0, 0, 0, True, 1, 0],
+            [1, 0, 1, 0, True, 1, 1],
+            [1, 0, 0, 0, False, 1, 1],
+            [0, 0, 0, 0, True, 1, 1],
+            [0, 0, 1, 0, True, 0, 1],
+            [0, 0, 1, 0, True, 1, 1],
+            [0, 1, 0, 1, False, 0, 1],
+            [1, 0, 0, 0, False, 1, 1],
+            [0, 0, 1, 0, False, 1, 1],
+            [1, 0, 0, 0, True, 1, 0],
+            [1, 0, 1, 0, False, 1, 1],
+            [0, 1, 0, 0, False, 1, 1],
+            [1, 0, 1, 0, True, 0, 1],
+            [0, 0, 0, 1, True, 1, 0],
         ]
     )
 
@@ -188,98 +209,108 @@ def test_DPL():
 
 
 def test_KL():
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
-    assert res == approx(1.3219280948873624)
+    res = KL(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
+    assert res == approx(-0.366516)
 
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = KL(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
-    # No facet selection
-    res = KL(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
-    assert res is np.nan
+    with pytest.raises(ValueError) as e:
+        KL(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
+    assert str(e.value) == "No instance of common facet found, dataset may be too small"
+
+    # multi-facet, multi-category case
+    sensitive_facet_index: pd.Series = DATASET_PDF["x"] == "a"
+    sensitive_facet_index += DATASET_PDF["x"] == "c"
+
+    positive_label_index: pd.Series = DATASET_PDF["label"] == "1"
+    positive_label_index += DATASET_PDF["label"] == "2"
+    res = KL(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.2938933)
 
 
 def test_JS():
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
+    res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
     assert res == approx(0.3019448800171307)
 
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
-    # No facet selection
-    res = JS(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
-    assert res is np.nan
+    with pytest.raises(ValueError) as e:
+        JS(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
+    assert str(e.value) == "No instance of common facet found, dataset may be too small"
+
+    # multi-facet, multi-category case
+    sensitive_facet_index: pd.Series = DATASET_PDF["x"] == "a"
+    sensitive_facet_index += DATASET_PDF["x"] == "c"
+
+    positive_label_index: pd.Series = DATASET_PDF["label"] == "1"
+    positive_label_index += DATASET_PDF["label"] == "2"
+    res = JS(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.06465997)
+
     return
 
 
 def test_LP():
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, False, False]))
+    res = LP(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
     assert res == approx(0.6)
 
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([True, False, False, False, True, False]))
+    res = LP(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
 
     # No facet selection
-    res = LP(pd.Series([1, 1, 1, 2, 2, 2]), pd.Series([False, False, False, False, False, False]))
-    assert res is np.nan
+    with pytest.raises(ValueError) as e:
+        LP(pd.Series([True, True, True, False, False, False]), pd.Series([False, False, False, False, False, False]))
+    assert str(e.value) == "No instance of common facet found, dataset may be too small"
+
+    # multi-facet, multi-category case
+    sensitive_facet_index: pd.Series = DATASET_PDF["x"] == "a"
+    sensitive_facet_index += DATASET_PDF["x"] == "c"
+
+    positive_label_index: pd.Series = DATASET_PDF["label"] == "1"
+    positive_label_index += DATASET_PDF["label"] == "2"
+    res = LP(positive_label_index, sensitive_facet_index)
+    assert res == approx(0.471404520)
+
+    return
 
 
-#
-# def test_CDD():
-#    x = pd.Series(
-#        [
-#            "M",
-#            "M",
-#            "M",
-#            "F",
-#            "F",
-#            "F",
-#            "F",
-#            "M",
-#            "M",
-#            "M",
-#            "M",
-#            "F",
-#            "M",
-#            "M",
-#            "F",
-#            "M",
-#            "F",
-#            "F",
-#            "M",
-#            "M",
-#            "F",
-#            "M",
-#            "M",
-#            "F",
-#        ]
-#    )
-#    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
-#    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
+def test_CDD():
+    x = pd.Series(
+        [
+            "M",
+            "M",
+            "M",
+            "F",
+            "F",
+            "F",
+            "F",
+            "M",
+            "M",
+            "M",
+            "M",
+            "F",
+            "M",
+            "M",
+            "F",
+            "M",
+            "F",
+            "F",
+            "M",
+            "M",
+            "F",
+            "M",
+            "M",
+            "F",
+        ]
+    )
+    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
+    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
 
-#    response = metric_one_vs_all(CDDL, x, positive_label_index=positive_label_index, group_variable=group_variable)
-#    assert response["F"] == approx(0.3982142857)
-#    assert response["M"] == approx(-0.3982142857)
-
-# Multicategory Facet, Binary Label
-#    sensitive_facet_index = dfM[0]
-#    positive_label_index = pd.Series([0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0])
-#    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
-
-#    response = metric_one_vs_all(KS, dfM[0], positive_label_index=positive_label_index, group_variable=group_variable)
-#    assert response["M"] < 1.0 and response["M"] > -1.0
-#    assert response["F"] < 1.0 and response["F"] > -1.0
-#    assert response["O"] < 1.0 and response["O"] > -1.0
-
-# Multicategory Facet, Multicategory Label
-#    group_variable = pd.Series([1, 0, 2, 2, 1, 1, 2, 1, 1, 2, 0, 1, 2, 0, 1, 1, 1, 2, 0, 1, 0, 0, 1, 1])
-#    labels = pd.Series([0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 1, 1, 1, 1])
-#    response = metric_one_vs_all(KS, dfM[0], labels=labels, group_variable=group_variable)
-
-#    for cat in facet.unique():
-#        assert response[cat][0] < 1.0 and response[cat][0] > -1.0
-#        assert response[cat][1] < 1.0 and response[cat][1] > -1.0
-#        assert response[cat][2] < 1.0 and response[cat][2] > -1.0
+    response = metric_one_vs_all(CDDL, x, positive_label_index=positive_label_index == 1, group_variable=group_variable)
+    assert response["F"] == approx(0.3982142857)
+    assert response["M"] == approx(-0.3982142857)
 
 
 def test_DI():
@@ -296,14 +327,14 @@ def test_DI():
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
         DI(dfB[0], dfB[0] == None, positive_predicted_labels_index_zero_for_M)
-    assert str(e.value) == "DI: Facet set is empty"
+    assert str(e.value) == "Facet set is empty"
 
     # Check empty facet selection
     with pytest.raises(ValueError) as e:
         x = Series(["A", "A"])
         pred = Series([0, 1])
         DI(x, x == "A", pred == 1)
-    assert str(e.value) == "DI: Negated facet set is empty"
+    assert str(e.value) == "Negated facet set is empty"
 
 
 def test_DCA():
@@ -372,7 +403,10 @@ def test_TE():
 def test_FT():
     dfFT = datasetFT()
     sensitive_facet_index = dfFT[0]
-
     predicted = pd.Series([1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1])
+    assert FT(dfFT, sensitive_facet_index == 1, predicted == 1) == approx(-0.23076923076923078)
 
-    assert FT(dfFT, sensitive_facet_index, predicted) == approx(-0.23076923076923078)
+    dfFT[3] = dfFT[3].apply(lambda x: "a")
+    with pytest.raises(ValueError) as e:
+        FT(dfFT, sensitive_facet_index == 1, predicted == 1)
+    assert str(e.value) == "FlipTest does not support non-numeric columns"
