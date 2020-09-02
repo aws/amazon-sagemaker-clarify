@@ -328,18 +328,17 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 
 @registry.posttraining
-def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series) -> float:
+def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, predicted_label: pd.Series) -> float:
     """
     Flip Test (FT)
     :param df: array of data points
     :param sensitive_facet_index: boolean facet column indicating sensitive group
-    :param positive_predicted_label_index: boolean column of predicted positive values for target column
+    :param predicted_label: column of predicted labels
     :return: FT difference metric
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
-    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(df[sensitive_facet_index]) == 0:
         raise ValueError("Facet set is empty")
@@ -352,12 +351,12 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
 
     data_a = (
         [el for idx, el in enumerate(dataset) if ~sensitive_facet_index.iat[idx]],
-        [el for idx, el in enumerate(positive_predicted_label_index) if ~sensitive_facet_index.iat[idx]],
+        [el for idx, el in enumerate(predicted_label) if ~sensitive_facet_index.iat[idx]],
         [el for idx, el in enumerate(sensitive_facet_index) if ~sensitive_facet_index.iat[idx]],
     )
     data_d = (
         [el for idx, el in enumerate(dataset) if sensitive_facet_index.iat[idx]],
-        [el for idx, el in enumerate(positive_predicted_label_index) if sensitive_facet_index.iat[idx]],
+        [el for idx, el in enumerate(predicted_label) if sensitive_facet_index.iat[idx]],
         [el for idx, el in enumerate(sensitive_facet_index) if sensitive_facet_index.iat[idx]],
     )
     n_neighbors = 5 if np.array(data_a[0]).size > 16 else 1

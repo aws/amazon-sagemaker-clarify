@@ -266,6 +266,7 @@ def _categorical_metric_call_wrapper(
                 sensitive_facet_index=sensitive_facet_index,
                 label=positive_label_index,
                 positive_label_index=positive_label_index,
+                predicted_label=positive_predicted_label_index,
                 positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
@@ -299,6 +300,7 @@ def _continuous_metric_call_wrapper(
             sensitive_facet_index=sensitive_facet_index,
             label=positive_label_index,
             positive_label_index=positive_label_index,
+            predicted_label=positive_predicted_label_index,
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )

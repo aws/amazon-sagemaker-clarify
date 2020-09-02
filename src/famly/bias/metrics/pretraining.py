@@ -75,7 +75,7 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     .. math::
         KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
 
-    :param label: input feature
+    :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kullback and Leibler (KL) divergence metric
     """
@@ -97,7 +97,7 @@ def JS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     .. math::
         JS(Pa, Pd, P) = 0.5 [KL(Pa,P) + KL(Pd,P)] \geq 0
 
-    :param label: input feature
+    :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Jensen-Shannon (JS) divergence metric
     """
@@ -121,7 +121,7 @@ def LP(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     .. math::
         Lp(Pa, Pd) = [\sum_{x} |Pa(x)-Pd(x)|^p]^{1/p}
 
-    :param label: input feature
+    :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Returns the LP norm of the difference between class distributions
     """
@@ -147,7 +147,7 @@ def TVD(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     .. math::
         TVD = 0.5 * L1(Pa, Pd) \geq 0
 
-    :param label: input feature
+    :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: total variation distance metric
     """
@@ -164,7 +164,7 @@ def KS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     .. math::
         KS = max(\left | Pa-Pd \right |) \geq 0
 
-    :param label: input feature
+    :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kolmogorov-Smirnov metric
     """
