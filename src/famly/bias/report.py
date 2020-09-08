@@ -92,7 +92,7 @@ class FacetReport:
         self.metrics = metrics
 
     def toJson(self):
-        return json.loads(json.dumps(self, default=lambda o: o.__dict__))
+        return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
 
 
 def problem_type(labels: pd.Series) -> ProblemType:
@@ -115,6 +115,19 @@ def _column_list_to_str(xs: List[Any]) -> str:
     """
     metricname = ", ".join([str(x) for x in xs])
     return metricname
+
+
+def inf_as_str(obj):
+    """Checks each dict passed to this function if it contains the key "value" with infinity float value assigned
+    Args:
+        obj (dict): The object to decode
+
+    Returns:
+        dict: The new dictionary with change in value from float('inf') to "Infinity"
+    """
+    if "value" in obj and obj["value"] in [float("inf"), float("-inf")]:
+        obj["value"] = str(obj["value"]).replace("inf", "Infinity")
+    return obj
 
 
 def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: List[str]):
