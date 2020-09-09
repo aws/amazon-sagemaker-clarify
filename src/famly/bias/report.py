@@ -101,7 +101,6 @@ def problem_type(labels: pd.Series) -> ProblemType:
     """
     # TODO: add other problem types
     labels = labels.dropna()
-    n_rows = len(labels)
     n_unique = labels.unique().size
     if n_unique == 2:
         return ProblemType.BINARY
@@ -363,10 +362,13 @@ def bias_report(
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
     data_series: pd.Series = df[facet_column.name]
+    df = df.drop(facet_column.name, 1)
     label_series: pd.Series = label_column.data
     positive_label_index, label_values = _positive_label_index(
         data=label_series, positive_values=label_column.positive_label_values
     )
+    if label_column.name in df.columns:
+        df = df.drop(label_column.name, 1)
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
@@ -382,6 +384,8 @@ def bias_report(
             label_data=label_series,
             positive_label_values=label_column.positive_label_values,
         )
+        if predicted_label_column.name in df.columns:
+            df = df.drop(predicted_label_column.name, 1)
     else:
         positive_predicted_label_index = [None]
         predicted_label_series = None

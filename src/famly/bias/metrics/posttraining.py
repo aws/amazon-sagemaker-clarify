@@ -30,7 +30,7 @@ def DPPL(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Returns Difference in Positive Proportions, based on predictions rather than labels
+    :return Returns Difference in Positive Proportions, based on predictions rather than labels
     """
     return common.DPL(feature, sensitive_facet_index, positive_predicted_label_index)
 
@@ -53,7 +53,7 @@ def DI(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
+    :return Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
@@ -87,7 +87,7 @@ def DCA(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Conditional Acceptance between advantaged and disadvantaged classes
+    :return Difference in Conditional Acceptance between advantaged and disadvantaged classes
     """
     dca, _ = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return dca
@@ -107,7 +107,7 @@ def DCR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Conditional Rejection between advantaged and disadvantaged classes
+    :return Difference in Conditional Rejection between advantaged and disadvantaged classes
     """
     _, dcr = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return dcr
@@ -127,7 +127,7 @@ def RD(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Recall Difference between advantaged and disadvantaged classes
+    :return Recall Difference between advantaged and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
@@ -169,7 +169,7 @@ def DAR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Acceptance Rates
+    :return Difference in Acceptance Rates
     """
 
     dar, _ = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
@@ -190,7 +190,7 @@ def DRR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Rejection Rates
+    :return Difference in Rejection Rates
     """
     _, drr = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return drr
@@ -210,7 +210,7 @@ def AD(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Accuracy Difference between advantaged and disadvantaged classes
+    :return Accuracy Difference between advantaged and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
@@ -268,7 +268,7 @@ def CDDPL(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param group_variable: categorical column indicating subgroups each point belongs to
-    :return: the weighted average of demographic disparity on all subgroups
+    :return the weighted average of demographic disparity on all subgroups
     """
     return common.CDD(feature, sensitive_facet_index, positive_predicted_label_index, group_variable)
 
@@ -287,7 +287,7 @@ def TE(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Returns the difference in ratios between false negatives and false positives for the advantaged
+    :return returns the difference in ratios between false negatives and false positives for the advantaged
         and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
@@ -328,35 +328,42 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 
 @registry.posttraining
-def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, predicted_label: pd.Series) -> float:
+def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series) -> float:
     """
     Flip Test (FT)
-    :param df: array of data points
+
+    The Flip Test(FT) is an approximation of the test described in (Black et. al paper) to apply for tabular data. In this
+    test, we train a k-Nearest Neighbors(k-NN) algorithm on the advantaged samples, run prediction on disadvantaged samples,
+    and compute FT metric FT = (FTp - FTn)/ number of disadvangated samples where FTp is the number samples that flipped
+    from negative to positive, and FTn is the number samples that flipped from positive to negative.
+
+    :param df: the dataset, excluding facet and label columns
     :param sensitive_facet_index: boolean facet column indicating sensitive group
-    :param predicted_label: column of predicted labels
-    :return: FT difference metric
+    :param positive_predicted_label_index: boolean column indicating predicted labels
+    :return FT metric
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
     if len(df[sensitive_facet_index]) == 0:
         raise ValueError("Facet set is empty")
     if len(df[~sensitive_facet_index]) == 0:
         raise ValueError("Negated Facet set is empty")
-    if len(df.columns) != len(df.select_dtypes([np.number]).columns):
+    if len(df.columns) != len(df.select_dtypes([np.number, bool]).columns):
         raise ValueError("FlipTest does not support non-numeric columns")
 
     dataset = np.array(df)
 
     data_a = (
         [el for idx, el in enumerate(dataset) if ~sensitive_facet_index.iat[idx]],
-        [el for idx, el in enumerate(predicted_label) if ~sensitive_facet_index.iat[idx]],
+        [el for idx, el in enumerate(positive_predicted_label_index) if ~sensitive_facet_index.iat[idx]],
         [el for idx, el in enumerate(sensitive_facet_index) if ~sensitive_facet_index.iat[idx]],
     )
     data_d = (
         [el for idx, el in enumerate(dataset) if sensitive_facet_index.iat[idx]],
-        [el for idx, el in enumerate(predicted_label) if sensitive_facet_index.iat[idx]],
+        [el for idx, el in enumerate(positive_predicted_label_index) if sensitive_facet_index.iat[idx]],
         [el for idx, el in enumerate(sensitive_facet_index) if sensitive_facet_index.iat[idx]],
     )
     n_neighbors = 5 if np.array(data_a[0]).size > 16 else 1
