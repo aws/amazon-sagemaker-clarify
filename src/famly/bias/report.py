@@ -92,7 +92,7 @@ class FacetReport:
         self.metrics = metrics
 
     def toJson(self):
-        return json.loads(json.dumps(self, default=lambda o: o.__dict__))
+        return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
 
 
 def problem_type(labels: pd.Series) -> ProblemType:
@@ -101,7 +101,6 @@ def problem_type(labels: pd.Series) -> ProblemType:
     """
     # TODO: add other problem types
     labels = labels.dropna()
-    n_rows = len(labels)
     n_unique = labels.unique().size
     if n_unique == 2:
         return ProblemType.BINARY
@@ -115,6 +114,19 @@ def _column_list_to_str(xs: List[Any]) -> str:
     """
     metricname = ", ".join([str(x) for x in xs])
     return metricname
+
+
+def inf_as_str(obj):
+    """Checks each dict passed to this function if it contains the key "value" with infinity float value assigned
+    Args:
+        obj (dict): The object to decode
+
+    Returns:
+        dict: The new dictionary with change in value from float('inf') to "Infinity"
+    """
+    if "value" in obj and obj["value"] in [float("inf"), float("-inf")]:
+        obj["value"] = str(obj["value"]).replace("inf", "Infinity")
+    return obj
 
 
 def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: List[str]):
@@ -247,9 +259,7 @@ def _categorical_metric_call_wrapper(
     df: pd.DataFrame,
     feature: pd.Series,
     facet_values: Optional[List[Any]],
-    label: pd.Series,
     positive_label_index: pd.Series,
-    predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
@@ -267,9 +277,9 @@ def _categorical_metric_call_wrapper(
                 df=df,
                 feature=feature,
                 sensitive_facet_index=sensitive_facet_index,
-                label=label,
+                label=positive_label_index,
                 positive_label_index=positive_label_index,
-                predicted_label=predicted_label,
+                predicted_label=positive_predicted_label_index,
                 positive_predicted_label_index=positive_predicted_label_index,
                 group_variable=group_variable,
             )
@@ -286,9 +296,7 @@ def _continuous_metric_call_wrapper(
     df: pd.DataFrame,
     feature: pd.Series,
     facet_threshold_index: pd.IntervalIndex,
-    label: pd.Series,
     positive_label_index: pd.Series,
-    predicted_label: pd.Series,
     positive_predicted_label_index: pd.Series,
     group_variable: pd.Series,
 ) -> MetricResult:
@@ -303,9 +311,9 @@ def _continuous_metric_call_wrapper(
             df=df,
             feature=feature,
             sensitive_facet_index=sensitive_facet_index,
-            label=label,
+            label=positive_label_index,
             positive_label_index=positive_label_index,
-            predicted_label=predicted_label,
+            predicted_label=positive_predicted_label_index,
             positive_predicted_label_index=positive_predicted_label_index,
             group_variable=group_variable,
         )
@@ -325,7 +333,12 @@ def bias_report(
     group_variable: Optional[pd.Series] = None,
 ) -> List[Dict]:
     """
-    Run Full bias report on a dataset.:
+    Run full bias report on a dataset.
+
+    The report computes the bias metric for multi-facet, and multi-class inputs by
+    computing the sensitive_facet_index, positive_label_index, and positive_predicted_label_index by collapsing the
+    multiple categories into two, as indicated by the facet_column, label_column, and predicted_label_column respectively.
+
     :param df: Dataset as a pandas.DataFrame
     :param facet_column: description of column to consider for Bias analysis
     :param label_column: description of column which has the labels.
@@ -350,10 +363,13 @@ def bias_report(
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
 
     data_series: pd.Series = df[facet_column.name]
+    df = df.drop(facet_column.name, 1)
     label_series: pd.Series = label_column.data
     positive_label_index, label_values = _positive_label_index(
         data=label_series, positive_values=label_column.positive_label_values
     )
+    if label_column.name in df.columns:
+        df = df.drop(label_column.name, 1)
 
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
@@ -369,11 +385,10 @@ def bias_report(
             label_data=label_series,
             positive_label_values=label_column.positive_label_values,
         )
-        print(predicted_label_series)
-        print(positive_predicted_label_index)
+        if predicted_label_column.name in df.columns:
+            df = df.drop(predicted_label_column.name, 1)
     else:
         positive_predicted_label_index = [None]
-        predicted_label_values = [None]
         predicted_label_series = None
         pre_training_metrics = (
             famly.bias.metrics.PRETRAINING_METRICS
@@ -405,9 +420,7 @@ def bias_report(
                     df,
                     data_series_cat,
                     facet_values,
-                    label_series,
                     positive_label_index,
-                    predicted_label_series,
                     positive_predicted_label_index,
                     group_variable,
                 )
@@ -429,9 +442,7 @@ def bias_report(
                 df,
                 data_series,
                 facet_continuous_column.interval_indices,
-                label_series,
                 positive_label_index,
-                predicted_label_series,
                 positive_predicted_label_index,
                 group_variable,
             )

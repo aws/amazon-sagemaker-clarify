@@ -47,9 +47,14 @@ docs() {
     make html
 }
 
+build_package() {
+    python setup.py bdist_wheel
+}
+
 all() {
     lint
     test_with_coverage
+    build_package
     docs
 }
 
