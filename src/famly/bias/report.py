@@ -167,6 +167,7 @@ def _positive_predicted_index(
         raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(label_data, positive_label_values)
+        print(data_interval_indices)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
     elif predicted_label_datatype == common.DataType.CATEGORICAL and positive_label_values:
         positive_predicted_index = _categorical_data_idx(predicted_label_data, positive_label_values)
@@ -368,6 +369,8 @@ def bias_report(
             label_data=label_series,
             positive_label_values=label_column.positive_label_values,
         )
+        print(predicted_label_series)
+        print(positive_predicted_label_index)
     else:
         positive_predicted_label_index = [None]
         predicted_label_values = [None]
