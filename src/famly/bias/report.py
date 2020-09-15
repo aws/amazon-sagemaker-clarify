@@ -381,7 +381,7 @@ def bias_report(
         positive_predicted_label_index = _positive_predicted_index(
             predicted_label_data=predicted_label_series,
             label_data=label_series,
-            positive_label_values=label_column.positive_label_values,
+            positive_label_values=predicted_label_column.positive_label_values,
         )
         if predicted_label_column.name in df.columns:
             df = df.drop(predicted_label_column.name, 1)
