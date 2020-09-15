@@ -355,9 +355,7 @@ def bias_report(
         raise ValueError("Positive label values or thresholds are empty for Label column")
     if isinstance(predicted_label_column, LabelColumn) and predicted_label_column.positive_label_values:
         if predicted_label_column.positive_label_values != label_column.positive_label_values:
-            raise ValueError(
-                "Positive predicted label values or threshold should be empty or same as label values or thresholds"
-            )
+            logger.warning("positive_label_values are not the same for labels and predicted labels")
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
     data_series: pd.Series = df[facet_column.name]
@@ -381,7 +379,7 @@ def bias_report(
         positive_predicted_label_index = _positive_predicted_index(
             predicted_label_data=predicted_label_series,
             label_data=label_series,
-            positive_label_values=predicted_label_column.positive_label_values,
+            positive_label_values=predicted_label_column.positive_label_values or [],
         )
         if predicted_label_column.name in df.columns:
             df = df.drop(predicted_label_column.name, 1)
