@@ -178,8 +178,7 @@ def _positive_predicted_index(
     if predicted_label_datatype != label_datatype:
         raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
-        data_interval_indices = _interval_index(label_data, positive_label_values)
-        print(data_interval_indices)
+        data_interval_indices = _interval_index(label_data + predicted_label_data, positive_label_values)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
     elif predicted_label_datatype == common.DataType.CATEGORICAL and positive_label_values:
         positive_predicted_index = _categorical_data_idx(predicted_label_data, positive_label_values)
@@ -361,7 +360,6 @@ def bias_report(
             )
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
-
     data_series: pd.Series = df[facet_column.name]
     df = df.drop(facet_column.name, 1)
     label_series: pd.Series = label_column.data
