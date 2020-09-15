@@ -229,6 +229,94 @@ def test_report_continuous_data():
     assert posttraining_report == expected_result_1
 
 
+def test_report_continuous_data_regression():
+    #   test that we correctly apply thresholds for regression tasks.
+    #
+    df_cont_old = pd.DataFrame(
+        [
+            [0, 0, 0, 0, True, 1, 1, 1],
+            [3, 0, 0, 0, True, 0, 1, 1],
+            [3, 0, 1, 0, True, 0, 1, 1],
+            [0, 0, 0, 0, False, 1, 1, 0],
+            [4, 0, 0, 1, True, 0, 1, 1],
+            [0, 0, 1, 0, True, 1, 1, 1],
+            [3, 0, 0, 0, True, 1, 1, 1],
+            [3, 1, 0, 0, True, 1, 1, 1],
+            [0, 0, 1, 0, True, 1, 1, 1],
+            [3, 0, 1, 1, True, 1, 0, 1],
+            [4, 0, 0, 0, True, 1, 0, 1],
+            [3, 0, 1, 0, True, 1, 1, 1],
+            [3, 0, 0, 0, False, 1, 1, 0],
+            [0, 0, 0, 0, True, 1, 1, 1],
+            [0, 0, 1, 0, True, 0, 1, 1],
+            [0, 0, 1, 0, True, 1, 1, 1],
+            [0, 1, 0, 1, False, 0, 1, 0],
+            [3, 0, 0, 0, False, 1, 1, 0],
+            [0, 0, 1, 0, False, 1, 1, 1],
+            [3, 0, 0, 0, True, 1, 0, 1],
+            [3, 0, 1, 0, False, 1, 1, 0],
+            [0, 1, 0, 0, False, 1, 1, 0],
+            [3, 0, 1, 0, True, 0, 1, 1],
+            [0, 0, 0, 1, True, 1, 0, 1],
+        ],
+        columns=["x", "y", "z", "a", "b", "c", "d", "yhat"],
+    )
+
+    df_cont = pd.DataFrame(
+        [
+            [0, 0.0, 0, 0, True, 1, 1, 11],  # 11 is the highest among y and yhat
+            [3, 0.5, 0, 0, True, 0, 1, 6],
+            [3, 2, 1, 0, True, 0, 1, 6.6],
+            [0, 3, 0, 0, False, 1, 1, 0.3],
+            [4, 2.2, 0, 1, True, 0, 1, 6],
+            [0, 0.1, 1, 0, True, 1, 1, 6],
+            [3, 0, 0, 0, True, 1, 1, 6],
+            [3, 6, 0, 0, True, 1, 1, 6],
+            [0, 0, 1, 0, True, 1, 1, 6],
+            [3, 0, 1, 1, True, 1, 0, 6],
+            [4, 0, 0, 0, True, 1, 0, 6],
+            [3, 0, 1, 0, True, 1, 1, 6],
+            [3, 0, 0, 0, False, 1, 1, 0],
+            [0, 0, 0, 0, True, 1, 1, 6.2],
+            [0, 0, 1, 0, True, 0, 1, 6.6],
+            [0, 0, 1, 0, True, 1, 1, 6.6],
+            [0, 7, 0, 1, False, 0, 1, 0.1],
+            [3, 0, 0, 0, False, 1, 1, 2],
+            [0, 0, 1, 0, False, 1, 1, 8],
+            [3, 0, 0, 0, True, 1, 0, 9],
+            [3, 0, 1, 0, False, 1, 1, 0.1],
+            [0, 8, 0, 0, False, 1, 1, 2.2],
+            [3, 0, 1, 0, True, 0, 1, 10],
+            [0, 0, 0, 1, True, 1, 0, 9],
+        ],
+        columns=["x", "y", "z", "a", "b", "c", "d", "yhat"],
+    )
+    # Old and new df should yield the same results if we use threshold 5 for the latter.
+
+    threshold_old = 0.5
+    threshold_new = 5
+    assert ((df_cont_old[["y"]] > threshold_old) == (df_cont[["y"]] > threshold_new)).all
+    assert ((df_cont_old[["yhat"]] > threshold_old) == (df_cont[["yhat"]] > threshold_new)).all
+
+    posttraining_report = bias_report(
+        df_cont,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont["y"], positive_label_values=[threshold_new]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"], positive_label_values=[threshold_new]),
+        group_variable=df_cont["z"],
+    )
+    posttraining_report_old = bias_report(
+        df_cont_old,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont_old["y"], positive_label_values=[threshold_old]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont_old["yhat"], positive_label_values=[threshold_old]),
+        group_variable=df_cont["z"],
+    )
+    assert posttraining_report == posttraining_report_old
+
+
 def test_label_values():
     """
     Test bias metrics for multiple label values
