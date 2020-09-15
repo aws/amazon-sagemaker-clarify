@@ -6,7 +6,7 @@ import logging
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from famly.bias.metrics.constants import INFINITY
+from famly.bias.metrics.constants import INFINITY, FT_DEFAULT_NEIGHBOR, FT_MIN_NEIGHBOR, FT_SAMPLES_COUNT_THRESHOLD
 from . import registry, common
 from .common import require
 
@@ -368,8 +368,7 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
     )
     # Set KNN neighbors to 1 if samples less than 10
     # Used at prediction to have enough samples for neighbors
-    n_neighbors = 5 if len(data_a[0]) > 9 else 1
-
+    n_neighbors = FT_DEFAULT_NEIGHBOR if len(data_a[0]) > FT_SAMPLES_COUNT_THRESHOLD else FT_MIN_NEIGHBOR
     knn = KNeighborsClassifier(
         n_neighbors=n_neighbors,
         weights="uniform",
