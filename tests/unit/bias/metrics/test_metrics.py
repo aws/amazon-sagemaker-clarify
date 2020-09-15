@@ -140,6 +140,33 @@ def datasetFT():
     return pd.DataFrame(X)
 
 
+def datasetFT_small_samples():
+    """
+    With facet as column 0, the FT selects only 3 rows by ~facet
+    """
+    X = np.array(
+        [
+            [0, 0, 0, 0, True, 1, 1],
+            [1, 0, 0, 0, True, 0, 1],
+            [1, 0, 1, 0, True, 0, 1],
+            [1, 0, 0, 1, True, 0, 1],
+            [1, 0, 0, 0, True, 1, 1],
+            [1, 1, 0, 0, True, 1, 1],
+            [1, 0, 1, 1, True, 1, 0],
+            [1, 0, 0, 0, True, 1, 0],
+            [1, 0, 1, 0, True, 1, 1],
+            [1, 0, 0, 0, False, 1, 1],
+            [1, 0, 0, 0, False, 1, 1],
+            [0, 0, 1, 0, False, 1, 1],
+            [1, 0, 0, 0, True, 1, 0],
+            [1, 0, 1, 0, False, 1, 1],
+            [1, 0, 1, 0, True, 0, 1],
+            [0, 0, 0, 1, True, 1, 0],
+        ]
+    )
+    return pd.DataFrame(X)
+
+
 def datasetFTMult():
     X = np.array(
         [
@@ -410,3 +437,10 @@ def test_FT():
     with pytest.raises(ValueError) as e:
         FT(dfFT, sensitive_facet_index == 1, predicted == 1)
     assert str(e.value) == "FlipTest does not support non-numeric columns"
+
+
+def test_FT_small_samples():
+    dfFT = datasetFT_small_samples()
+    sensitive_facet_index = dfFT[0]
+    predicted = pd.Series([1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1])
+    assert FT(dfFT, sensitive_facet_index == 1, predicted == 1) == approx(-0.15384615384615385)

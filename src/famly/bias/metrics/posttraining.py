@@ -366,7 +366,9 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
         [el for idx, el in enumerate(positive_predicted_label_index) if sensitive_facet_index.iat[idx]],
         [el for idx, el in enumerate(sensitive_facet_index) if sensitive_facet_index.iat[idx]],
     )
-    n_neighbors = 5 if np.array(data_a[0]).size > 16 else 1
+    # Set KNN neighbors to 1 if samples less than 10
+    # Used at prediction to have enough samples for neighbors
+    n_neighbors = 5 if len(data_a[0]) > 9 else 1
 
     knn = KNeighborsClassifier(
         n_neighbors=n_neighbors,
