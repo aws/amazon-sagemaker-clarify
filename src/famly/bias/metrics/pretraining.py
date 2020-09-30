@@ -54,7 +54,7 @@ def CI(feature: pd.Series, sensitive_facet_index: pd.Series) -> float:
 
 @registry.pretraining
 def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
-    """
+    r"""
     Difference in Positive Proportions in Labels (DPL)
 
     :param feature: input feature
