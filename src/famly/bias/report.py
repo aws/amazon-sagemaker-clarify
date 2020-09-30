@@ -177,7 +177,13 @@ def _positive_predicted_index(
     label_datatype = common.series_datatype(label_data, positive_label_values)
     if predicted_label_datatype != label_datatype:
         raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
-    predicted_label_data = predicted_label_data.astype(label_data.dtype)
+    try:
+        predicted_label_data = predicted_label_data.astype(label_data.dtype)
+    except ValueError as e:
+        raise ValueError(
+            "Labels and predicted labels cannot have different types (%s, %s)."
+            % (label_data.dtype, predicted_label_data.dtype)
+        )
     if predicted_label_datatype == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(label_data.append(predicted_label_data), positive_label_values)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
