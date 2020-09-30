@@ -111,7 +111,7 @@ class S3Handler:
     def download(self, s3_url, local) -> None:
         (bucket, path) = self.url_bucket_key(s3_url)
         self.s3.download_file(bucket, path, local)
-        o: boto3.resources.factory.s3.Object = self.s3r.Object(bucket, path)
+        o = self.s3r.Object(bucket, path)
         mtime = o.last_modified.timestamp()
         os.utime(local, (mtime, mtime))
 
@@ -123,7 +123,7 @@ class S3Handler:
         """
         (bucket, path) = self.url_bucket_key(s3_url)
         assert os.path.isfile(local)
-        o: boto3.resources.factory.s3.Object = self.s3r.Object(bucket, path)
+        o = self.s3r.Object(bucket, path)
         if o.last_modified.timestamp() == os.path.getmtime(local) and o.content_length == os.path.getsize(local):
             return False
         return True
