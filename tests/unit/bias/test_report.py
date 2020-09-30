@@ -18,7 +18,8 @@ def test_report_category_data():
     #
     # pre training bias metrics
     df_cat = pd.DataFrame(
-        [["a", 1, 1, 1], ["b", 1, 1, 0], ["b", 0, 1, 0], ["b", 0, 0, 1]], columns=["x", "y", "z", "yhat"]
+        [["a", 1, 1, 1, "1"], ["b", 1, 1, 0, "0"], ["b", 0, 1, 0, "0"], ["b", 0, 0, 1, "1"]],
+        columns=["x", "y", "z", "yhat", "yhat_cat"],
     )
     pretraining_report = bias_report(
         df_cat,
@@ -28,15 +29,26 @@ def test_report_category_data():
         LabelColumn("yhat", df_cat["yhat"]),
         group_variable=df_cat["z"],
     )
+
+    pretraining_report_cat = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], [0]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cat["yhat_cat"]),
+        group_variable=df_cat["z"],
+    )
+
     assert isinstance(pretraining_report, list)
     assert len(pretraining_report) > 0
+    assert pretraining_report == pretraining_report_cat
 
     result = [
         {
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.5},
                 {
-                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
                     "value": -0.6666666666666667,
                 },
@@ -57,7 +69,7 @@ def test_report_category_data():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": -0.5},
                 {
-                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
                     "value": 0.6666666666666667,
                 },
@@ -87,13 +99,26 @@ def test_report_category_data():
         metrics=["AD", "DI", "DPPL", "RD"],
         group_variable=df_cat["z"],
     )
+
+    posttraining_report_cat = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], [0]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cat["yhat_cat"]),
+        metrics=["AD", "DI", "DPPL", "RD"],
+        group_variable=df_cat["z"],
+    )
+
     assert isinstance(posttraining_report, list)
     assert len(posttraining_report) > 0
+    assert posttraining_report == posttraining_report_cat
+
     expected_result_1 = [
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": -0.6666666666666667,
                 },
@@ -106,7 +131,7 @@ def test_report_category_data():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": 0.6666666666666667,
                 },
@@ -169,7 +194,7 @@ def test_report_continuous_data():
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": -0.08333333333333333},
                 {
-                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
                     "value": 0.1048951048951049,
                 },
@@ -204,7 +229,7 @@ def test_report_continuous_data():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": -0.04195804195804198,
                 },
@@ -341,26 +366,26 @@ def test_label_values():
     expected_result_1 = [
         {
             "metrics": [
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": -0.25},
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.3},
+                {"description": "Difference in Positive Proportions in Labels (DPL)", "name": "DPL", "value": -0.25},
+                {"description": "Conditional Demographic Disparity in Labels (CDDL)", "name": "CDDL", "value": -0.3},
             ],
             "value_or_threshold": "a",
         },
         {
             "metrics": [
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": 0.3},
+                {"description": "Difference in Positive Proportions in Labels (DPL)", "name": "DPL", "value": 0.5},
+                {"description": "Conditional Demographic Disparity in Labels (CDDL)", "name": "CDDL", "value": 0.3},
             ],
             "value_or_threshold": "b",
         },
         {
             "metrics": [
                 {
-                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
                     "value": -0.33333333333333337,
                 },
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.4},
+                {"description": "Conditional Demographic Disparity in Labels (CDDL)", "name": "CDDL", "value": -0.4},
             ],
             "value_or_threshold": "c",
         },
@@ -383,7 +408,7 @@ def test_label_values():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": 0.0,
                 },
@@ -398,7 +423,7 @@ def test_label_values():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": 0.0,
                 },
@@ -413,7 +438,7 @@ def test_label_values():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": 0.0,
                 },
@@ -464,10 +489,10 @@ def test_partial_bias_report():
         {
             "metrics": [
                 {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
+                {"description": "Difference in Positive Proportions in Labels (DPL)", "name": "DPL", "value": 0.5},
                 {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
                 {
-                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "description": "Conditional Demographic Disparity in Labels (CDDL)",
                     "error": "Group variable is empty or not provided",
                     "name": "CDDL",
                     "value": None,
@@ -492,7 +517,7 @@ def test_partial_bias_report():
         {
             "metrics": [
                 {
-                    "description": '"Difference in Positive Proportions in ' 'Predicted Labels (DPPL)")',
+                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
                     "name": "DPPL",
                     "value": 0.75,
                 },
@@ -548,7 +573,7 @@ def test_metric_descriptions():
         "DCA": "Difference in Conditional Acceptance (DCA)",
         "DCR": "Difference in Conditional Rejection (DCR)",
         "DI": "Disparate Impact (DI)",
-        "DPPL": '"Difference in Positive Proportions in Predicted Labels (DPPL)")',
+        "DPPL": "Difference in Positive Proportions in Predicted Labels (DPPL)",
         "DRR": "Difference in Rejection Rates (DRR)",
         "FT": "Flip Test (FT)",
         "RD": "Recall Difference (RD)",

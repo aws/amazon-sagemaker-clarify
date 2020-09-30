@@ -20,7 +20,7 @@ def DPPL(
     positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    "Difference in Positive Proportions in Predicted Labels (DPPL)")
+    Difference in Positive Proportions in Predicted Labels (DPPL)
 
     Indication if initial bias resident in the dataset increases or decreases after training.
 
@@ -80,7 +80,7 @@ def DCA(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Difference in Conditional Acceptance (DCA)
 
     :param feature: input feature
@@ -100,7 +100,7 @@ def DCR(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Difference in Conditional Rejection (DCR)
 
     :param feature: input feature
@@ -120,7 +120,7 @@ def RD(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Recall Difference (RD)
 
     :param feature: input feature
@@ -162,7 +162,7 @@ def DAR(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Difference in Acceptance Rates (DAR)
 
     :param feature: input feature
@@ -183,7 +183,7 @@ def DRR(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Difference in Rejection Rates (DRR)
 
     :param feature: input feature
@@ -203,7 +203,7 @@ def AD(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Accuracy Difference (AD)
 
     :param feature: input feature
@@ -280,7 +280,7 @@ def TE(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
-    """
+    r"""
     Treatment Equality (TE)
 
     :param feature: input feature
@@ -329,7 +329,7 @@ def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> 
 
 @registry.posttraining
 def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_label_index: pd.Series) -> float:
-    """
+    r"""
     Flip Test (FT)
 
     The Flip Test(FT) is an approximation of the test described in (Black et. al paper) to apply for tabular data. In this

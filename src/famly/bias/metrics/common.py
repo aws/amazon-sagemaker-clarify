@@ -117,7 +117,7 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
         # cast the dtype to int, if exception is raised data is categorical
         casted_data = data.astype("int64", copy=True, errors="ignore")
         if np.issubdtype(casted_data.dtype, np.integer) and data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
-            data_type = DataType.CONTINOUS  # type: ignore
+            data_type = DataType.CONTINUOUS  # type: ignore
     elif np.issubdtype(data.dtype, np.floating):
         data_type = DataType.CONTINUOUS
     elif np.issubdtype(data.dtype, np.integer):
