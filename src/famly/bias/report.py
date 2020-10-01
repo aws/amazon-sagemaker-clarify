@@ -432,7 +432,7 @@ def bias_report(
                 metrics_list.append(result)
             facet_metric = FacetReport(facet_value_or_threshold=",".join(map(str, facet_values)), metrics=metrics_list)
             metrics_result.append(facet_metric.toJson())
-        logger.debug("metric_result:", metrics_result)
+        logger.debug("metric_result: %s", str(metrics_result))
         return metrics_result
 
     elif facet_dtype == common.DataType.CONTINUOUS:
