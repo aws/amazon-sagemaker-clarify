@@ -1,4 +1,4 @@
-from famly.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE
+from famly.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS
 from famly.bias.metrics import metric_one_vs_all
 from famly.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -6,7 +6,6 @@ import pandas as pd
 from pandas import Series
 import numpy as np
 import pytest
-
 
 DATASET_PDF = pd.DataFrame(
     np.array(
@@ -254,6 +253,18 @@ def test_KL():
     positive_label_index += DATASET_PDF["label"] == "2"
     res = KL(positive_label_index, sensitive_facet_index)
     assert res == approx(0.2938933)
+
+
+def test_KS():
+    df = pd.DataFrame([["1", "a"], ["0", "a"], ["0", "b"], ["1", "b"], ["1", "b"]], columns=["label", "x"])
+    result = KS(df["label"], df["x"] == "b")
+    assert result == approx(0.33333333)
+
+    result = KS(DATASET_PDF["label"], DATASET_PDF["x"] != "b")
+    assert result == approx(0.66666666)
+
+    result = KS(DATASET_PDF["positive_label_index"], DATASET_PDF["x"] != "b")
+    assert result == approx(0.66666666)
 
 
 def test_JS():
