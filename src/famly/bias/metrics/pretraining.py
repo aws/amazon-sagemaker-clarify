@@ -73,7 +73,7 @@ def KL(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     Kullback-Liebler Divergence (KL)
 
     .. math::
-        KL(Pa, Pd) = \sum_{x}{Pa(x) \ log2 \frac{Pa(x)}{Pd(x)}}
+        KL(Pa, Pd) = \sum_{x}{Pa(x) \ log \frac{Pa(x)}{Pd(x)}}
 
     :param label: column of labels
     :param sensitive_facet_index: boolean column indicating sensitive group

@@ -329,6 +329,10 @@ def _continuous_metric_call_wrapper(
     return MetricResult(metric.__name__, metric_description, metric_value)
 
 
+def _metric_name_comparator(e):
+    return e.__name__
+
+
 def bias_report(
     df: pd.DataFrame,
     facet_column: FacetColumn,
@@ -394,13 +398,13 @@ def bias_report(
             df = df.drop(predicted_label_column.name, 1)
     else:
         positive_predicted_label_index = [None]
-        predicted_label_series = None
         pre_training_metrics = (
             famly.bias.metrics.PRETRAINING_METRICS
             if metrics == ["all"]
             else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(pre_training_metrics)
+    metrics_to_run.sort(key=_metric_name_comparator)
 
     facet_dtype = common.series_datatype(data_series, facet_column.sensitive_values)
     data_series_cat: pd.Series  # Category series
