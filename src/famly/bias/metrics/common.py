@@ -19,6 +19,14 @@ class DataType(Enum):
     CONTINUOUS = 1
 
 
+def divide(a, b):
+    if b == 0 and a == 0:
+        return 0.0
+    if b == 0:
+        return INFINITY
+    return a / b
+
+
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise ValueError(message)
@@ -163,25 +171,11 @@ def DCO(
     nd1 = len(feature[positive_label_index & sensitive_facet_index])
     nd1hat = len(feature[positive_predicted_label_index & sensitive_facet_index])
 
-    if na0hat != 0:
-        rr_a = na0 / na0hat
-    else:
-        rr_a = INFINITY
+    rr_a = divide(na0, na0hat)
+    rr_d = divide(nd0, nd0hat)
 
-    if nd0hat != 0:
-        rr_d = nd0 / nd0hat
-    else:
-        rr_d = INFINITY
-
-    if na1hat != 0:
-        ca = na1 / na1hat
-    else:
-        ca = INFINITY
-
-    if nd1hat != 0:
-        cd = nd1 / nd1hat
-    else:
-        cd = INFINITY
+    ca = divide(na1, na1hat)
+    cd = divide(nd1, nd1hat)
 
     dca = ca - cd
     dcr = rr_d - rr_a
@@ -203,6 +197,8 @@ def DLR(
 ) -> Tuple[float, float]:
     """
     Difference in Label Rates (DLR)
+
+    For cases where both the nominator and the denominator are 0 we use 0 as result.
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
@@ -229,25 +225,11 @@ def DLR(
     TN_d = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & sensitive_facet_index])
     nd0hat = len(feature[(~positive_predicted_label_index) & sensitive_facet_index])
 
-    if na1hat != 0:
-        ar_a = TP_a / na1hat
-    else:
-        ar_a = INFINITY
+    ar_a = divide(TP_a, na1hat)
+    ar_d = divide(TP_d, nd1hat)
 
-    if nd1hat != 0:
-        ar_d = TP_d / nd1hat
-    else:
-        ar_d = INFINITY
-
-    if na0hat != 0:
-        rr_a = TN_a / na0hat
-    else:
-        rr_a = INFINITY
-
-    if nd0hat != 0:
-        rr_d = TN_d / nd0hat
-    else:
-        rr_d = INFINITY
+    rr_a = divide(TN_a, na0hat)
+    rr_d = divide(TN_d, nd0hat)
 
     dar = ar_a - ar_d
     drr = rr_d - rr_a

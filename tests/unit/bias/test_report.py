@@ -523,7 +523,11 @@ def test_partial_bias_report():
                     "name": "CDDPL",
                     "value": None,
                 },
-                {"description": "Difference in Conditional Acceptance (DCA)", "name": "DCA", "value": "-Infinity"},
+                {
+                    "description": "Difference in Conditional Acceptance (DCA)",
+                    "name": "DCA",
+                    "value": 0.6666666666666666,
+                },
                 {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",

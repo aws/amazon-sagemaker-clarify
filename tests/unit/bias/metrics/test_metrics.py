@@ -411,6 +411,19 @@ def test_DRR():
     assert DRR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(-1 / 3)
 
 
+def test_DRR_zero():
+    # Binary Facet, Binary Label
+    # All M have 1 prediction
+    predicted_label = pd.Series([1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1])
+    positive_predicted_label_index = predicted_label == 1
+
+    sensitive_facet_index = dfB[0] == "F"
+    assert DRR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, positive_predicted_label_index) == approx(0.5)
+
+    sensitive_facet_index = dfB[0] == "M"
+    assert DRR(dfB[0], sensitive_facet_index, dfB_pos_label_idx, positive_predicted_label_index) == approx(-0.5)
+
+
 def test_AD():
     # Binary Facet, Binary Label
     sensitive_facet_index = dfB[0] == "F"

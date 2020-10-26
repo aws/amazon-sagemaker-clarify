@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 from famly.bias.metrics.constants import INFINITY, FT_DEFAULT_NEIGHBOR, FT_MIN_NEIGHBOR, FT_SAMPLES_COUNT_THRESHOLD
 from . import registry, common
-from .common import require
+from .common import divide, require
 
 log = logging.getLogger(__name__)
 
@@ -68,9 +68,7 @@ def DI(
     if nd == 0:
         raise ValueError("Facet set is empty")
     qd = nd1hat / nd
-    if qa == 0:
-        return INFINITY
-    return qd / qa
+    return divide(qd, qa)
 
 
 @registry.posttraining
@@ -141,12 +139,12 @@ def RD(
     TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
     FN_a = len(feature[positive_label_index & (~positive_predicted_label_index) & (~sensitive_facet_index)])
 
-    rec_a = TP_a / (TP_a + FN_a) if TP_a + FN_a != 0 else INFINITY
+    rec_a = divide(TP_a, TP_a + FN_a)
 
     TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
     FN_d = len(feature[positive_label_index & (~positive_predicted_label_index) & sensitive_facet_index])
 
-    rec_d = TP_d / (TP_d + FN_d) if TP_d + FN_d != 0 else INFINITY
+    rec_d = divide(TP_d, TP_d + FN_d)
 
     rd = rec_a - rec_d
 
@@ -231,7 +229,7 @@ def AD(
     TN_a = len(feature[idx_tn_a])
 
     total_a = TP_a + TN_a + FP_a + FN_a
-    acc_a = (TP_a + TN_a) / total_a if total_a != 0 else INFINITY
+    acc_a = divide(TP_a + TN_a, total_a)
 
     idx_tp_d = positive_label_index & positive_predicted_label_index & sensitive_facet_index
     TP_d = len(feature[idx_tp_d])
@@ -243,7 +241,7 @@ def AD(
     TN_d = len(feature[idx_tn_d])
 
     total_d = TP_d + TN_d + FP_d + FN_d
-    acc_d = (TP_d + TN_d) / total_d if total_d != 0 else INFINITY
+    acc_d = divide(TP_d + TN_d, total_d)
 
     ad = acc_a - acc_d
     if acc_a == acc_d and acc_a == INFINITY:
@@ -304,8 +302,8 @@ def TE(
     FP_d = len(feature[(~positive_label_index) & positive_predicted_label_index & sensitive_facet_index])
     FN_d = len(feature[positive_label_index & (~positive_predicted_label_index) & sensitive_facet_index])
 
-    tau_a = FN_a / FP_a if FP_a != 0 else INFINITY
-    tau_d = FN_d / FP_d if FP_d != 0 else INFINITY
+    tau_a = divide(FN_a, FP_a)
+    tau_d = divide(FN_d, FP_d)
 
     te = tau_d - tau_a
 
