@@ -10,7 +10,11 @@ install_deps_dev() {
 }
 
 unit_tests() {
-    pytest --pspec
+    pytest --pspec tests/unit
+}
+
+integ_tests() {
+    pytest --pspec tests/integration
     scripts/run_examples.py
 }
 
@@ -38,7 +42,7 @@ lint() {
 
 test_with_coverage() {
     scripts/run_examples.py
-    coverage run -m pytest --pspec
+    coverage run -m pytest --pspec tests/unit
     coverage report -m --fail-under=72
 }
 

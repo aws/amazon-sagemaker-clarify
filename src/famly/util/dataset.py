@@ -139,6 +139,10 @@ class S3Dataset(S3CachedDatasetMixin, Dataset):
         # FIXME use data loader and check CSV, PARQUET etc
         return pd.read_parquet(self.local_path())
 
+    def read_csv_data(self, index_col=False) -> pd.DataFrame:
+        self.ensure_local()
+        return pd.read_csv(self.local_path(), index_col=index_col)
+
 
 class Datasets:
     datasets = {
@@ -155,6 +159,16 @@ class Datasets:
         "german_lending": S3Dataset(
             "german_lending",
             "s3://famly-datasets/statlog/german.parquet",
+            textwrap.dedent("""German Lending dataset"""),
+        ),
+        "german_csv": S3Dataset(
+            "german_csv",
+            "s3://famly-datasets/statlog/german_data.csv",
+            textwrap.dedent("""German Lending dataset"""),
+        ),
+        "german_predicted_labels": S3Dataset(
+            "german_predicted_labels",
+            "s3://famly-datasets/statlog/predicted_labels.csv",
             textwrap.dedent("""German Lending dataset"""),
         ),
     }

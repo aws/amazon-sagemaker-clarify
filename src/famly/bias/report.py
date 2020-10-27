@@ -369,6 +369,8 @@ def bias_report(
             raise ValueError(
                 "Positive predicted label values or threshold should be empty or same as label values or thresholds"
             )
+    if not isinstance(stage_type, StageType):
+        raise ValueError("stage_type should be a Enum value of StageType")
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
     data_series: pd.Series = df[facet_column.name]

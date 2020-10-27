@@ -1,0 +1,22 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+
+  build:
+    commands:
+      - python --version
+      - python setup.py bdist_wheel
+
+  post_build:
+    commands:
+      - echo Running Integration tests
+      - ./devtool install_deps_dev
+      - ./devtool integ_tests
+
+artifacts:
+  base-directory: dist
+  files:
+    - famly-*.whl
