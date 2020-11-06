@@ -148,27 +148,27 @@ class Datasets:
     datasets = {
         "lending_club": S3Dataset(
             "lending_club",
-            "s3://famly-datasets/lending-club/loan.parquet.gz",
+            "s3://sagemaker-clarify-datasets/lending-club/loan.parquet.gz",
             textwrap.dedent("""Lending club dataset"""),
         ),
         "lending_club_small": S3Dataset(
             "lending_club_small",
-            "s3://famly-datasets/lending-club/loan_small.parquet.gz",
+            "s3://sagemaker-clarify-datasets/lending-club/loan_small.parquet.gz",
             textwrap.dedent("""Lending club dataset. 10K rows."""),
         ),
         "german_lending": S3Dataset(
             "german_lending",
-            "s3://famly-datasets/statlog/german.parquet",
+            "s3://sagemaker-clarify-datasets/statlog/german.parquet",
             textwrap.dedent("""German Lending dataset"""),
         ),
         "german_csv": S3Dataset(
             "german_csv",
-            "s3://famly-datasets/statlog/german_data.csv",
+            "s3://sagemaker-clarify-datasets/statlog/german_data.csv",
             textwrap.dedent("""German Lending dataset"""),
         ),
         "german_predicted_labels": S3Dataset(
             "german_predicted_labels",
-            "s3://famly-datasets/statlog/predicted_labels.csv",
+            "s3://sagemaker-clarify-datasets/statlog/predicted_labels.csv",
             textwrap.dedent("""German Lending dataset"""),
         ),
     }
