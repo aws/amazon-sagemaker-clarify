@@ -23,6 +23,8 @@ def divide(a, b):
     if b == 0 and a == 0:
         return 0.0
     if b == 0:
+        if a < 0:
+            return -INFINITY
         return INFINITY
     return a / b
 
@@ -100,7 +102,7 @@ def CDD(
         D = numD / denomD if denomD != 0 else 0
         CDD = np.append(CDD, D - A)
 
-    wtd_mean_CDD = np.sum(counts * CDD) / np.sum(counts)
+    wtd_mean_CDD = divide(np.sum(counts * CDD), np.sum(counts))
 
     return wtd_mean_CDD
 
@@ -115,7 +117,7 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
     """
     # if datatype is boolean or categorical we return data as categorical
     data_type = DataType.CATEGORICAL
-    data_uniqueness_fraction = data.nunique() / data.count()
+    data_uniqueness_fraction = divide(data.nunique(), data.count())
     logger.info(f"data uniqueness fraction: {data_uniqueness_fraction}")
     # Assumption: user will give single value for threshold currently
     # Todo: fix me if multiple thresholds for facet or label are supported

@@ -308,7 +308,7 @@ def TE(
     te = tau_d - tau_a
 
     if tau_a == tau_d and tau_a == INFINITY:
-        te = 0
+        te = 0.0
 
     return te
 
@@ -397,7 +397,6 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
     #           100 * len(FS_neg) / len(data_d[0]), '%)')
     #     print('Length of FlipSet:', len(FS), '(', 100 * len(FS) / len(data_d[0]), '%)')
 
-    FTd = (len(FS_pos) - len(FS_neg)) / len(data_d[0])
-    FTs = len(FS) / len(data_d[0])
+    FTd = divide(len(FS_pos) - len(FS_neg), len(data_d[0]))
 
     return FTd
