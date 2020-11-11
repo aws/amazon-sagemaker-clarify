@@ -1,5 +1,5 @@
-famly package
-=============
+smclarify package
+=================
 
 Subpackages
 -----------
@@ -7,13 +7,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   famly.bias
-   famly.util
+   smclarify.bias
+   smclarify.util
 
 Module contents
 ---------------
 
-.. automodule:: famly
+.. automodule:: smclarify
    :members:
    :undoc-members:
    :show-inheritance:

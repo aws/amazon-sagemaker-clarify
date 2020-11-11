@@ -1,9 +1,9 @@
-![Python package](https://github.com/aws/famly/workflows/Python%20package/badge.svg)
+![Python package](https://github.com/aws/amazon-sagemaker-clarify/workflows/Python%20package/badge.svg)
 ![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat)
 
-# FAMLy
+# smclarify
 
-Fairness Aware Machine Learning
+Amazon Sagemaker Clarify
 
 Bias detection and mitigation for datasets and models.
 

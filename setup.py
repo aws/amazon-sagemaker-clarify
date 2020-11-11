@@ -31,7 +31,7 @@ with open("README.md", "r") as f:
 
 
 setup(
-    name="famly",
+    name="smclarify",
     version="0.1",
     packages=find_packages("src"),
     package_dir={"": "src"},

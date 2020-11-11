@@ -11,8 +11,8 @@ import logging
 from typing import Dict, Optional
 
 import pandas as pd
-from famly.bias.report import FacetColumn, LabelColumn, bias_report, StageType
-from famly.util.dataset import Datasets
+from smclarify.bias.report import FacetColumn, LabelColumn, bias_report, StageType
+from smclarify.util.dataset import Datasets
 
 logger = logging.getLogger(__name__)
 RESOURCES_DIR = os.path.join(os.getcwd(), "tests", "resources")

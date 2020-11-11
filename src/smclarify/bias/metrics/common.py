@@ -7,9 +7,9 @@ from enum import Enum
 from typing import List, Optional, Tuple, Callable
 import pandas as pd
 import numpy as np
-from famly.bias.metrics.constants import INFINITY
+from smclarify.bias.metrics.constants import INFINITY
 
-from famly.bias.metrics.constants import UNIQUENESS_THRESHOLD
+from smclarify.bias.metrics.constants import UNIQUENESS_THRESHOLD
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
 
-from famly.util import pdf, pdfs_aligned_nonzero
+from smclarify.util import pdf, pdfs_aligned_nonzero
 import numpy as np
 
 

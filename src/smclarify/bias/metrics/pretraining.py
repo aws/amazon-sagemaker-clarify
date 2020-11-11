@@ -13,7 +13,7 @@ Note:
     The metrics that consume positive_label_index require it to be of type 'bool'. The metrics that consume label can work with other data types as well.
 """
 import logging
-from famly.util import pdfs_aligned_nonzero
+from smclarify.util import pdfs_aligned_nonzero
 from . import registry, common
 from .common import require
 import pandas as pd
