@@ -10,7 +10,7 @@ import logging
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from famly.bias.metrics.constants import INFINITY, FT_DEFAULT_NEIGHBOR, FT_MIN_NEIGHBOR, FT_SAMPLES_COUNT_THRESHOLD
+from smclarify.bias.metrics.constants import INFINITY, FT_DEFAULT_NEIGHBOR, FT_MIN_NEIGHBOR, FT_SAMPLES_COUNT_THRESHOLD
 from . import registry, common
 from .common import divide, require
 

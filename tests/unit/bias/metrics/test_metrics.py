@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
 
-from famly.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS
-from famly.bias.metrics import metric_one_vs_all
-from famly.bias.metrics.constants import INFINITY
+from smclarify.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS
+from smclarify.bias.metrics import metric_one_vs_all
+from smclarify.bias.metrics.constants import INFINITY
 from pytest import approx
 import pandas as pd
 from pandas import Series

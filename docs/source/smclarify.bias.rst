@@ -1,5 +1,5 @@
-famly.bias package
-==================
+smclarify.bias package
+======================
 
 Subpackages
 -----------
@@ -7,24 +7,23 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   famly.bias.metrics
+   smclarify.bias.metrics
 
 Submodules
 ----------
 
-famly.bias.report module
-------------------------
+smclarify.bias.report module
+----------------------------
 
-.. automodule:: famly.bias.report
+.. automodule:: smclarify.bias.report
    :members:
    :undoc-members:
    :show-inheritance:
 
-
 Module contents
 ---------------
 
-.. automodule:: famly.bias
+.. automodule:: smclarify.bias
    :members:
    :undoc-members:
    :show-inheritance:

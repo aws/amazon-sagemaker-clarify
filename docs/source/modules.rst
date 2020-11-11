@@ -1,7 +1,7 @@
-famly
-=====
+smclarify
+=========
 
 .. toctree::
    :maxdepth: 4
 
-   famly
+   smclarify

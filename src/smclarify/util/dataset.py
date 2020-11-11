@@ -25,7 +25,7 @@ def cache_dir(*paths) -> str:
     j = os.path.join
     path = j(
         os.environ.get("XDG_CACHE_HOME", j(os.environ.get("HOME", ""), ".cache")),  # type: ignore
-        "famly",
+        "smclarify",
         "datasets",
     )
     dir = j(path, *paths)

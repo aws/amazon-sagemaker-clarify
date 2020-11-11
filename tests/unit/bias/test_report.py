@@ -4,7 +4,7 @@
 
 import pandas as pd
 import pytest
-from famly.bias.report import (
+from smclarify.bias.report import (
     ProblemType,
     problem_type,
     bias_report,
@@ -13,8 +13,8 @@ from famly.bias.report import (
     fetch_metrics_to_run,
     StageType,
 )
-from famly.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
-from famly.bias.metrics import common
+from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
+from smclarify.bias.metrics import common
 
 
 def test_report_category_data():

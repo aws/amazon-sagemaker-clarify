@@ -19,4 +19,4 @@ phases:
 artifacts:
   base-directory: dist
   files:
-    - famly-*.whl
+    - smclarify-*.whl

@@ -3,7 +3,7 @@
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
 
 import pytest
-from famly.bias.metrics import registry
+from smclarify.bias.metrics import registry
 
 
 def test_valid_registration():

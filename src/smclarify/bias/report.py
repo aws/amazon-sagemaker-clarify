@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Callable, Tuple
 
 import pandas as pd
 
-import famly
-import famly.bias.metrics
-from famly.bias.metrics import common
+import smclarify
+import smclarify.bias.metrics
+from smclarify.bias.metrics import common
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +282,7 @@ def _categorical_metric_call_wrapper(
             # Build index series from facet
             sensitive_facet_index = _categorical_data_idx(feature, facet_values)
             metric_description = common.metric_description(metric)
-            metric_value = famly.bias.metrics.call_metric(
+            metric_value = smclarify.bias.metrics.call_metric(
                 metric,
                 df=df,
                 feature=feature,
@@ -316,7 +316,7 @@ def _continuous_metric_call_wrapper(
     try:
         sensitive_facet_index = _continuous_data_idx(feature, facet_threshold_index)
         metric_description = common.metric_description(metric)
-        metric_value = famly.bias.metrics.call_metric(
+        metric_value = smclarify.bias.metrics.call_metric(
             metric,
             df=df,
             feature=feature,
@@ -389,9 +389,9 @@ def bias_report(
     metrics_to_run = []
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
         post_training_metrics = (
-            famly.bias.metrics.POSTTRAINING_METRICS
+            smclarify.bias.metrics.POSTTRAINING_METRICS
             if metrics == ["all"]
-            else fetch_metrics_to_run(famly.bias.metrics.POSTTRAINING_METRICS, metrics)
+            else fetch_metrics_to_run(smclarify.bias.metrics.POSTTRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(post_training_metrics)
         predicted_label_series = predicted_label_column.data
@@ -405,9 +405,9 @@ def bias_report(
     else:
         positive_predicted_label_index = [None]
         pre_training_metrics = (
-            famly.bias.metrics.PRETRAINING_METRICS
+            smclarify.bias.metrics.PRETRAINING_METRICS
             if metrics == ["all"]
-            else fetch_metrics_to_run(famly.bias.metrics.PRETRAINING_METRICS, metrics)
+            else fetch_metrics_to_run(smclarify.bias.metrics.PRETRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(pre_training_metrics)
     metrics_to_run.sort(key=_metric_name_comparator)
