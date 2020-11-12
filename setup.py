@@ -4,7 +4,7 @@
 
 from setuptools import find_packages, setup
 
-INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "s3fs", "numpy", "sklearn", "pyfunctional"]
+INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "numpy", "sklearn", "pyfunctional"]
 
 EXTRAS_REQUIRE = {
     "test": [
