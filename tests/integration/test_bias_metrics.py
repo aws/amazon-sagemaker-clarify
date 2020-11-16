@@ -101,7 +101,7 @@ def test_bias_metrics():
                 },
                 {"name": "JS", "description": "Jensen-Shannon Divergence (JS)", "value": 0.04021236938805562},
                 {"name": "KL", "description": "Kullback-Liebler Divergence (KL)", "value": 0.08543332780657628},
-                {"name": "KS", "description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.3490783410138249},
+                {"name": "KS", "description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.17453917050691248},
                 {"name": "LP", "description": "L-p Norm (LP)", "value": 0.2468356620962257},
                 {"name": "TVD", "description": "Total Variation Distance (TVD)", "value": 0.17453917050691245},
             ],
