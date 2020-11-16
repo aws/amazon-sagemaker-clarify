@@ -172,7 +172,7 @@ def KS(label: pd.Series, sensitive_facet_index: pd.Series) -> float:
     :param sensitive_facet_index: boolean column indicating sensitive group
     :return: Kolmogorov-Smirnov metric
     """
-    return LP_norm(label, sensitive_facet_index, 1)
+    return LP_norm(label, sensitive_facet_index, np.inf)
 
 
 @registry.pretraining

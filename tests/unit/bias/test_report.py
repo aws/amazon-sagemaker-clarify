@@ -209,7 +209,7 @@ def test_report_continuous_data():
                 },
                 {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.012610670256663018},
                 {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 0.057704603668062765},
-                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.2097902097902098},
+                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.1048951048951049},
                 {"description": "L-p Norm (LP)", "name": "LP", "value": 0.14834407996920576},
                 {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.1048951048951049},
             ],
