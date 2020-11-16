@@ -262,13 +262,13 @@ def test_KL():
 def test_KS():
     df = pd.DataFrame([["1", "a"], ["0", "a"], ["0", "b"], ["1", "b"], ["1", "b"]], columns=["label", "x"])
     result = KS(df["label"], df["x"] == "b")
-    assert result == approx(0.33333333)
+    assert result == approx(0.16666666)
 
     result = KS(DATASET_PDF["label"], DATASET_PDF["x"] != "b")
-    assert result == approx(0.66666666)
+    assert result == approx(0.33333333)
 
     result = KS(DATASET_PDF["positive_label_index"], DATASET_PDF["x"] != "b")
-    assert result == approx(0.66666666)
+    assert result == approx(0.33333333)
 
 
 def test_JS():
