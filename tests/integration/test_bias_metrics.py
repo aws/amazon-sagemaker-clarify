@@ -7,6 +7,8 @@
 
 import os
 import logging
+import boto3
+import json
 
 from typing import Dict, Optional
 
@@ -30,6 +32,19 @@ def get_predicted_labels() -> pd.DataFrame:
     s3_pred_label_obj = dataset("german_predicted_labels")
     predicted_labels = s3_pred_label_obj.read_csv_data(index_col=0)
     return predicted_labels.squeeze()
+
+
+def get_expected_results() -> Dict:
+    s3_client = boto3.client("s3")
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    file_name = "bias_metrics_results.json"
+    s3_client.download_file("sagemaker-clarify-datasets",
+                            f"statlog/result/{file_name}",
+                            f"{test_dir}/{file_name}")
+    results_file = os.path.join(test_dir, file_name)
+    with open(results_file) as json_file:
+        expected_results = json.load(json_file)
+    return expected_results
 
 
 def get_pretraining_bias_metrics(
@@ -83,65 +98,9 @@ def test_bias_metrics():
     post_training_metrics = get_posttraining_bias_metrics(
         dataframe, facet_column, label_column, pred_label_column, group_variable
     )
-
-    pre_training_expected_result = [
-        {
-            "value_or_threshold": "1",
-            "metrics": [
-                {
-                    "name": "CDDL",
-                    "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                    "value": 0.029771892530848814,
-                },
-                {"name": "CI", "description": "Class Imbalance (CI)", "value": -0.9288888888888889},
-                {
-                    "name": "DPL",
-                    "description": "Difference in Positive Proportions in Labels (DPL)",
-                    "value": 0.17453917050691248,
-                },
-                {"name": "JS", "description": "Jensen-Shannon Divergence (JS)", "value": 0.04021236938805562},
-                {"name": "KL", "description": "Kullback-Liebler Divergence (KL)", "value": 0.08543332780657628},
-                {"name": "KS", "description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.3490783410138249},
-                {"name": "LP", "description": "L-p Norm (LP)", "value": 0.2468356620962257},
-                {"name": "TVD", "description": "Total Variation Distance (TVD)", "value": 0.17453917050691245},
-            ],
-        }
-    ]
-
-    post_training_expected_result = [
-        {
-            "value_or_threshold": "1",
-            "metrics": [
-                {"name": "AD", "description": "Accuracy Difference (AD)", "value": 0.03312211981566815},
-                {
-                    "name": "CDDPL",
-                    "description": "Conditional Demographic Disparity in Predicted Labels (CDDPL)",
-                    "value": 0.032647137172999274,
-                },
-                {"name": "DAR", "description": "Difference in Acceptance Rates (DAR)", "value": 0.017096617181796114},
-                {
-                    "name": "DCA",
-                    "description": "Difference in Conditional Acceptance (DCA)",
-                    "value": -0.035775127768313375,
-                },
-                {
-                    "name": "DCR",
-                    "description": "Difference in Conditional Rejection (DCR)",
-                    "value": -0.07473309608540923,
-                },
-                {"name": "DI", "description": "Disparate Impact (DI)", "value": 0.7728768926925609},
-                {
-                    "name": "DPPL",
-                    "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
-                    "value": 0.19873271889400923,
-                },
-                {"name": "DRR", "description": "Difference in Rejection Rates (DRR)", "value": 0.06494661921708189},
-                {"name": "FT", "description": "Flip Test (FT)", "value": -0.32373271889400923},
-                {"name": "RD", "description": "Recall Difference (RD)", "value": 0.049812030075187974},
-                {"name": "TE", "description": "Treatment Equality (TE)", "value": 0.6774193548387097},
-            ],
-        }
-    ]
+    expected_results = get_expected_results()
+    pre_training_expected_result = expected_results.get("pre_training_bias_metrics")
+    post_training_expected_result = expected_results.get("post_training_bias_metrics")
 
     assert pre_training_metrics == pre_training_expected_result
     assert post_training_metrics == post_training_expected_result
