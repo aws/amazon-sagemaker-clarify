@@ -52,7 +52,13 @@ docs() {
 }
 
 build_package() {
-    python setup.py bdist_wheel
+    echo $(git rev-parse HEAD) >> src/smclarify/COMMIT_HASH
+    python3 setup.py bdist_wheel
+}
+
+install_package(){
+  wheel_name=$(ls -t dist | head -n 1)
+  pip install --upgrade dist/$wheel_name
 }
 
 all() {
