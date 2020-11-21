@@ -54,6 +54,7 @@ docs() {
 build_package() {
     echo $(git rev-parse HEAD) >> src/smclarify/COMMIT_HASH
     python3 setup.py bdist_wheel
+    rm src/smclarify/COMMIT_HASH
 }
 
 install_package(){
