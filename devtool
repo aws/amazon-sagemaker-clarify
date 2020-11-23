@@ -53,7 +53,6 @@ docs() {
 
 create_commit_hash_file(){
   if [[ -z "${CODEBUILD_RESOLVED_SOURCE_VERSION:-}" ]]; then
-    echo Hello
     echo $(git rev-parse HEAD) > COMMIT_HASH
   else
     echo "${CODEBUILD_RESOLVED_SOURCE_VERSION}" > COMMIT_HASH
