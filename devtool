@@ -51,8 +51,23 @@ docs() {
     make html
 }
 
+create_commit_hash_file(){
+  if [[ -z "${CODEBUILD_RESOLVED_SOURCE_VERSION:-}" ]]; then
+    echo $(git rev-parse HEAD) > COMMIT_HASH
+  else
+    echo "${CODEBUILD_RESOLVED_SOURCE_VERSION}" > COMMIT_HASH
+  fi
+}
+
 build_package() {
-    python setup.py bdist_wheel
+    create_commit_hash_file
+    python3 setup.py bdist_wheel
+    rm COMMIT_HASH
+}
+
+install_package(){
+  wheel_name=$(ls -t dist | head -n 1)
+  pip install --upgrade dist/$wheel_name
 }
 
 all() {
