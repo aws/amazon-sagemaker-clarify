@@ -29,7 +29,7 @@ EXTRAS_REQUIRE = {
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
 
-data_files = ["COMMIT_HASH"] if os.path.exists("./src/explainers/COMMIT_HASH") else []
+data_files = ["COMMIT_HASH"] if os.path.exists("./src/smclarify/COMMIT_HASH") else []
 
 setup(
     name="smclarify",
