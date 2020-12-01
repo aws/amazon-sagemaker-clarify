@@ -53,16 +53,16 @@ docs() {
 
 create_commit_hash_file(){
   if [[ -z "${CODEBUILD_RESOLVED_SOURCE_VERSION:-}" ]]; then
-    echo $(git rev-parse HEAD) > COMMIT_HASH
+    echo $(git rev-parse HEAD) > src/smclarify/COMMIT_HASH
   else
-    echo "${CODEBUILD_RESOLVED_SOURCE_VERSION}" > COMMIT_HASH
+    echo "${CODEBUILD_RESOLVED_SOURCE_VERSION}" > src/smclarify/COMMIT_HASH
   fi
 }
 
 build_package() {
     create_commit_hash_file
     python3 setup.py bdist_wheel
-    rm COMMIT_HASH
+    rm src/smclarify/COMMIT_HASH
 }
 
 install_package(){
