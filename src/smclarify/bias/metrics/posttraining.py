@@ -52,7 +52,7 @@ def DI(
     the facet.
 
     .. math::
-        DI = \frac{\frac{\hat{n_a}^{(1)}}{n_a}}{\frac{\hat{n_d}^{(1)}}{n_d}}
+        DI = \frac{\frac{\hat{n_d}^{(1)}}{n_d}}{\frac{\hat{n_a}^{(1)}}{n_a}}
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
