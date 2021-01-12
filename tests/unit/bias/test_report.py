@@ -17,6 +17,66 @@ from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI
 from smclarify.bias.metrics import common
 
 
+def test_invalid_input():
+    df_cat = pd.DataFrame(
+        [["a", 0, 0, "n"], ["b", 0, 1, "y"], ["c", 1, 0, "n"]],
+        columns=["x", "y", "label", "predicted_label"],
+    )
+    for staging_type in StageType:
+        # facet not in dataset
+        with pytest.raises(ValueError):
+            bias_report(
+                df_cat,
+                FacetColumn("z"),
+                LabelColumn("Label", df_cat["label"]),
+                staging_type,
+            )
+        # no positive label value
+        with pytest.raises(ValueError):
+            bias_report(
+                df_cat,
+                FacetColumn("x"),
+                LabelColumn("Label", df_cat["label"]),
+                staging_type,
+            )
+    # incorrect stage type
+    with pytest.raises(ValueError):
+        # noinspection PyTypeChecker
+        bias_report(
+            df_cat,
+            FacetColumn("x"),
+            LabelColumn("Label", df_cat["label"], [1]),
+            "pre_training",
+        )
+    # post-training but no predicted label column
+    with pytest.raises(ValueError):
+        bias_report(
+            df_cat,
+            FacetColumn("x"),
+            LabelColumn("Label", df_cat["label"], [1]),
+            StageType.POST_TRAINING,
+        )
+    # positive label value of label and predicted label not the same
+    with pytest.raises(ValueError):
+        bias_report(
+            df_cat,
+            FacetColumn("x"),
+            LabelColumn("Label", df_cat["label"], [1]),
+            StageType.POST_TRAINING,
+            LabelColumn("Prediction", df_cat["predicted_label"], [1]),
+        )
+    # label and positive label have different data types.
+    with pytest.raises(ValueError):
+        bias_report(
+            df_cat,
+            FacetColumn("x"),
+            LabelColumn("Label", df_cat["label"], [1]),
+            StageType.POST_TRAINING,
+            LabelColumn("Prediction", df_cat["predicted_label"], [1]),
+        )
+    # TODO: add more test cases.
+
+
 def test_report_category_data():
     # test the bias_report function on the category data
     #

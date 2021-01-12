@@ -180,7 +180,7 @@ def _positive_predicted_index(
     predicted_label_datatype = common.series_datatype(predicted_label_data, positive_label_values)
     label_datatype = common.series_datatype(label_data, positive_label_values)
     if predicted_label_datatype != label_datatype:
-        raise AssertionError("Predicted Label Column series datatype is not the same as Label Column series")
+        raise ValueError("Predicted Label Column series datatype is not the same as Label Column series")
     try:
         predicted_label_data = predicted_label_data.astype(label_data.dtype)
     except ValueError as e:
@@ -363,9 +363,8 @@ def bias_report(
     :return: list of dictionaries with metrics for different label values
     """
     if facet_column:
-        assert facet_column.name in df.columns, "Facet column {} is not present in the dataset".format(
-            facet_column.name
-        )
+        if facet_column.name not in df.columns:
+            raise ValueError("Facet column {} is not present in the dataset".format(facet_column.name))
     if not label_column.positive_label_values:
         raise ValueError("Positive label values or thresholds are empty for Label column")
     if isinstance(predicted_label_column, LabelColumn) and predicted_label_column.positive_label_values:
