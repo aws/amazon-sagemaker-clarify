@@ -1,4 +1,5 @@
 ![Python package](https://github.com/aws/amazon-sagemaker-clarify/workflows/Python%20package/badge.svg)
+![Pypi](https://img.shields.io/pypi/v/smclarify.svg?maxAge=60)
 ![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat)
 
 # smclarify
@@ -7,7 +8,19 @@ Amazon Sagemaker Clarify
 
 Bias detection and mitigation for datasets and models.
 
-## Terminology
+
+# Installation
+
+To install the package from PIP you can simply do:
+
+```
+pip install smclarify
+```
+
+You can see examples on running the Bias metrics on the notebooks in the [examples folder](https://github.com/aws/amazon-sagemaker-clarify/tree/master/examples).
+
+
+# Terminology
 
 ### Facet
 A facet is column or feature that will be used to measure bias against. A facet can have value(s) that designates that sample as "***sensitive***".
@@ -24,7 +37,10 @@ A bias metric is a numerical value indicating the level of bias detected as dete
 ### Bias report
 A collection of bias metrics for a given dataset or a combination of a dataset and model.
 
-## Development
+# Development
+
+It's recommended that you setup a virtualenv.
+
 ```
 virtualenv -p(which python3) venv
 source venv/bin/activate.fish
@@ -33,7 +49,7 @@ pytest --pspec
 pre-commit install && pre-commit run --all-files
 ```
 
-Always run `pre-commit run --all-files` before commit.
+Always run `pre-commit run --all-files` before commit or sending a pull request.
 
 
 For running unit tests, do `./test.sh` or `pytest --pspec`. If you are using PyCharm, and cannot see the green run button next to the tests, open `Preferences` -> `Tools` -> `Python Integrated tools`, and set default test runner to `pytest`.
