@@ -113,19 +113,35 @@ def test_report_category_data():
                 {
                     "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
                     "name": "CDDL",
-                    "value": -0.375,
+                    "value": pytest.approx(-0.375),
                 },
-                {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.5},
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": pytest.approx(0.5)},
                 {
                     "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
-                    "value": -0.6666666666666667,
+                    "value": pytest.approx(-0.6666666666666667),
                 },
-                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.3662040962227032},
-                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.6666666666666667},
-                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
-                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
+                {
+                    "description": "Jensen-Shannon Divergence (JS)",
+                    "name": "JS",
+                    "value": pytest.approx(0.2789960722619452),
+                },
+                {
+                    "description": "Kullback-Liebler Divergence (KL)",
+                    "name": "KL",
+                    "value": pytest.approx(-0.3662040962227032),
+                },
+                {
+                    "description": "Kolmogorov-Smirnov Distance (KS)",
+                    "name": "KS",
+                    "value": pytest.approx(0.6666666666666667),
+                },
+                {"description": "L-p Norm (LP)", "name": "LP", "value": pytest.approx(0.6666666666666667)},
+                {
+                    "description": "Total Variation Distance (TVD)",
+                    "name": "TVD",
+                    "value": pytest.approx(0.33333333333333337),
+                },
             ],
             "value_or_threshold": "a",
         },
@@ -134,19 +150,35 @@ def test_report_category_data():
                 {
                     "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
                     "name": "CDDL",
-                    "value": 0.625,
+                    "value": pytest.approx(0.625),
                 },
-                {"description": "Class Imbalance (CI)", "name": "CI", "value": -0.5},
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": pytest.approx(-0.5)},
                 {
                     "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
-                    "value": 0.6666666666666667,
+                    "value": pytest.approx(0.6666666666666667),
                 },
-                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.2789960722619452},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 1.0986122886681098},
-                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.6666666666666667},
-                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.6666666666666667},
-                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.33333333333333337},
+                {
+                    "description": "Jensen-Shannon Divergence (JS)",
+                    "name": "JS",
+                    "value": pytest.approx(0.2789960722619452),
+                },
+                {
+                    "description": "Kullback-Liebler Divergence (KL)",
+                    "name": "KL",
+                    "value": pytest.approx(1.0986122886681098),
+                },
+                {
+                    "description": "Kolmogorov-Smirnov Distance (KS)",
+                    "name": "KS",
+                    "value": pytest.approx(0.6666666666666667),
+                },
+                {"description": "L-p Norm (LP)", "name": "LP", "value": pytest.approx(0.6666666666666667)},
+                {
+                    "description": "Total Variation Distance (TVD)",
+                    "name": "TVD",
+                    "value": pytest.approx(0.33333333333333337),
+                },
             ],
             "value_or_threshold": "b",
         },
@@ -181,27 +213,27 @@ def test_report_category_data():
     expected_result_1 = [
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.6666666666666667},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 3.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(-0.6666666666666667)},
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(3.0)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": -0.6666666666666667,
+                    "value": pytest.approx(-0.6666666666666667),
                 },
-                {"description": "Recall Difference (RD)", "name": "RD", "value": -1.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(-1.0)},
             ],
             "value_or_threshold": "a",
         },
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.6666666666666667},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.3333333333333333},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(0.6666666666666667)},
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(0.3333333333333333)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": 0.6666666666666667,
+                    "value": pytest.approx(0.6666666666666667),
                 },
-                {"description": "Recall Difference (RD)", "name": "RD", "value": 1.0},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(1.0)},
             ],
             "value_or_threshold": "b",
         },
@@ -259,19 +291,35 @@ def test_report_continuous_data():
                 {
                     "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
                     "name": "CDDL",
-                    "value": 0.3851010101010101,
+                    "value": pytest.approx(0.3851010101010101),
                 },
-                {"description": "Class Imbalance (CI)", "name": "CI", "value": -0.08333333333333333},
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": pytest.approx(-0.08333333333333333)},
                 {
                     "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
-                    "value": 0.1048951048951049,
+                    "value": pytest.approx(0.1048951048951049),
                 },
-                {"description": "Jensen-Shannon Divergence (JS)", "name": "JS", "value": 0.012610670256663018},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": 0.057704603668062765},
-                {"description": "Kolmogorov-Smirnov Distance (KS)", "name": "KS", "value": 0.1048951048951049},
-                {"description": "L-p Norm (LP)", "name": "LP", "value": 0.14834407996920576},
-                {"description": "Total Variation Distance (TVD)", "name": "TVD", "value": 0.1048951048951049},
+                {
+                    "description": "Jensen-Shannon Divergence (JS)",
+                    "name": "JS",
+                    "value": pytest.approx(0.012610670256663018),
+                },
+                {
+                    "description": "Kullback-Liebler Divergence (KL)",
+                    "name": "KL",
+                    "value": pytest.approx(0.057704603668062765),
+                },
+                {
+                    "description": "Kolmogorov-Smirnov Distance (KS)",
+                    "name": "KS",
+                    "value": pytest.approx(0.1048951048951049),
+                },
+                {"description": "L-p Norm (LP)", "name": "LP", "value": pytest.approx(0.14834407996920576)},
+                {
+                    "description": "Total Variation Distance (TVD)",
+                    "name": "TVD",
+                    "value": pytest.approx(0.1048951048951049),
+                },
             ],
             "value_or_threshold": "(2, 4]",
         }
@@ -292,25 +340,37 @@ def test_report_continuous_data():
     expected_result_1 = [
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.2167832167832168},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(-0.2167832167832168)},
                 {
                     "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
                     "name": "CDDPL",
-                    "value": 0.07592592592592595,
+                    "value": pytest.approx(0.07592592592592595),
                 },
-                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": -0.1},
-                {"description": "Difference in Conditional Acceptance (DCA)", "name": "DCA", "value": 0.15},
-                {"description": "Difference in Conditional Rejection (DCR)", "name": "DCR", "value": 1.0},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0576923076923077},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": pytest.approx(-0.1)},
+                {
+                    "description": "Difference in Conditional Acceptance (DCA)",
+                    "name": "DCA",
+                    "value": pytest.approx(0.15),
+                },
+                {
+                    "description": "Difference in Conditional Rejection (DCR)",
+                    "name": "DCR",
+                    "value": pytest.approx(1.0),
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(1.0576923076923077)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": -0.04195804195804198,
+                    "value": pytest.approx(-0.04195804195804198),
                 },
-                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0.6666666666666667},
-                {"description": "Flip Test (FT)", "name": "FT", "value": -0.23076923076923078},
-                {"description": "Recall Difference (RD)", "name": "RD", "value": -1.0},
-                {"description": "Treatment Equality (TE)", "name": "TE", "value": -0.25},
+                {
+                    "description": "Difference in Rejection Rates (DRR)",
+                    "name": "DRR",
+                    "value": pytest.approx(0.6666666666666667),
+                },
+                {"description": "Flip Test (FT)", "name": "FT", "value": pytest.approx(-0.23076923076923078)},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(-1.0)},
+                {"description": "Treatment Equality (TE)", "name": "TE", "value": pytest.approx(-0.25)},
             ],
             "value_or_threshold": "(2, 4]",
         }
@@ -430,25 +490,45 @@ def test_label_values():
     expected_result_1 = [
         {
             "metrics": [
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.3},
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": -0.25},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": pytest.approx(-0.3),
+                },
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": pytest.approx(-0.25),
+                },
             ],
             "value_or_threshold": "a",
         },
         {
             "metrics": [
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": 0.3},
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": pytest.approx(0.3),
+                },
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": pytest.approx(0.5),
+                },
             ],
             "value_or_threshold": "b",
         },
         {
             "metrics": [
-                {"description": "Conditional Demographic Disparity in Labels " "(CDDL)", "name": "CDDL", "value": -0.4},
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": pytest.approx(-0.4),
+                },
                 {
                     "description": "Difference in Positive Proportions in Labels (DPL)",
                     "name": "DPL",
-                    "value": -0.33333333333333337,
+                    "value": pytest.approx(-0.33333333333333337),
                 },
             ],
             "value_or_threshold": "c",
@@ -471,46 +551,50 @@ def test_label_values():
     expected_result_2 = [
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.25},
-                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": -0.25},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(-0.25)},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": pytest.approx(-0.25)},
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(1.0)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": 0.0,
+                    "value": pytest.approx(0.0),
                 },
-                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
-                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": pytest.approx(0)},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(0.0)},
             ],
             "value_or_threshold": "a",
         },
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": 0.5},
-                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": 0.5},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(0.5)},
+                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": pytest.approx(0.5)},
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(1.0)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": 0.0,
+                    "value": pytest.approx(0.0),
                 },
-                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
-                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": pytest.approx(0)},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(0.0)},
             ],
             "value_or_threshold": "b",
         },
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.33333333333333337},
-                {"description": "Difference in Acceptance Rates (DAR)", "name": "DAR", "value": -0.33333333333333337},
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 1.0},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(-0.33333333333333337)},
+                {
+                    "description": "Difference in Acceptance Rates (DAR)",
+                    "name": "DAR",
+                    "value": pytest.approx(-0.33333333333333337),
+                },
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(1.0)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": 0.0,
+                    "value": pytest.approx(0.0),
                 },
-                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": 0},
-                {"description": "Recall Difference (RD)", "name": "RD", "value": 0.0},
+                {"description": "Difference in Rejection Rates (DRR)", "name": "DRR", "value": pytest.approx(0)},
+                {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(0.0)},
             ],
             "value_or_threshold": "c",
         },
@@ -558,9 +642,17 @@ def test_partial_bias_report():
                     "name": "CDDL",
                     "value": None,
                 },
-                {"description": "Class Imbalance (CI)", "name": "CI", "value": 0.6},
-                {"description": "Difference in Positive Proportions in Labels " "(DPL)", "name": "DPL", "value": 0.5},
-                {"description": "Kullback-Liebler Divergence (KL)", "name": "KL", "value": -0.34657359027997264},
+                {"description": "Class Imbalance (CI)", "name": "CI", "value": pytest.approx(0.6)},
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": pytest.approx(0.5),
+                },
+                {
+                    "description": "Kullback-Liebler Divergence (KL)",
+                    "name": "KL",
+                    "value": pytest.approx(-0.34657359027997264),
+                },
             ],
             "value_or_threshold": "(2, 3]",
         }
@@ -580,7 +672,7 @@ def test_partial_bias_report():
     expected_result_2 = [
         {
             "metrics": [
-                {"description": "Accuracy Difference (AD)", "name": "AD", "value": -0.75},
+                {"description": "Accuracy Difference (AD)", "name": "AD", "value": pytest.approx(-0.75)},
                 {
                     "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
                     "error": "Group variable is empty or not provided",
@@ -590,15 +682,15 @@ def test_partial_bias_report():
                 {
                     "description": "Difference in Conditional Acceptance (DCA)",
                     "name": "DCA",
-                    "value": 0.6666666666666666,
+                    "value": pytest.approx(0.6666666666666666),
                 },
-                {"description": "Disparate Impact (DI)", "name": "DI", "value": 0.0},
+                {"description": "Disparate Impact (DI)", "name": "DI", "value": pytest.approx(0.0)},
                 {
                     "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
                     "name": "DPPL",
-                    "value": 0.75,
+                    "value": pytest.approx(0.75),
                 },
-                {"description": "Flip Test (FT)", "name": "FT", "value": -1.0},
+                {"description": "Flip Test (FT)", "name": "FT", "value": pytest.approx(-1.0)},
             ],
             "value_or_threshold": "(2, 3]",
         }

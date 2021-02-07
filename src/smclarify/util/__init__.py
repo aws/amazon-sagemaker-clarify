@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 from functional import seq
 from typing import List
 
@@ -16,7 +15,7 @@ def collapse_to_binary(values, pivot=0.0):
     return np.array(nvalues)
 
 
-def GaussianFilter(input_array: np.array, sigma: int = 1) -> np.array:
+def GaussianFilter(input_array: np.ndarray, sigma: int = 1) -> np.ndarray:
     """
     :param input_array: array which Gaussian Filter is applied to
     :param sigma: integer which indicates standard deviation of the desired Gaussian distribution
@@ -49,7 +48,7 @@ def pdf(xs) -> dict:
     return result_pdf
 
 
-def pdfs_aligned_nonzero(*args) -> List[np.array]:
+def pdfs_aligned_nonzero(*args) -> List[np.ndarray]:
     """
     Convert a list of discrete pdfs / freq counts to aligned numpy arrays of the same size for common non-zero elements
     :return: pair of numpy arrays of the same size with the aligned pdfs
@@ -69,7 +68,7 @@ def pdfs_aligned_nonzero(*args) -> List[np.array]:
     dict_pdfs = seq(pdfs).map(dict).list()
 
     # result aligned lists
-    aligned_lists: List[List[np.array]] = [[] for x in range(num_pdfs)]
+    aligned_lists: List[List] = [[] for x in range(num_pdfs)]
 
     # fill keys present in all pdfs
     for i, key in enumerate(all_keys):
