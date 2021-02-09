@@ -120,13 +120,11 @@ def _column_list_to_str(xs: List[Any]) -> str:
     return metricname
 
 
-def inf_as_str(obj):
+def inf_as_str(obj: Dict) -> Dict:
     """Checks each dict passed to this function if it contains the key "value" with infinity float value assigned
-    Args:
-        obj (dict): The object to decode
 
-    Returns:
-        dict: The new dictionary with change in value from float('inf') to "Infinity"
+    :param obj: The object to decode
+    :return: The new dictionary with change in value from float('inf') to "Infinity"
     """
     if "value" in obj and obj["value"] in [float("inf"), float("-inf")]:
         obj["value"] = str(obj["value"]).replace("inf", "Infinity")
