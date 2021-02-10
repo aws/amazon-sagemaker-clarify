@@ -7,6 +7,8 @@ Post training metrics
 The metrics defined in this file must be computed after training the model.
 """
 import logging
+from typing import List
+
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
@@ -317,15 +319,15 @@ def TE(
     return te
 
 
-def FlipSet_pos(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
+def FlipSet_pos(dataset: List, labels: List, predicted_labels: np.ndarray) -> np.ndarray:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] > predicted_labels[i]])
 
 
-def FlipSet_neg(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
+def FlipSet_neg(dataset: List, labels: List, predicted_labels: np.ndarray) -> np.ndarray:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] < predicted_labels[i]])
 
 
-def FlipSet(dataset: np.array, labels: np.array, predicted_labels: np.array) -> np.array:
+def FlipSet(dataset: List, labels: List, predicted_labels: np.ndarray) -> np.ndarray:
     return np.array([dataset[i] for i in range(len(dataset)) if labels[i] != predicted_labels[i]])
 
 
