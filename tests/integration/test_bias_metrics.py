@@ -11,6 +11,8 @@ import logging
 from typing import Dict, Optional
 
 import pandas as pd
+import pytest
+
 from smclarify.bias.report import FacetColumn, LabelColumn, bias_report, StageType
 from smclarify.util.dataset import Datasets
 
@@ -91,19 +93,35 @@ def test_bias_metrics():
                 {
                     "name": "CDDL",
                     "description": "Conditional Demographic Disparity in Labels (CDDL)",
-                    "value": 0.029771892530848814,
+                    "value": pytest.approx(0.029771892530848814),
                 },
-                {"name": "CI", "description": "Class Imbalance (CI)", "value": -0.9288888888888889},
+                {"name": "CI", "description": "Class Imbalance (CI)", "value": pytest.approx(-0.9288888888888889)},
                 {
                     "name": "DPL",
                     "description": "Difference in Positive Proportions in Labels (DPL)",
-                    "value": 0.17453917050691248,
+                    "value": pytest.approx(0.17453917050691248),
                 },
-                {"name": "JS", "description": "Jensen-Shannon Divergence (JS)", "value": 0.023326469309177138},
-                {"name": "KL", "description": "Kullback-Liebler Divergence (KL)", "value": 0.08543332780657628},
-                {"name": "KS", "description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.17453917050691248},
-                {"name": "LP", "description": "L-p Norm (LP)", "value": 0.2468356620962257},
-                {"name": "TVD", "description": "Total Variation Distance (TVD)", "value": 0.17453917050691245},
+                {
+                    "name": "JS",
+                    "description": "Jensen-Shannon Divergence (JS)",
+                    "value": pytest.approx(0.023326469309177138),
+                },
+                {
+                    "name": "KL",
+                    "description": "Kullback-Liebler Divergence (KL)",
+                    "value": pytest.approx(0.08543332780657628),
+                },
+                {
+                    "name": "KS",
+                    "description": "Kolmogorov-Smirnov Distance (KS)",
+                    "value": pytest.approx(0.17453917050691248),
+                },
+                {"name": "LP", "description": "L-p Norm (LP)", "value": pytest.approx(0.2468356620962257)},
+                {
+                    "name": "TVD",
+                    "description": "Total Variation Distance (TVD)",
+                    "value": pytest.approx(0.17453917050691245),
+                },
             ],
         }
     ]
@@ -112,33 +130,41 @@ def test_bias_metrics():
         {
             "value_or_threshold": "1",
             "metrics": [
-                {"name": "AD", "description": "Accuracy Difference (AD)", "value": 0.03312211981566815},
+                {"name": "AD", "description": "Accuracy Difference (AD)", "value": pytest.approx(0.03312211981566815)},
                 {
                     "name": "CDDPL",
                     "description": "Conditional Demographic Disparity in Predicted Labels (CDDPL)",
-                    "value": 0.032647137172999274,
+                    "value": pytest.approx(0.032647137172999274),
                 },
-                {"name": "DAR", "description": "Difference in Acceptance Rates (DAR)", "value": 0.017096617181796114},
+                {
+                    "name": "DAR",
+                    "description": "Difference in Acceptance Rates (DAR)",
+                    "value": pytest.approx(0.017096617181796114),
+                },
                 {
                     "name": "DCA",
                     "description": "Difference in Conditional Acceptance (DCA)",
-                    "value": -0.035775127768313375,
+                    "value": pytest.approx(-0.035775127768313375),
                 },
                 {
                     "name": "DCR",
                     "description": "Difference in Conditional Rejection (DCR)",
-                    "value": -0.07473309608540923,
+                    "value": pytest.approx(-0.07473309608540923),
                 },
-                {"name": "DI", "description": "Disparate Impact (DI)", "value": 0.7728768926925609},
+                {"name": "DI", "description": "Disparate Impact (DI)", "value": pytest.approx(0.7728768926925609)},
                 {
                     "name": "DPPL",
                     "description": "Difference in Positive Proportions in Predicted Labels (DPPL)",
-                    "value": 0.19873271889400923,
+                    "value": pytest.approx(0.19873271889400923),
                 },
-                {"name": "DRR", "description": "Difference in Rejection Rates (DRR)", "value": 0.06494661921708189},
-                {"name": "FT", "description": "Flip Test (FT)", "value": -0.32373271889400923},
-                {"name": "RD", "description": "Recall Difference (RD)", "value": 0.049812030075187974},
-                {"name": "TE", "description": "Treatment Equality (TE)", "value": 0.6774193548387097},
+                {
+                    "name": "DRR",
+                    "description": "Difference in Rejection Rates (DRR)",
+                    "value": pytest.approx(0.06494661921708189),
+                },
+                {"name": "FT", "description": "Flip Test (FT)", "value": pytest.approx(-0.32373271889400923)},
+                {"name": "RD", "description": "Recall Difference (RD)", "value": pytest.approx(0.049812030075187974)},
+                {"name": "TE", "description": "Treatment Equality (TE)", "value": pytest.approx(0.6774193548387097)},
             ],
         }
     ]
