@@ -45,11 +45,8 @@ It's recommended that you setup a virtualenv.
 virtualenv -p(which python3) venv
 source venv/bin/activate.fish
 pip install -e .[test]
-pytest --pspec
-pre-commit install && pre-commit run --all-files
+cd src/
+../devtool all
 ```
 
-Always run `pre-commit run --all-files` before commit or sending a pull request.
-
-
-For running unit tests, do `./test.sh` or `pytest --pspec`. If you are using PyCharm, and cannot see the green run button next to the tests, open `Preferences` -> `Tools` -> `Python Integrated tools`, and set default test runner to `pytest`.
+For running unit tests, do `pytest --pspec`. If you are using PyCharm, and cannot see the green run button next to the tests, open `Preferences` -> `Tools` -> `Python Integrated tools`, and set default test runner to `pytest`.

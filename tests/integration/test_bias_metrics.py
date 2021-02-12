@@ -99,7 +99,7 @@ def test_bias_metrics():
                     "description": "Difference in Positive Proportions in Labels (DPL)",
                     "value": 0.17453917050691248,
                 },
-                {"name": "JS", "description": "Jensen-Shannon Divergence (JS)", "value": 0.04021236938805562},
+                {"name": "JS", "description": "Jensen-Shannon Divergence (JS)", "value": 0.023326469309177138},
                 {"name": "KL", "description": "Kullback-Liebler Divergence (KL)", "value": 0.08543332780657628},
                 {"name": "KS", "description": "Kolmogorov-Smirnov Distance (KS)", "value": 0.17453917050691248},
                 {"name": "LP", "description": "L-p Norm (LP)", "value": 0.2468356620962257},

@@ -8,6 +8,7 @@ from smclarify.bias.metrics.constants import INFINITY
 from pytest import approx
 import pandas as pd
 from pandas import Series
+import math
 import numpy as np
 import pytest
 
@@ -273,7 +274,7 @@ def test_KS():
 
 def test_JS():
     res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, False, False]))
-    assert res == approx(0.3019448800171307)
+    assert res == approx(0.06641431438228168)
 
     res = JS(pd.Series([True, True, True, False, False, False]), pd.Series([True, False, False, False, True, False]))
     assert res == 0.0
@@ -291,7 +292,18 @@ def test_JS():
     res = JS(positive_label_index, sensitive_facet_index)
     assert res == approx(0.06465997)
 
-    return
+    # Calculate JS manually.
+    res = JS(pd.Series([True, True, True, True, False, False]), pd.Series([True, False, False, False, True, False]))
+    Pa = np.array([0.5, 0.5])
+    Pd = np.array([0.25, 0.75])
+    P = np.array([0.375, 0.625])
+    expected_result = 0.5 * (
+        (Pa[0] * math.log(Pa[0] / P[0]))
+        + (Pa[1] * math.log(Pa[1] / P[1]))
+        + (Pd[0] * math.log(Pd[0] / P[0]))
+        + (Pd[1] * math.log(Pd[1] / P[1]))
+    )
+    assert res == approx(expected_result)
 
 
 def test_LP():

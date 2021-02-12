@@ -124,7 +124,7 @@ def test_report_category_data():
                 {
                     "description": "Jensen-Shannon Divergence (JS)",
                     "name": "JS",
-                    "value": pytest.approx(0.2789960722619452),
+                    "value": pytest.approx(0.08720802396075798),
                 },
                 {
                     "description": "Kullback-Liebler Divergence (KL)",
@@ -161,7 +161,7 @@ def test_report_category_data():
                 {
                     "description": "Jensen-Shannon Divergence (JS)",
                     "name": "JS",
-                    "value": pytest.approx(0.2789960722619452),
+                    "value": pytest.approx(0.08720802396075798),
                 },
                 {
                     "description": "Kullback-Liebler Divergence (KL)",
@@ -302,7 +302,7 @@ def test_report_continuous_data():
                 {
                     "description": "Jensen-Shannon Divergence (JS)",
                     "name": "JS",
-                    "value": pytest.approx(0.012610670256663018),
+                    "value": pytest.approx(0.01252420207928287),
                 },
                 {
                     "description": "Kullback-Liebler Divergence (KL)",
