@@ -36,7 +36,7 @@ def DPPL(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Returns Difference in Positive Proportions, based on predictions rather than labels
+    :return: Returns Difference in Positive Proportions, based on predictions rather than labels
     """
     return common.DPL(feature, sensitive_facet_index, positive_predicted_label_index)
 
@@ -59,7 +59,7 @@ def DI(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Returns disparate impact, the ratio between positive proportions, based on predicted labels
+    :return: Returns disparate impact, the ratio between positive proportions, based on predicted labels
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
@@ -91,7 +91,7 @@ def DCA(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Difference in Conditional Acceptance between advantaged and disadvantaged classes
+    :return: Difference in Conditional Acceptance between advantaged and disadvantaged classes
     """
     dca, _ = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return dca
@@ -111,7 +111,7 @@ def DCR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Difference in Conditional Rejection between advantaged and disadvantaged classes
+    :return: Difference in Conditional Rejection between advantaged and disadvantaged classes
     """
     _, dcr = common.DCO(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return dcr
@@ -131,7 +131,7 @@ def RD(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Recall Difference between advantaged and disadvantaged classes
+    :return: Recall Difference between advantaged and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
@@ -173,7 +173,7 @@ def DAR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Difference in Acceptance Rates
+    :return: Difference in Acceptance Rates
     """
 
     dar, _ = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
@@ -194,7 +194,7 @@ def DRR(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Difference in Rejection Rates
+    :return: Difference in Rejection Rates
     """
     _, drr = common.DLR(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return drr
@@ -214,7 +214,7 @@ def AD(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return Accuracy Difference between advantaged and disadvantaged classes
+    :return: Accuracy Difference between advantaged and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
     require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
@@ -272,7 +272,7 @@ def CDDPL(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param group_variable: categorical column indicating subgroups each point belongs to
-    :return the weighted average of demographic disparity on all subgroups
+    :return: the weighted average of demographic disparity on all subgroups
     """
     return common.CDD(feature, sensitive_facet_index, positive_predicted_label_index, group_variable)
 
@@ -291,7 +291,7 @@ def TE(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return returns the difference in ratios between false negatives and false positives for the advantaged
+    :return: returns the difference in ratios between false negatives and false positives for the advantaged
         and disadvantaged classes
     """
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
@@ -344,7 +344,7 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
     :param df: the dataset, excluding facet and label columns
     :param sensitive_facet_index: boolean facet column indicating sensitive group
     :param positive_predicted_label_index: boolean column indicating predicted labels
-    :return FT metric
+    :return: FT metric
     """
     # FlipTest - binary case
     # a = adv facet, d = disadv facet
