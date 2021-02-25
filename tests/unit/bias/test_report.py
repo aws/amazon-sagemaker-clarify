@@ -7,6 +7,7 @@ import pytest
 from smclarify.bias.report import (
     ProblemType,
     problem_type,
+    bias_basic_stats,
     bias_report,
     FacetColumn,
     LabelColumn,
@@ -770,3 +771,90 @@ def test_predicted_label_values():
 def test_problem_type():
     series = pd.Series([1, 2, 1, 2])
     assert problem_type(series) == ProblemType.BINARY
+
+
+def test_bias_basic_stats():
+    df_cat = pd.DataFrame(
+        [["a", 1, 1, 1, "1"], ["b", 1, 1, 0, "0"], ["b", 0, 1, 0, "0"], ["b", 0, 0, 1, "1"]],
+        columns=["x", "y", "z", "yhat", "yhat_cat"],
+    )
+
+    # Proportion
+    results = bias_basic_stats(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], [0]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cat["yhat"]),
+    )
+    expected_results = [
+        {
+            "value_or_threshold": "a",
+            "metrics": [
+                {
+                    "name": "proportion",
+                    "description": "Proportion of examples in sensitive facet.",
+                    "value": pytest.approx(0.25),
+                }
+            ],
+        },
+        {
+            "value_or_threshold": "b",
+            "metrics": [
+                {
+                    "name": "proportion",
+                    "description": "Proportion of examples in sensitive facet.",
+                    "value": pytest.approx(0.75),
+                }
+            ],
+        },
+    ]
+    assert expected_results == results
+
+    # Confusion matrix
+    results = bias_basic_stats(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], [0]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cat["yhat"]),
+    )
+
+    expected_results = [
+        {
+            "value_or_threshold": "a",
+            "metrics": [
+                {
+                    "name": "proportion",
+                    "description": "Proportion of examples in sensitive facet.",
+                    "value": pytest.approx(0.25),
+                },
+                {
+                    "name": "confusion_matrix",
+                    "description": "Fractions of TP, FP, FN, TN.",
+                    "value": [pytest.approx(1.0), pytest.approx(0.0), pytest.approx(0.0), pytest.approx(0.0)],
+                },
+            ],
+        },
+        {
+            "value_or_threshold": "b",
+            "metrics": [
+                {
+                    "name": "proportion",
+                    "description": "Proportion of examples in sensitive facet.",
+                    "value": pytest.approx(0.75),
+                },
+                {
+                    "name": "confusion_matrix",
+                    "description": "Fractions of TP, FP, FN, TN.",
+                    "value": [
+                        pytest.approx(0.0),
+                        pytest.approx(1 / 3.0),
+                        pytest.approx(1 / 3.0),
+                        pytest.approx(1 / 3.0),
+                    ],
+                },
+            ],
+        },
+    ]
+    assert expected_results == results
