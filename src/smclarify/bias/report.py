@@ -360,6 +360,77 @@ def bias_report(
     :param group_variable: data series for the group variable
     :return: list of dictionaries with metrics for different label values
     """
+    metrics_to_run = []
+    if predicted_label_column and stage_type == StageType.POST_TRAINING:
+        post_training_metrics = (
+            smclarify.bias.metrics.POSTTRAINING_METRICS
+            if metrics == ["all"]
+            else fetch_metrics_to_run(smclarify.bias.metrics.POSTTRAINING_METRICS, metrics)
+        )
+        metrics_to_run.extend(post_training_metrics)
+        predicted_label_series = predicted_label_column.data
+        if predicted_label_column.name in df.columns:
+            df = df.drop(predicted_label_column.name, 1)
+    else:
+        pre_training_metrics = (
+            smclarify.bias.metrics.PRETRAINING_METRICS
+            if metrics == ["all"]
+            else fetch_metrics_to_run(smclarify.bias.metrics.PRETRAINING_METRICS, metrics)
+        )
+        metrics_to_run.extend(pre_training_metrics)
+    metrics_to_run.sort(key=_metric_name_comparator)
+    return _report(df, facet_column, label_column, stage_type, metrics_to_run, predicted_label_column, group_variable)
+
+
+def bias_basic_stats(
+    df: pd.DataFrame,
+    facet_column: FacetColumn,
+    label_column: LabelColumn,
+    stage_type: StageType,
+    predicted_label_column: LabelColumn = None,
+) -> List[Dict]:
+    """Computes size and confusion matrix.
+
+    :param df: Dataset as a pandas.DataFrame
+    :param facet_column: description of column to consider for Bias analysis
+    :param label_column: description of column which has the labels.
+    :param stage_type: pre_training or post_training for which bias metrics is computed
+    :param predicted_label_column: description of column with predicted labels
+    :param metrics: list of metrics names to provide bias metrics
+    :param group_variable: data series for the group variable
+
+    :return: list of dictionaries with stats (size and confusion matrix) for each label value."""
+    methods = [smclarify.bias.metrics.basic_stats.proportion]
+    if predicted_label_column and stage_type == StageType.POST_TRAINING:
+        methods.append(smclarify.bias.metrics.basic_stats.confusion_matrix)
+    return _report(df, facet_column, label_column, stage_type, methods, predicted_label_column)
+
+
+def _report(
+    df: pd.DataFrame,
+    facet_column: FacetColumn,
+    label_column: LabelColumn,
+    stage_type: StageType,
+    methods: List[Callable],
+    predicted_label_column: LabelColumn = None,
+    group_variable: Optional[pd.Series] = None,
+) -> List[Dict]:
+    """
+    Run full bias report on a dataset.
+
+    The report computes the bias metric for multi-facet, and multi-class inputs by
+    computing the sensitive_facet_index, positive_label_index, and positive_predicted_label_index by collapsing the
+    multiple categories into two, as indicated by the facet_column, label_column, and predicted_label_column respectively.
+
+    :param df: Dataset as a pandas.DataFrame
+    :param facet_column: description of column to consider for Bias analysis
+    :param label_column: description of column which has the labels.
+    :param stage_type: pre_training or post_training for which bias metrics is computed
+    :param methods: list of methods to provide metrics.
+    :param predicted_label_column: description of column with predicted labels
+    :param group_variable: data series for the group variable
+    :return: list of dictionaries with metrics for different label values
+    """
     if facet_column:
         if facet_column.name not in df.columns:
             raise ValueError("Facet column {} is not present in the dataset".format(facet_column.name))
@@ -380,34 +451,19 @@ def bias_report(
     positive_label_index, label_values = _positive_label_index(
         data=label_series, positive_values=label_column.positive_label_values
     )
-    if label_column.name in df.columns:
-        df = df.drop(label_column.name, 1)
 
-    metrics_to_run = []
+    positive_predicted_label_index = [None]
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
-        post_training_metrics = (
-            smclarify.bias.metrics.POSTTRAINING_METRICS
-            if metrics == ["all"]
-            else fetch_metrics_to_run(smclarify.bias.metrics.POSTTRAINING_METRICS, metrics)
-        )
-        metrics_to_run.extend(post_training_metrics)
-        predicted_label_series = predicted_label_column.data
         positive_predicted_label_index = _positive_predicted_index(
-            predicted_label_data=predicted_label_series,
+            predicted_label_data=predicted_label_column.data,
             label_data=label_series,
             positive_label_values=label_column.positive_label_values,
         )
-        if predicted_label_column.name in df.columns:
-            df = df.drop(predicted_label_column.name, 1)
-    else:
-        positive_predicted_label_index = [None]
-        pre_training_metrics = (
-            smclarify.bias.metrics.PRETRAINING_METRICS
-            if metrics == ["all"]
-            else fetch_metrics_to_run(smclarify.bias.metrics.PRETRAINING_METRICS, metrics)
-        )
-        metrics_to_run.extend(pre_training_metrics)
-    metrics_to_run.sort(key=_metric_name_comparator)
+
+    if label_column.name in df.columns:
+        df = df.drop(label_column.name, 1)
+    if predicted_label_column and predicted_label_column.name in df.columns:
+        df = df.drop(predicted_label_column.name, 1)
 
     facet_dtype = common.series_datatype(data_series, facet_column.sensitive_values)
     data_series_cat: pd.Series  # Category series
@@ -426,7 +482,7 @@ def bias_report(
         for facet_values in facet_values_list:
             # list of metrics with values
             metrics_list = []
-            for metric in metrics_to_run:
+            for metric in methods:
                 result = _categorical_metric_call_wrapper(
                     metric,
                     df,
@@ -448,7 +504,7 @@ def bias_report(
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
         # list of metrics with values
         metrics_list = []
-        for metric in metrics_to_run:
+        for metric in methods:
             result = _continuous_metric_call_wrapper(
                 metric,
                 df,
