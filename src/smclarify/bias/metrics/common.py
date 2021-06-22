@@ -122,10 +122,13 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
     # if datatype is boolean or categorical we return data as categorical
     data_type = DataType.CATEGORICAL
     data_uniqueness_fraction = divide(data.nunique(), data.count())
-    logger.info(f"data uniqueness fraction: {data_uniqueness_fraction}")
     # Assumption: user will give single value for threshold currently
     # Todo: fix me if multiple thresholds for facet or label are supported
     if data.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
+        logger.info(
+            f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
+            f"{data_type.name} column"
+        )
         return data_type
     if data.dtype.name in ["str", "string", "object"]:
         # cast the dtype to int, if exception is raised data is categorical
@@ -139,6 +142,10 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
         # Todo: Needs to be enhanced, This rule doesn't always determine the datatype correctly
         if data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
             data_type = DataType.CONTINUOUS
+    logger.info(
+        f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
+        f"{data_type.name} column"
+    )
     return data_type
 
 
