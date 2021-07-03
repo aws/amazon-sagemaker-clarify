@@ -160,7 +160,8 @@ def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.Int
     # add  max value if not exists in threshold limits
     if abs(facet_max) not in thresholds:
         threshold_intervals.append(facet_max)
-    return pd.IntervalIndex.from_breaks(threshold_intervals)
+    sorted_threshold_intervals = sorted(threshold_intervals)
+    return pd.IntervalIndex.from_breaks(sorted_threshold_intervals)
 
 
 def _positive_predicted_index(
