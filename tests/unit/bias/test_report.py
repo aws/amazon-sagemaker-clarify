@@ -13,6 +13,7 @@ from smclarify.bias.report import (
     LabelColumn,
     fetch_metrics_to_run,
     StageType,
+    label_value_or_threshold,
 )
 from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from smclarify.bias.metrics import common
@@ -858,3 +859,11 @@ def test_bias_basic_stats():
         },
     ]
     assert expected_results == results
+
+
+def test_thresholds_small_data():
+    """Test that for trivial dataset where labels don't have as many element as label_values thresholds are calculated correctly"""
+    data = pd.Series([0])
+    positive_values = [1]
+    res = label_value_or_threshold(data, positive_values)
+    assert res == "(0, 1]"
