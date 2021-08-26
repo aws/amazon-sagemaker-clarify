@@ -145,49 +145,47 @@ def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: L
     return metrics_to_run
 
 
-def _interval_index(facet: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
+def _interval_index(data: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
     """
     Creates a Interval Index from list of threshold values. See pd.IntervalIndex.from_breaks
     Ex. [0,1,2] -> [(0, 1], (1,2]]
-    :param facet: input data series
+    :param data: input data series
     :param thresholds: list of int or float values defining the threshold splits
     :return: pd.IntervalIndex
     """
     if not thresholds:
         raise ValueError("Threshold values must be provided for continuous features")
-    facet_max, facet_min = facet.max(), facet.min()
+    max_value, min_value = data.max(), data.min()
     threshold_intervals = thresholds.copy()
     # add  max value if not exists in threshold limits
-    if abs(facet_max) not in thresholds:
-        threshold_intervals.append(facet_max)
+    if abs(max_value) not in thresholds:
+        threshold_intervals.append(max_value)
     sorted_threshold_intervals = sorted(threshold_intervals)
     return pd.IntervalIndex.from_breaks(sorted_threshold_intervals)
 
 
 def _positive_predicted_index(
-    predicted_label_data: pd.Series, label_data: pd.Series, positive_label_values: List[Any]
+    predicted_label_data: pd.Series,
+    predicted_label_datatype: common.DataType,
+    label_data: pd.Series,
+    label_datatype: common.DataType,
+    positive_label_values: List[Any],
 ) -> pd.Series:
     """
     creates a list of bool series for positive predicted label index based on the input data type,
     list of positive label values or intervals
 
     :param predicted_label_data: input data for predicted label column
+    :param predicted_label_datatype: data type of the predicted label data
+    :param label_data: input data for label column
     :param label_datatype:  input data for the label column
     :param positive_label_values: list of positive label values
     :return: list of positive predicted label index series
     """
-    predicted_label_datatype = common.series_datatype(predicted_label_data, positive_label_values)
-    label_datatype = common.series_datatype(label_data, positive_label_values)
     if predicted_label_datatype != label_datatype:
         raise ValueError("Predicted Label Column series datatype is not the same as Label Column series")
-    try:
-        predicted_label_data = predicted_label_data.astype(label_data.dtype)
-    except ValueError as e:
-        raise ValueError(
-            "Labels and predicted labels cannot have different types (%s, %s)."
-            % (label_data.dtype, predicted_label_data.dtype)
-        )
     if predicted_label_datatype == common.DataType.CONTINUOUS:
+        predicted_label_data = predicted_label_data.astype(label_data.dtype)
         data_interval_indices = _interval_index(label_data.append(predicted_label_data), positive_label_values)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
     elif predicted_label_datatype == common.DataType.CATEGORICAL and positive_label_values:
@@ -203,16 +201,18 @@ def _positive_predicted_index(
     return positive_predicted_index
 
 
-def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[pd.Series, str]:
+def _positive_label_index(
+    data: pd.Series, data_type: common.DataType, positive_values: List[Any]
+) -> Tuple[pd.Series, str]:
     """
     creates a list of bool series for positive label index based on the input data type, list of positive
     label values or intervals
 
     :param data: input data for label column
+    :param data_type: DataType of the label series data
     :param positive_values: list of positive label values
     :return: list of positive label index series, positive_label_values or intervals
     """
-    data_type = common.series_datatype(data, positive_values)
     if data_type == common.DataType.CONTINUOUS:
         data_interval_indices = _interval_index(data, positive_values)
         positive_index = _continuous_data_idx(data, data_interval_indices)
@@ -227,7 +227,7 @@ def _positive_label_index(data: pd.Series, positive_values: List[Any]) -> Tuple[
     return positive_index, label_values_or_intervals
 
 
-def label_value_or_threshold(label_series: pd.Series, positive_values: List[str]) -> str:
+def label_value_or_threshold(label_series: pd.Series, positive_values: List[Any]) -> str:
     """
     Fetch label values or threshold intervals for the input label data and label values
     :param label_series: label column data
@@ -236,7 +236,11 @@ def label_value_or_threshold(label_series: pd.Series, positive_values: List[str]
     """
     if not positive_values:
         raise ValueError("Positive label values or thresholds are empty for Label column")
-    _, value_or_threshold = _positive_label_index(data=label_series, positive_values=positive_values)
+
+    label_data_type, label_series = common.ensure_series_data_type(label_series, positive_values)
+    _, value_or_threshold = _positive_label_index(
+        data=label_series, data_type=label_data_type, positive_values=positive_values
+    )
     return value_or_threshold
 
 
@@ -446,39 +450,82 @@ def _report(
         raise ValueError("stage_type should be a Enum value of StageType")
     if not predicted_label_column and stage_type == StageType.POST_TRAINING:
         raise ValueError("predicted_label_column has to be provided for Post training metrics")
-    data_series: pd.Series = df[facet_column.name]
+
+    sensitive_facet_values = facet_column.sensitive_values
+    facet_data_type, facet_data_series = common.ensure_series_data_type(df[facet_column.name], sensitive_facet_values)
     df = df.drop(facet_column.name, 1)
-    label_series: pd.Series = label_column.data
-    positive_label_index, label_values = _positive_label_index(
-        data=label_series, positive_values=label_column.positive_label_values
+
+    positive_label_values = label_column.positive_label_values
+    label_data_type, label_data_series = common.ensure_series_data_type(label_column.data, positive_label_values)
+    positive_label_index, _ = _positive_label_index(
+        data=label_data_series, data_type=label_data_type, positive_values=positive_label_values
     )
-
-    positive_predicted_label_index = [None]
-    if predicted_label_column and stage_type == StageType.POST_TRAINING:
-        positive_predicted_label_index = _positive_predicted_index(
-            predicted_label_data=predicted_label_column.data,
-            label_data=label_series,
-            positive_label_values=label_column.positive_label_values,
-        )
-
     if label_column.name in df.columns:
         df = df.drop(label_column.name, 1)
-    if predicted_label_column and predicted_label_column.name in df.columns:
-        df = df.drop(predicted_label_column.name, 1)
 
-    facet_dtype = common.series_datatype(data_series, facet_column.sensitive_values)
-    data_series_cat: pd.Series  # Category series
+    positive_predicted_label_index = [None]
+    if predicted_label_column:
+        if stage_type == StageType.POST_TRAINING:
+            predicted_label_data_type, predicted_label_data_series = common.ensure_series_data_type(
+                predicted_label_column.data, positive_label_values
+            )
+            positive_predicted_label_index = _positive_predicted_index(
+                predicted_label_data=predicted_label_data_series,
+                predicted_label_datatype=predicted_label_data_type,
+                label_data=label_data_series,
+                label_datatype=label_data_type,
+                positive_label_values=positive_label_values,
+            )
+        if predicted_label_column.name in df.columns:
+            df = df.drop(predicted_label_column.name, 1)
+
+    # Above are validations and preprocessing, the real reporting logic is moved to a new method for clarity and
+    # to avoid using wrong data by chance (e.g., label_data_series should be used, instead of label_column.data).
+    return _do_report(
+        methods=methods,
+        df=df,
+        facet_data_type=facet_data_type,
+        facet_data_series=facet_data_series,
+        sensitive_facet_values=sensitive_facet_values,
+        positive_label_index=positive_label_index,
+        positive_predicted_label_index=positive_predicted_label_index,
+        group_variable=group_variable,
+    )
+
+
+def _do_report(
+    methods: List[Callable],
+    df: pd.DataFrame,
+    facet_data_type: common.DataType,
+    facet_data_series: pd.Series,
+    sensitive_facet_values: Optional[List[Any]],
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: Optional[pd.Series] = None,
+    group_variable: Optional[pd.Series] = None,
+) -> List[Dict]:
+    """
+    Run full bias report on a dataset for real.
+
+    :param methods: list of methods to provide metrics.
+    :param df: Dataset of features (no facet column, label column or predicted label column).
+    :param facet_data_series: facet data series
+    :param facet_data_type: data type of the facet data series.
+    :param sensitive_facet_values: list of values indicating categories or threshold
+    :param positive_label_index: positive label index series
+    :param positive_predicted_label_index: positive predicted label index series
+    :param group_variable: data series for the group variable
+    :return: list of dictionaries with metrics for different label values
+    """
     # result values can be str for label_values or dict for metrics
     result: MetricResult
     facet_metric: FacetReport
     metrics_result = []
-    if facet_dtype == common.DataType.CATEGORICAL:
-        data_series_cat = data_series.astype("category")
+    if facet_data_type == common.DataType.CATEGORICAL:
         # pass the values for metric one vs all case
         facet_values_list = (
-            [[val] for val in list(data_series.unique())]
-            if not facet_column.sensitive_values
-            else [facet_column.sensitive_values]
+            [[val] for val in list(facet_data_series.unique())]
+            if not sensitive_facet_values
+            else [sensitive_facet_values]
         )
         for facet_values in facet_values_list:
             # list of metrics with values
@@ -487,7 +534,7 @@ def _report(
                 result = _categorical_metric_call_wrapper(
                     metric,
                     df,
-                    data_series_cat,
+                    facet_data_series,
                     facet_values,
                     positive_label_index,
                     positive_predicted_label_index,
@@ -499,9 +546,8 @@ def _report(
         logger.debug("metric_result: %s", str(metrics_result))
         return metrics_result
 
-    elif facet_dtype == common.DataType.CONTINUOUS:
-        facet_interval_indices = _interval_index(data_series, facet_column.sensitive_values)
-        facet_continuous_column = FacetContinuousColumn(facet_column.name, facet_interval_indices)
+    elif facet_data_type == common.DataType.CONTINUOUS:
+        facet_interval_indices = _interval_index(facet_data_series, sensitive_facet_values)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
         # list of metrics with values
         metrics_list = []
@@ -509,8 +555,8 @@ def _report(
             result = _continuous_metric_call_wrapper(
                 metric,
                 df,
-                data_series,
-                facet_continuous_column.interval_indices,
+                facet_data_series,
+                facet_interval_indices,
                 positive_label_index,
                 positive_predicted_label_index,
                 group_variable,
