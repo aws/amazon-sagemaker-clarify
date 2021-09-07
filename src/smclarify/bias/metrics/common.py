@@ -4,7 +4,7 @@
 
 import logging
 from enum import Enum
-from typing import List, Optional, Tuple, Callable
+from typing import List, Optional, Tuple, Callable, Any
 import pandas as pd
 import numpy as np
 from smclarify.bias.metrics.constants import INFINITY
@@ -111,9 +111,11 @@ def CDD(
     return wtd_mean_CDD
 
 
-def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> DataType:
+def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> DataType:
     """
-    determine given data series is categorical or continuous using set of rules
+    Determine given data series is categorical or continuous using set of rules.
+    WARNING: The deduced data type can be different from real data type of the data series. Please
+    use the function `ensure_series_data_type` instead if you'd like ensure the series data type.
 
     :param data: data for facet/label/predicted_label columns
     :param values: list of facet or label values provided by user
@@ -147,6 +149,22 @@ def series_datatype(data: pd.Series, values: Optional[List[str]] = None) -> Data
         f"{data_type.name} column"
     )
     return data_type
+
+
+def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None) -> Tuple[DataType, pd.Series]:
+    """
+    Determine the type of the given data series using set of rules, and then do necessary type conversion
+    to ensure the series data type.
+    :param data: data for facet/label/predicted_label columns
+    :param values: list of facet or label values provided by user
+    :return: A tuple of DataType and the converted data series
+    """
+    data_type = series_datatype(data, values)
+    if data_type == DataType.CATEGORICAL:
+        return data_type, data.astype("category")
+    if data_type == DataType.CONTINUOUS:
+        return data_type, pd.to_numeric(data)
+    raise ValueError("Data series is invalid or can't be classified")
 
 
 # Todo: Fix the function to avoid redundant calls for DCA and DCR

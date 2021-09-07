@@ -43,7 +43,7 @@ lint() {
 test_with_coverage() {
     scripts/run_examples.py
     coverage run -m pytest --pspec tests/unit
-    coverage report -m --fail-under=72
+    coverage report -m --fail-under=88
 }
 
 docs() {
