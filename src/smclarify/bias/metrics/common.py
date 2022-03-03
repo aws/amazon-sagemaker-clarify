@@ -51,7 +51,7 @@ def metric_description(metric: Callable[..., float]) -> str:
 
 def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
-    require(positive_label_index.dtype == bool, "label_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
     na = len(feature[~sensitive_facet_index])
     nd = len(feature[sensitive_facet_index])
     na_pos = len(feature[~sensitive_facet_index & positive_label_index])

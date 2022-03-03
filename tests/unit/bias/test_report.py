@@ -15,6 +15,9 @@ from smclarify.bias.report import (
     fetch_metrics_to_run,
     StageType,
     label_value_or_threshold,
+    _positive_label_index,
+    _positive_predicted_index,
+    _interval_index,
 )
 from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from smclarify.bias.metrics import common
@@ -112,7 +115,7 @@ def test_report_category_data():
     pretraining_report = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df_cat["yhat"]),
         group_variable=df_cat["z"],
@@ -121,7 +124,7 @@ def test_report_category_data():
     pretraining_report_cat = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df_cat["yhat_cat"]),
         group_variable=df_cat["z"],
@@ -213,7 +216,7 @@ def test_report_category_data():
     posttraining_report = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cat["yhat"]),
         metrics=["AD", "DI", "DPPL", "RD"],
@@ -223,7 +226,7 @@ def test_report_category_data():
     posttraining_report_cat = bias_report(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cat["yhat_cat"]),
         metrics=["AD", "DI", "DPPL", "RD"],
@@ -302,7 +305,7 @@ def test_report_continuous_data():
     pretraining_report = bias_report(
         df_cont,
         FacetColumn("x", [2]),
-        LabelColumn("y", df_cont["y"], [0]),
+        LabelColumn("y", df_cont["y"], [0.5]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df_cont["yhat"]),
         group_variable=df_cont["z"],
@@ -345,7 +348,7 @@ def test_report_continuous_data():
                     "value": pytest.approx(0.1048951048951049),
                 },
             ],
-            "value_or_threshold": "(2, 4]",
+            "value_or_threshold": "[2, 4]",
         }
     ]
 
@@ -354,7 +357,7 @@ def test_report_continuous_data():
     posttraining_report = bias_report(
         df_cont,
         FacetColumn("x", [2]),
-        LabelColumn("y", df_cont["y"], [0]),
+        LabelColumn("y", df_cont["y"], [0.5]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cont["yhat"]),
         group_variable=df_cont["z"],
@@ -396,7 +399,7 @@ def test_report_continuous_data():
                 {"description": "Recall Difference (RD)", "name": "RD", "value": pytest.approx(-1.0)},
                 {"description": "Treatment Equality (TE)", "name": "TE", "value": pytest.approx(-0.25)},
             ],
-            "value_or_threshold": "(2, 4]",
+            "value_or_threshold": "[2, 4]",
         }
     ]
     assert posttraining_report == expected_result_1
@@ -503,7 +506,7 @@ def test_report_string_data_determined_as_continuous():
         ],
         columns=["Label", "Facet", "Feature", "PredictedLabel"],
     )
-    pretraining_report = bias_report(
+    posttraining_report = bias_report(
         df=df,
         facet_column=FacetColumn("Facet", [2]),
         label_column=LabelColumn("Label", df["Label"], [2]),
@@ -514,9 +517,9 @@ def test_report_string_data_determined_as_continuous():
     # Actually the validation below is not really needed. If there was problem then the report method
     # should have failed with error like "TypeError: bad operand type for abs(): 'str'" when it tried to
     # manipulate string as number.
-    assert pretraining_report == [
+    assert posttraining_report == [
         {
-            "value_or_threshold": "(2, 4]",  # <== range, so the facet is indeed determined as continuous
+            "value_or_threshold": "[2, 4]",  # <== range, so the facet is indeed determined as continuous
             "metrics": [
                 {
                     "name": "DPPL",
@@ -724,8 +727,8 @@ def test_partial_bias_report():
     # pre training bias metrics
     pretraining_report = bias_report(
         df,
-        FacetColumn("x", [2]),
-        LabelColumn("y", df["y"], [0]),
+        FacetColumn("x", [3]),
+        LabelColumn("y", df["y"], [0.5]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df["yhat"]),
         metrics=["CI", "CDDL", "DPL", "KL"],
@@ -752,7 +755,7 @@ def test_partial_bias_report():
                     "value": pytest.approx(-0.34657359027997264),
                 },
             ],
-            "value_or_threshold": "(2, 3]",
+            "value_or_threshold": "[3, 3]",
         }
     ]
     assert pretraining_report == expected_result_1
@@ -760,8 +763,8 @@ def test_partial_bias_report():
     # post training bias metrics
     posttraining_report = bias_report(
         df,
-        FacetColumn("x", [2]),
-        LabelColumn("y", df["y"], [0]),
+        FacetColumn("x", [3]),
+        LabelColumn("y", df["y"], [0.5]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df["yhat"]),
         metrics=["AD", "CDDPL", "DCA", "DI", "DPPL", "FT"],
@@ -790,7 +793,7 @@ def test_partial_bias_report():
                 },
                 {"description": "Flip Test (FT)", "name": "FT", "value": pytest.approx(-1.0)},
             ],
-            "value_or_threshold": "(2, 3]",
+            "value_or_threshold": "[3, 3]",
         }
     ]
     assert posttraining_report == expected_result_2
@@ -880,7 +883,7 @@ def test_bias_basic_stats():
     results = bias_basic_stats(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.PRE_TRAINING,
         LabelColumn("yhat", df_cat["yhat"]),
     )
@@ -912,7 +915,7 @@ def test_bias_basic_stats():
     results = bias_basic_stats(
         df_cat,
         FacetColumn("x"),
-        LabelColumn("y", df_cat["y"], [0]),
+        LabelColumn("y", df_cat["y"], [0.5]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df_cat["yhat"]),
     )
@@ -981,17 +984,17 @@ def label_value_or_threshold_test_cases():
 
     # continuous data series
     function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[2.0])
-    function_output = LabelValueOrThresholdFunctionOutput(result="(2.0, 3.0]")
+    function_output = LabelValueOrThresholdFunctionOutput(result="[2.0, 3.0]")
     test_cases.append([function_input, function_output])
 
     # continuous data series, positive value less than all data
     function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[0.0])
-    function_output = LabelValueOrThresholdFunctionOutput(result="(0.0, 3.0]")
+    function_output = LabelValueOrThresholdFunctionOutput(result="[0.0, 3.0]")
     test_cases.append([function_input, function_output])
 
     # continuous data series, positive value greater than all data
     function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[5.0])
-    function_output = LabelValueOrThresholdFunctionOutput(result="(3.0, 5.0]")
+    function_output = LabelValueOrThresholdFunctionOutput(result="[3.0, 5.0]")
     test_cases.append([function_input, function_output])
 
     # object data series, can NOT be converted to numeric
@@ -1001,7 +1004,7 @@ def label_value_or_threshold_test_cases():
 
     # object data series, can be converted to numeric, and uniqueness is high
     function_input = LabelValueOrThresholdFunctionInput(data=pd.Series(["1", "2", "3"]), values=[2])
-    function_output = LabelValueOrThresholdFunctionOutput(result="(2, 3]")
+    function_output = LabelValueOrThresholdFunctionOutput(result="[2, 3]")
     test_cases.append([function_input, function_output])
 
     # boolean data series
@@ -1013,7 +1016,7 @@ def label_value_or_threshold_test_cases():
     data = pd.Series([0])
     positive_values = [1]
     function_input = LabelValueOrThresholdFunctionInput(data=data, values=positive_values)
-    function_output = LabelValueOrThresholdFunctionOutput(result="(0, 1]")
+    function_output = LabelValueOrThresholdFunctionOutput(result="[0, 1]")
     test_cases.append([function_input, function_output])
 
     return test_cases
@@ -1023,3 +1026,33 @@ def label_value_or_threshold_test_cases():
 def test_label_value_or_threshold(function_input, function_output):
     result = label_value_or_threshold(*function_input)
     assert result == function_output.result
+
+
+def test_positive_predicted_index_continuous_multiple_thresholds():
+    predicted_label_data = pd.Series([0, 100, 200, 1000])
+    label_data = pd.Series([1, 150, 500])
+    with pytest.raises(ValueError, match="Only a single threshold is supported for continuous datatypes"):
+        _positive_predicted_index(
+            predicted_label_data, common.DataType.CONTINUOUS, label_data, common.DataType.CONTINUOUS, [100, 150]
+        )
+
+
+def test_positive_label_index_continuous_multiple_thresholds():
+    data = pd.Series([0, 100, 200, 1000])
+    with pytest.raises(ValueError, match="Only a single threshold is supported for continuous datatypes"):
+        _positive_label_index(data, common.DataType.CONTINUOUS, [100, 150])
+
+
+def test_interval_index_inclusive_lower_bound():
+    data = pd.Series([0, 100, 200, 1000])
+    thresholds = [100, 300]
+    res = _interval_index(data, thresholds)
+    assert (res == pd.IntervalIndex.from_tuples([(100, 300), (300, 1000)], closed="both").values).all()
+
+
+def test_interval_index_singular_threshold_interval_max_value():
+    data = pd.Series([0, 100, 200, 1000])
+    thresholds = [1000]
+    res = _interval_index(data, thresholds)
+    assert (res == pd.IntervalIndex.from_tuples([(1000, 1000)], closed="both").values).all()
+
