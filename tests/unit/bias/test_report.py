@@ -1055,4 +1055,3 @@ def test_interval_index_singular_threshold_interval_max_value():
     thresholds = [1000]
     res = _interval_index(data, thresholds)
     assert (res == pd.IntervalIndex.from_tuples([(1000, 1000)], closed="both").values).all()
-
