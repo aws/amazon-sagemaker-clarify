@@ -7,6 +7,8 @@ from enum import Enum
 from typing import List, Optional, Tuple, Callable, Any
 import pandas as pd
 import numpy as np
+from numpy import ndarray
+
 from smclarify.bias.metrics.constants import INFINITY
 
 from smclarify.bias.metrics.constants import UNIQUENESS_THRESHOLD
@@ -94,8 +96,8 @@ def CDD(
 
     # Conditional demographic disparity (CDD)
     # FIXME: appending to numpy arrays is inefficient
-    CDD = np.array([])
-    counts = np.array([])
+    CDD: ndarray = np.array([])
+    counts: ndarray = np.array([])
     for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
         numA = len(feature[label_index & sensitive_facet_index & (group_variable == subgroup_variable)])
