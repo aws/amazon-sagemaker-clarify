@@ -22,3 +22,4 @@ venv/
 *.swp
 .docker/
 reports
+**.unison.tmp

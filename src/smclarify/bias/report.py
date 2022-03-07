@@ -175,6 +175,8 @@ def _positive_predicted_index(
     creates a list of bool series for positive predicted label index based on the input data type,
     list of positive label values or intervals
 
+    Note: For CONTINUOUS data, we currently only support having a single lower bound threshold.  See BiasConfig doc
+
     :param predicted_label_data: input data for predicted label column
     :param predicted_label_datatype: data type of the predicted label data
     :param label_data: input data for label column
@@ -185,6 +187,8 @@ def _positive_predicted_index(
     if predicted_label_datatype != label_datatype:
         raise ValueError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
+        if len(positive_label_values) != 1:
+            raise ValueError("Only a single threshold is supported for continuous datatypes")
         predicted_label_data = predicted_label_data.astype(label_data.dtype)
         data_interval_indices = _interval_index(label_data.append(predicted_label_data), positive_label_values)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
@@ -208,12 +212,16 @@ def _positive_label_index(
     creates a list of bool series for positive label index based on the input data type, list of positive
     label values or intervals
 
+    Note: For CONTINUOUS data, we currently only support having a single lower bound threshold.  See BiasConfig doc
+
     :param data: input data for label column
     :param data_type: DataType of the label series data
     :param positive_values: list of positive label values
     :return: list of positive label index series, positive_label_values or intervals
     """
     if data_type == common.DataType.CONTINUOUS:
+        if len(positive_values) != 1:
+            raise ValueError("Only a single threshold is supported for continuous datatypes")
         data_interval_indices = _interval_index(data, positive_values)
         positive_index = _continuous_data_idx(data, data_interval_indices)
         label_values_or_intervals = ",".join(map(str, data_interval_indices))
@@ -547,6 +555,8 @@ def _do_report(
         return metrics_result
 
     elif facet_data_type == common.DataType.CONTINUOUS:
+        if sensitive_facet_values and len(sensitive_facet_values) > 1:
+            raise ValueError("Sensitive Facet Threshold must be a single value for continuous data")
         facet_interval_indices = _interval_index(facet_data_series, sensitive_facet_values)
         logger.info(f"Threshold Interval indices: {facet_interval_indices}")
         # list of metrics with values

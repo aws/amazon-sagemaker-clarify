@@ -15,6 +15,9 @@ from smclarify.bias.report import (
     fetch_metrics_to_run,
     StageType,
     label_value_or_threshold,
+    _positive_predicted_index,
+    _positive_label_index,
+    _interval_index,
 )
 from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from smclarify.bias.metrics import common
@@ -1023,3 +1026,18 @@ def label_value_or_threshold_test_cases():
 def test_label_value_or_threshold(function_input, function_output):
     result = label_value_or_threshold(*function_input)
     assert result == function_output.result
+
+
+def test_positive_predicted_index_continuous_multiple_thresholds():
+    predicted_label_data = pd.Series([0, 100, 200, 1000])
+    label_data = pd.Series([1, 150, 500])
+    with pytest.raises(ValueError, match="Only a single threshold is supported for continuous datatypes"):
+        _positive_predicted_index(
+            predicted_label_data, common.DataType.CONTINUOUS, label_data, common.DataType.CONTINUOUS, [100, 150]
+        )
+
+
+def test_positive_label_index_continuous_multiple_thresholds():
+    data = pd.Series([0, 100, 200, 1000])
+    with pytest.raises(ValueError, match="Only a single threshold is supported for continuous datatypes"):
+        _positive_label_index(data, common.DataType.CONTINUOUS, [100, 150])

@@ -140,7 +140,8 @@ def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> f
     if len(Pa) == 0 or len(Pd) == 0:
         raise ValueError("No instance of common facet found, dataset may be too small")
     res = np.linalg.norm(Pa - Pd, norm_order)
-    return res
+    # res should only be a single float value, otherwise this metric is incorrect
+    return float(res)
 
 
 @registry.pretraining
