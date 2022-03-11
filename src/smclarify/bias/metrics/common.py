@@ -7,9 +7,12 @@ from enum import Enum
 from typing import List, Optional, Tuple, Callable, Any
 import pandas as pd
 import numpy as np
+from numpy import ndarray
+
 from smclarify.bias.metrics.constants import INFINITY
 
 from smclarify.bias.metrics.constants import UNIQUENESS_THRESHOLD
+from smclarify.bias.metrics.interval import Interval
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ def metric_description(metric: Callable[..., float]) -> str:
 
 def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:
     require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
-    require(positive_label_index.dtype == bool, "label_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
     na = len(feature[~sensitive_facet_index])
     nd = len(feature[sensitive_facet_index])
     na_pos = len(feature[~sensitive_facet_index & positive_label_index])
@@ -94,8 +97,8 @@ def CDD(
 
     # Conditional demographic disparity (CDD)
     # FIXME: appending to numpy arrays is inefficient
-    CDD = np.array([])
-    counts = np.array([])
+    CDD: ndarray = np.array([])
+    counts: ndarray = np.array([])
     for subgroup_variable in unique_groups:
         counts = np.append(counts, len(group_variable[group_variable == subgroup_variable]))
         numA = len(feature[label_index & sensitive_facet_index & (group_variable == subgroup_variable)])
@@ -109,6 +112,10 @@ def CDD(
     wtd_mean_CDD = divide(np.sum(counts * CDD), np.sum(counts))
 
     return wtd_mean_CDD
+
+
+def check_is_interval(interval: str) -> bool:
+    return isinstance(interval, str) and Interval.interval_regex_pattern.match(interval) is not None
 
 
 def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> DataType:
@@ -126,13 +133,16 @@ def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> Data
     data_uniqueness_fraction = divide(data.nunique(), data.count())
     # Assumption: user will give single value for threshold currently
     # Todo: fix me if multiple thresholds for facet or label are supported
-    if data.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
-        logger.info(
-            f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
-            f"{data_type.name} column"
-        )
+    if isinstance(values, list) and values and check_is_interval(values[0]):
+        # If we find an interval, expect the entire list to be a list of intervals
+        data_type = DataType.CONTINUOUS
+        logger.info(f"Column {data.name} contains an interval.  Classifying it as [{data_type.name}]")
         return data_type
-    if data.dtype.name in ["str", "string", "object"]:
+    if data.dtype.name == "category":
+        logger.info(f"Column {data.name} has explicit type [{data_type.name}]")
+    elif isinstance(values, list) and len(values) > 1:
+        logger.info(f"Column {data.name} has associated label_values_or_threshold with length > 1")
+    elif data.dtype.name in ["str", "string", "object"]:
         # cast the dtype to int, if exception is raised data is categorical
         casted_data = data.astype("int64", copy=True, errors="ignore")
         if np.issubdtype(casted_data.dtype, np.integer) and data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
@@ -145,7 +155,7 @@ def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> Data
         if data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
             data_type = DataType.CONTINUOUS
     logger.info(
-        f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
+        f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classified as a "
         f"{data_type.name} column"
     )
     return data_type

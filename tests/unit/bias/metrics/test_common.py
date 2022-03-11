@@ -76,6 +76,18 @@ def ensure_series_data_type_test_cases():
     function_output = EnsureSeriesDataTypeOutput(data_type=DataType.CATEGORICAL, new_data=data.astype("category"))
     test_cases.append([function_input, function_output])
 
+    # threshold intervals should be continuous
+    data = pd.Series([1, 2, 3])
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["[2,3]"])
+    function_output = EnsureSeriesDataTypeOutput(data_type=DataType.CONTINUOUS, new_data=data)
+    test_cases.append([function_input, function_output])
+
+    # threshold intervals should be continuous
+    data = pd.Series([1, 2, 3])
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["(1,2]", "(2,3]"])
+    function_output = EnsureSeriesDataTypeOutput(data_type=DataType.CONTINUOUS, new_data=data)
+    test_cases.append([function_input, function_output])
+
     return test_cases
 
 

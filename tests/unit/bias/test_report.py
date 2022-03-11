@@ -209,6 +209,31 @@ def test_report_category_data():
     ]
     assert pretraining_report == result
 
+    # Validate threshold interval gives same result
+    pretraining_report = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], ["(0,]"]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cat["yhat"]),
+        group_variable=df_cat["z"],
+    )
+
+    pretraining_report_cat = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], ["(0,]"]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cat["yhat_cat"]),
+        group_variable=df_cat["z"],
+    )
+
+    assert isinstance(pretraining_report, list)
+    assert len(pretraining_report) > 0
+    assert pretraining_report == pretraining_report_cat
+
+    assert pretraining_report == result
+
     # post training bias metrics
     posttraining_report = bias_report(
         df_cat,
@@ -262,6 +287,32 @@ def test_report_category_data():
             "value_or_threshold": "b",
         },
     ]
+    assert posttraining_report == expected_result_1
+
+    # Assert threshold intervals give same result
+    posttraining_report = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], ["(0,]"]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cat["yhat"]),
+        metrics=["AD", "DI", "DPPL", "RD"],
+        group_variable=df_cat["z"],
+    )
+
+    posttraining_report_cat = bias_report(
+        df_cat,
+        FacetColumn("x"),
+        LabelColumn("y", df_cat["y"], ["(0,]"]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cat["yhat_cat"]),
+        metrics=["AD", "DI", "DPPL", "RD"],
+        group_variable=df_cat["z"],
+    )
+
+    assert isinstance(posttraining_report, list)
+    assert len(posttraining_report) > 0
+    assert posttraining_report == posttraining_report_cat
     assert posttraining_report == expected_result_1
 
 
@@ -351,6 +402,19 @@ def test_report_continuous_data():
 
     assert pretraining_report == result
 
+    # Validate threshold intervals give same result
+    pretraining_report = bias_report(
+        df_cont,
+        FacetColumn("x", ["(2,]"]),
+        LabelColumn("y", df_cont["y"], [0]),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"]),
+        group_variable=df_cont["z"],
+    )
+    assert isinstance(pretraining_report, list)
+    assert len(pretraining_report) > 0
+    assert pretraining_report == result
+
     posttraining_report = bias_report(
         df_cont,
         FacetColumn("x", [2]),
@@ -399,6 +463,19 @@ def test_report_continuous_data():
             "value_or_threshold": "(2, 4]",
         }
     ]
+    assert posttraining_report == expected_result_1
+
+    # Validate threshold intervals give same result
+    posttraining_report = bias_report(
+        df_cont,
+        FacetColumn("x", ["(2,]"]),
+        LabelColumn("y", df_cont["y"], [0]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"]),
+        group_variable=df_cont["z"],
+    )
+    assert isinstance(posttraining_report, list)
+    assert len(posttraining_report) > 0
     assert posttraining_report == expected_result_1
 
 
@@ -489,6 +566,25 @@ def test_report_continuous_data_regression():
     )
     assert posttraining_report == posttraining_report_old
 
+    # Validate threshold intervals gives same result
+    posttraining_report = bias_report(
+        df_cont,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont["y"], positive_label_values=["(5, ]"]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont["yhat"], positive_label_values=["(5, ]"]),
+        group_variable=df_cont["z"],
+    )
+    posttraining_report_old = bias_report(
+        df_cont_old,
+        FacetColumn("x", [2]),
+        LabelColumn("y", df_cont_old["y"], positive_label_values=["(0.5, ]"]),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df_cont_old["yhat"], positive_label_values=["(0.5, ]"]),
+        group_variable=df_cont["z"],
+    )
+    assert posttraining_report == posttraining_report_old
+
 
 def test_report_string_data_determined_as_continuous():
     # Although the data columns look like categorical, they are determined as continuous
@@ -526,6 +622,48 @@ def test_report_string_data_determined_as_continuous():
             ],
         }
     ]
+
+
+def test_report_threshold_intervals_reflected_in_report():
+    """
+    Tests that the output report reflects thresholds in the input.
+    """
+
+    def validate_threshold(threshold: str):
+        df = pd.DataFrame(
+            data=[
+                ["1", "1", "1", "1"],
+                ["2", "2", "2", "2"],
+                ["3", "3", "3", "3"],
+                ["4", "4", "4", "4"],
+            ],
+            columns=["Label", "Facet", "Feature", "PredictedLabel"],
+        )
+        pretraining_report = bias_report(
+            df=df,
+            facet_column=FacetColumn("Facet", [threshold]),
+            label_column=LabelColumn("Label", df["Label"], [threshold]),
+            stage_type=StageType.POST_TRAINING,
+            predicted_label_column=LabelColumn("PredictedLabel", df["PredictedLabel"], [threshold]),
+            metrics=["DPPL"],
+        )
+        assert pretraining_report == [
+            {
+                "value_or_threshold": threshold,
+                "metrics": [
+                    {
+                        "name": "DPPL",
+                        "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
+                        "value": pytest.approx(-1.0),
+                    }
+                ],
+            }
+        ]
+
+    validate_threshold("[2, 4]")
+    validate_threshold("(2, 4]")
+    validate_threshold("(2, 4)")
+    validate_threshold("[2, 4)")
 
 
 def test_report_integer_data_determined_as_categorical():
@@ -1014,6 +1152,11 @@ def label_value_or_threshold_test_cases():
     positive_values = [1]
     function_input = LabelValueOrThresholdFunctionInput(data=data, values=positive_values)
     function_output = LabelValueOrThresholdFunctionOutput(result="(0, 1]")
+    test_cases.append([function_input, function_output])
+
+    # threshold intervals
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1, 2, 3]), values=["(2, 3]"])
+    function_output = LabelValueOrThresholdFunctionOutput(result="(2, 3]")
     test_cases.append([function_input, function_output])
 
     return test_cases

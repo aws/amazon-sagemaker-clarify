@@ -66,8 +66,6 @@ def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_ind
     :param positive_label_index: boolean column indicating positive labels
     :return: a float in the interval [-1, +1] indicating bias in the labels.
     """
-    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
-    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
     return common.DPL(feature, sensitive_facet_index, positive_label_index)
 
 
@@ -140,7 +138,8 @@ def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> f
     if len(Pa) == 0 or len(Pd) == 0:
         raise ValueError("No instance of common facet found, dataset may be too small")
     res = np.linalg.norm(Pa - Pd, norm_order)
-    return res
+    # res should only be a single float value, otherwise this metric is incorrect
+    return float(res)
 
 
 @registry.pretraining

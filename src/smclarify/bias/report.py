@@ -3,16 +3,17 @@
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
 
 """Bias detection in datasets"""
-import logging
 import json
+import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Callable, Tuple
+from typing import Any, Dict, List, Optional, Callable, Tuple, Union
 
 import pandas as pd
 
 import smclarify
 import smclarify.bias.metrics
 from smclarify.bias.metrics import common
+from smclarify.bias.metrics.interval import IntervalArray, Interval
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +146,7 @@ def fetch_metrics_to_run(full_metrics: List[Callable[..., Any]], metric_names: L
     return metrics_to_run
 
 
-def _interval_index(data: pd.Series, thresholds: Optional[List[Any]]) -> pd.IntervalIndex:
+def _interval_index(data: pd.Series, thresholds: Optional[List[Any]]):
     """
     Creates a Interval Index from list of threshold values. See pd.IntervalIndex.from_breaks
     Ex. [0,1,2] -> [(0, 1], (1,2]]
@@ -156,6 +157,8 @@ def _interval_index(data: pd.Series, thresholds: Optional[List[Any]]) -> pd.Inte
     if not thresholds:
         raise ValueError("Threshold values must be provided for continuous features")
     max_value, min_value = data.max(), data.min()
+    if common.check_is_interval(thresholds[0]):
+        return IntervalArray([Interval.from_string(x, min_value=min_value, max_value=max_value) for x in thresholds])
     threshold_intervals = thresholds.copy()
     # add  max value if not exists in threshold limits
     if abs(max_value) not in thresholds:
@@ -257,7 +260,7 @@ def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
     return index_key_series
 
 
-def _continuous_data_idx(x: pd.Series, data_threshold_index: pd.IntervalIndex) -> pd.Series:
+def _continuous_data_idx(x: pd.Series, data_threshold_index: Union[pd.IntervalIndex, IntervalArray]) -> pd.Series:
     """
     returns bool Series after checking threshold index for each value from input
     :param x:
