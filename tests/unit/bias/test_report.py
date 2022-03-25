@@ -100,6 +100,16 @@ def test_invalid_input():
             predicted_label_column=LabelColumn("PredictedLabel", df["PredictedLabel"], [2.0]),
         )
 
+    with pytest.raises(
+        ValueError, match="Facet/label value provided must be a single numeric threshold for continuous data"
+    ):
+        bias_report(
+            df=df,
+            facet_column=FacetColumn("Facet", [3.0]),
+            label_column=LabelColumn("Label", df["Label"], ["string_threshold"]),
+            stage_type=StageType.PRE_TRAINING,
+        )
+
 
 def test_report_category_data():
     # test the bias_report function on the category data
