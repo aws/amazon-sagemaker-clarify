@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
+from typing import NamedTuple, List, Any
 
 import pandas as pd
 import pytest
@@ -13,6 +14,7 @@ from smclarify.bias.report import (
     LabelColumn,
     fetch_metrics_to_run,
     StageType,
+    label_value_or_threshold,
 )
 from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from smclarify.bias.metrics import common
@@ -25,7 +27,7 @@ def test_invalid_input():
     )
     for staging_type in StageType:
         # facet not in dataset
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Facet column z is not present in the dataset"):
             bias_report(
                 df_cat,
                 FacetColumn("z"),
@@ -33,7 +35,7 @@ def test_invalid_input():
                 staging_type,
             )
         # no positive label value
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Positive label values or thresholds are empty for Label column"):
             bias_report(
                 df_cat,
                 FacetColumn("x"),
@@ -41,7 +43,7 @@ def test_invalid_input():
                 staging_type,
             )
     # incorrect stage type
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="stage_type should be a Enum value of StageType"):
         # noinspection PyTypeChecker
         bias_report(
             df_cat,
@@ -50,7 +52,7 @@ def test_invalid_input():
             "pre_training",
         )
     # post-training but no predicted label column
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="predicted_label_column has to be provided for Post training metrics"):
         bias_report(
             df_cat,
             FacetColumn("x"),
@@ -58,16 +60,19 @@ def test_invalid_input():
             StageType.POST_TRAINING,
         )
     # positive label value of label and predicted label not the same
-    with pytest.raises(ValueError):
+    match_message = "Positive predicted label values or threshold should be empty or same as label values or thresholds"
+    with pytest.raises(ValueError, match=match_message):
         bias_report(
             df_cat,
             FacetColumn("x"),
             LabelColumn("Label", df_cat["label"], [1]),
             StageType.POST_TRAINING,
-            LabelColumn("Prediction", df_cat["predicted_label"], [1]),
+            LabelColumn("Prediction", df_cat["predicted_label"], [0]),
         )
+
     # label and positive label have different data types.
-    with pytest.raises(ValueError):
+    match_message = "Predicted Label Column series datatype is not the same as Label Column series"
+    with pytest.raises(ValueError, match=match_message):
         bias_report(
             df_cat,
             FacetColumn("x"),
@@ -75,7 +80,25 @@ def test_invalid_input():
             StageType.POST_TRAINING,
             LabelColumn("Prediction", df_cat["predicted_label"], [1]),
         )
-    # TODO: add more test cases.
+
+    # threshold not provided for continuous facet
+    df = pd.DataFrame(
+        [
+            [1.0, 2.0, 3.0, 4.0],
+            [2.0, 3.0, 4.0, 5.0],
+            [3.0, 4.0, 5.0, 6.0],
+            [4.0, 5.0, 6.0, 7.0],
+        ],
+        columns=["Label", "Facet", "Feature", "PredictedLabel"],
+    )
+    with pytest.raises(ValueError, match="Threshold values must be provided for continuous features"):
+        bias_report(
+            df=df,
+            facet_column=FacetColumn("Facet"),
+            label_column=LabelColumn("Label", df["Label"], [2.0]),
+            stage_type=StageType.POST_TRAINING,
+            predicted_label_column=LabelColumn("PredictedLabel", df["PredictedLabel"], [2.0]),
+        )
 
 
 def test_report_category_data():
@@ -465,6 +488,80 @@ def test_report_continuous_data_regression():
         group_variable=df_cont["z"],
     )
     assert posttraining_report == posttraining_report_old
+
+
+def test_report_string_data_determined_as_continuous():
+    # Although the data columns look like categorical, they are determined as continuous
+    # because the data can be casted to numbers, and the data uniqueness is high.
+    # The test case means to check if the report method can handle the case correctly.
+    df = pd.DataFrame(
+        data=[
+            ["1", "1", "1", "1"],
+            ["2", "2", "2", "2"],
+            ["3", "3", "3", "3"],
+            ["4", "4", "4", "4"],
+        ],
+        columns=["Label", "Facet", "Feature", "PredictedLabel"],
+    )
+    pretraining_report = bias_report(
+        df=df,
+        facet_column=FacetColumn("Facet", [2]),
+        label_column=LabelColumn("Label", df["Label"], [2]),
+        stage_type=StageType.POST_TRAINING,
+        predicted_label_column=LabelColumn("PredictedLabel", df["PredictedLabel"], [2]),
+        metrics=["DPPL"],
+    )
+    # Actually the validation below is not really needed. If there was problem then the report method
+    # should have failed with error like "TypeError: bad operand type for abs(): 'str'" when it tried to
+    # manipulate string as number.
+    assert pretraining_report == [
+        {
+            "value_or_threshold": "(2, 4]",  # <== range, so the facet is indeed determined as continuous
+            "metrics": [
+                {
+                    "name": "DPPL",
+                    "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
+                    "value": pytest.approx(-1.0),
+                }
+            ],
+        }
+    ]
+
+
+def test_report_integer_data_determined_as_categorical():
+    # Although the data columns look like continuous, they are determined as categorical because
+    # the facet values or label values are categorical. Note that the label column and the predicted
+    # label column have different categories (1,3,4 and 2,3,4 respectively). They can not be cast to
+    # the type of each other, but no problem to get the positive label index.
+    df = pd.DataFrame(
+        data=[
+            [1, 1, 1, 2],
+            [1, 2, 2, 2],
+            [3, 3, 3, 3],
+            [4, 4, 4, 4],
+        ],
+        columns=["Label", "Facet", "Feature", "PredictedLabel"],
+    )
+    pretraining_report = bias_report(
+        df=df,
+        facet_column=FacetColumn("Facet", [1, 2]),
+        label_column=LabelColumn("Label", df["Label"], [1, 2]),
+        stage_type=StageType.POST_TRAINING,
+        predicted_label_column=LabelColumn("PredictedLabel", df["PredictedLabel"], [1, 2]),
+        metrics=["DPPL"],
+    )
+    assert pretraining_report == [
+        {
+            "value_or_threshold": "1,2",  # <== range, so the facet is indeed determined as categorical
+            "metrics": [
+                {
+                    "name": "DPPL",
+                    "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
+                    "value": pytest.approx(-1.0),
+                }
+            ],
+        }
+    ]
 
 
 def test_label_values():
@@ -858,3 +955,71 @@ def test_bias_basic_stats():
         },
     ]
     assert expected_results == results
+
+
+class LabelValueOrThresholdFunctionInput(NamedTuple):
+    data: pd.Series
+    values: List[Any]
+
+
+class LabelValueOrThresholdFunctionOutput(NamedTuple):
+    result: str
+
+
+def label_value_or_threshold_test_cases():
+    test_cases = []
+
+    # categorical data series
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1, 2, 3]).astype("category"), values=[2])
+    function_output = LabelValueOrThresholdFunctionOutput(result="2")  # instead of "(2, 3]"
+    test_cases.append([function_input, function_output])
+
+    # categorical values
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1, 2, 3]), values=[1, 2])
+    function_output = LabelValueOrThresholdFunctionOutput(result="1,2")
+    test_cases.append([function_input, function_output])
+
+    # continuous data series
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[2.0])
+    function_output = LabelValueOrThresholdFunctionOutput(result="(2.0, 3.0]")
+    test_cases.append([function_input, function_output])
+
+    # continuous data series, positive value less than all data
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[0.0])
+    function_output = LabelValueOrThresholdFunctionOutput(result="(0.0, 3.0]")
+    test_cases.append([function_input, function_output])
+
+    # continuous data series, positive value greater than all data
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([1.0, 2.0, 3.0]), values=[5.0])
+    function_output = LabelValueOrThresholdFunctionOutput(result="(3.0, 5.0]")
+    test_cases.append([function_input, function_output])
+
+    # object data series, can NOT be converted to numeric
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series(["yes", "no", "yes"]), values=["yes"])
+    function_output = LabelValueOrThresholdFunctionOutput(result="yes")
+    test_cases.append([function_input, function_output])
+
+    # object data series, can be converted to numeric, and uniqueness is high
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series(["1", "2", "3"]), values=[2])
+    function_output = LabelValueOrThresholdFunctionOutput(result="(2, 3]")
+    test_cases.append([function_input, function_output])
+
+    # boolean data series
+    function_input = LabelValueOrThresholdFunctionInput(data=pd.Series([True, False, True]), values=[True])
+    function_output = LabelValueOrThresholdFunctionOutput(result="True")
+    test_cases.append([function_input, function_output])
+
+    # Test that for trivial dataset where labels don't have as many element as label_values
+    data = pd.Series([0])
+    positive_values = [1]
+    function_input = LabelValueOrThresholdFunctionInput(data=data, values=positive_values)
+    function_output = LabelValueOrThresholdFunctionOutput(result="(0, 1]")
+    test_cases.append([function_input, function_output])
+
+    return test_cases
+
+
+@pytest.mark.parametrize("function_input,function_output", label_value_or_threshold_test_cases())
+def test_label_value_or_threshold(function_input, function_output):
+    result = label_value_or_threshold(*function_input)
+    assert result == function_output.result
