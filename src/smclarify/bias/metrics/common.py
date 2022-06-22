@@ -163,6 +163,14 @@ def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None)
     if data_type == DataType.CATEGORICAL:
         return data_type, data.astype("category")
     if data_type == DataType.CONTINUOUS:
+        if values is not None:
+            if not (isinstance(values[0], int) or isinstance(values[0], float)):
+                try:
+                    values[0] = float(values[0])
+                except ValueError:
+                    raise ValueError(
+                        "Facet/label value provided must be a single numeric threshold for continuous data"
+                    )
         return data_type, pd.to_numeric(data)
     raise ValueError("Data series is invalid or can't be classified")
 
