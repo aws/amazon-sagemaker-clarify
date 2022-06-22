@@ -10,7 +10,7 @@ EXTRAS_REQUIRE = {
     "test": [
         "tox",
         "flake8",
-        "black == 20.8b1",
+        "black == 22.3.0",
         "mock",
         "pre-commit",
         "pytest",
@@ -33,7 +33,7 @@ data_files = ["COMMIT_HASH"] if os.path.exists("./src/smclarify/COMMIT_HASH") el
 
 setup(
     name="smclarify",
-    version="0.2",
+    version="0.3",
     packages=find_packages("src"),
     package_dir={"": "src"},
     package_data={"smclarify": data_files},
@@ -46,6 +46,7 @@ setup(
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )
