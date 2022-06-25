@@ -39,6 +39,7 @@ setup(
     package_data={"smclarify": data_files},
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
+    python_requires='>=3.7',
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     classifiers=[
