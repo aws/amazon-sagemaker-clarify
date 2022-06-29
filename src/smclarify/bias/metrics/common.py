@@ -279,3 +279,88 @@ def DLR(
         drr = 0
 
     return dar, drr
+
+
+def DLA(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> Tuple[float, float]:
+    r"""
+    Difference in Label Accuracy (DLA)
+
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Recall Difference between advantaged and disadvantaged classes
+    """
+    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
+
+    if len(feature[sensitive_facet_index]) == 0:
+        raise ValueError("DLA: Facet set is empty")
+    if len(feature[~sensitive_facet_index]) == 0:
+        raise ValueError("DLA: Negated Facet set is empty")
+
+    TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
+    FN_a = len(feature[positive_label_index & (~positive_predicted_label_index) & (~sensitive_facet_index)])
+    TN_a = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & (~sensitive_facet_index)])
+    FP_a = len(feature[(~positive_label_index) & positive_predicted_label_index & (~sensitive_facet_index)])
+
+    rec_a = divide(TP_a, TP_a + FN_a)
+    sp_a = divide(TN_a, TN_a + FP_a)
+
+    TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
+    FN_d = len(feature[positive_label_index & (~positive_predicted_label_index) & sensitive_facet_index])
+    TN_d = len(feature[(~positive_label_index) & (~positive_predicted_label_index) & sensitive_facet_index])
+    FP_d = len(feature[(~positive_label_index) & positive_predicted_label_index & sensitive_facet_index])
+
+    rec_d = divide(TP_d, TP_d + FN_d)
+    sp_d = divide(TN_d, TN_d + FP_d)
+
+    rd = rec_a - rec_d
+    sd = sp_d - sp_a
+
+    if rec_a == rec_d and rec_a == INFINITY:
+        rd = 0
+    if sp_a == sp_d and sp_a == INFINITY:
+        sd = 0
+
+    return rd, sd
+
+
+def GE(positive_label_index: pd.Series, positive_predicted_label_index: pd.Series, alpha: float) -> float:
+    r"""
+    Generalized Entropy Index (GE) with parameter alpha.
+
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :param alpha: parameter of the GE index.
+    :return: Recall Difference between advantaged and disadvantaged classes
+    """
+
+    if alpha == 0 or alpha == 1:
+        raise NotImplementedError("Not implemented for alpha 0 or 1.")
+    N = positive_label_index.shape[0]
+    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
+    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
+    require(N > 0, "dataset must be non-empty")
+
+    positive_predicted_label_index = positive_predicted_label_index.astype(int)
+    positive_label_index = positive_label_index.astype(int)
+
+    benefit = positive_predicted_label_index - positive_label_index + 1
+    mean_benefit = benefit.mean()
+
+    # Benefit is a positive quantity so the mean benefit is 0 only when all
+    # the benefits are 0, that is, all the predictions are false negatives.
+    require(
+        mean_benefit != 0,
+        "All predicted labels are false negatives. There should be at least one prediction that is not false negative.",
+    )
+
+    benefit_mean_ratio = benefit / mean_benefit
+    return (benefit_mean_ratio ** alpha - 1).sum() / (N * alpha * (alpha - 1))

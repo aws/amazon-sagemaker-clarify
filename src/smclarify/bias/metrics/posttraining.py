@@ -133,30 +133,30 @@ def RD(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Recall Difference between advantaged and disadvantaged classes
     """
-    require(sensitive_facet_index.dtype == bool, "sensitive_facet_index must be of type bool")
-    require(positive_label_index.dtype == bool, "positive_label_index must be of type bool")
-    require(positive_predicted_label_index.dtype == bool, "positive_predicted_label_index must be of type bool")
 
-    if len(feature[sensitive_facet_index]) == 0:
-        raise ValueError("Facet set is empty")
-    if len(feature[~sensitive_facet_index]) == 0:
-        raise ValueError("Negated Facet set is empty")
-
-    TP_a = len(feature[positive_label_index & positive_predicted_label_index & (~sensitive_facet_index)])
-    FN_a = len(feature[positive_label_index & (~positive_predicted_label_index) & (~sensitive_facet_index)])
-
-    rec_a = divide(TP_a, TP_a + FN_a)
-
-    TP_d = len(feature[positive_label_index & positive_predicted_label_index & sensitive_facet_index])
-    FN_d = len(feature[positive_label_index & (~positive_predicted_label_index) & sensitive_facet_index])
-
-    rec_d = divide(TP_d, TP_d + FN_d)
-
-    rd = rec_a - rec_d
-
-    if rec_a == rec_d and rec_a == INFINITY:
-        rd = 0
+    rd, _ = common.DLA(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
     return rd
+
+
+@registry.posttraining
+def SD(
+    feature: pd.Series,
+    sensitive_facet_index: pd.Series,
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    r"""
+    Specificity Difference (SD)
+
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Recall Difference between advantaged and disadvantaged classes
+    """
+
+    _, sd = common.DLA(feature, sensitive_facet_index, positive_label_index, positive_predicted_label_index)
+    return sd
 
 
 @registry.posttraining
@@ -406,3 +406,21 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
     FTd = divide(len(FS_pos) - len(FS_neg), len(data_d[0]))
 
     return FTd
+
+
+@registry.posttraining
+def GE2(
+    positive_label_index: pd.Series,
+    positive_predicted_label_index: pd.Series,
+) -> float:
+    r"""
+    Generalized Entropy Index with alpha=2. Is half of the coefficient of variation squared.
+
+    :param feature: input feature
+    :param sensitive_facet_index: boolean column indicating sensitive group
+    :param positive_label_index: boolean column indicating positive labels
+    :param positive_predicted_label_index: boolean column indicating positive predicted labels
+    :return: Difference in Rejection Rates
+    """
+
+    return common.GE(positive_label_index, positive_predicted_label_index, 2)
