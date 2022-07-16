@@ -414,13 +414,13 @@ def GE2(
     positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    Generalized Entropy Index with alpha=2. Is half of the coefficient of variation squared.
+    Generalized Entropy with alpha=2 (GE2)
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return: Difference in Rejection Rates
+    :return: Difference in Rejection Rates (Also Half the Coefficient of Variation Squared)
     """
 
     return common.GE(positive_label_index, positive_predicted_label_index, 2)

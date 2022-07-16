@@ -404,7 +404,7 @@ def test_report_continuous_data():
                 },
                 {"description": "Flip Test (FT)", "name": "FT", "value": pytest.approx(-0.23076923076923078)},
                 {
-                    "description": "Generalized Entropy Index with alpha=2. Is half of the coefficient of variation squared.",
+                    "description": "Generalized Entropy with alpha=2 (GE2)",
                     "name": "GE2",
                     "value": 0.07593688362919139,
                 },
@@ -781,7 +781,7 @@ def test_partial_bias_report():
         LabelColumn("y", df["y"], [0]),
         StageType.POST_TRAINING,
         LabelColumn("yhat", df["yhat"]),
-        metrics=["AD", "CDDPL", "DCA", "DI", "DPPL", "FT"],
+        metrics=["AD", "CDDPL", "DCA", "DI", "DPPL", "FT", "SD", "GE2"],
     )
     assert isinstance(posttraining_report, list)
     expected_result_2 = [
@@ -806,6 +806,8 @@ def test_partial_bias_report():
                     "value": pytest.approx(0.75),
                 },
                 {"description": "Flip Test (FT)", "name": "FT", "value": pytest.approx(-1.0)},
+                {"description": "Generalized Entropy with alpha=2 (GE2)", "name": "GE2", "value": 0.19444444444444456},
+                {"description": "Specificity Difference (SD)", "name": "SD", "value": 1.0},
             ],
             "value_or_threshold": "(2, 3]",
         }
@@ -851,7 +853,7 @@ def test_metric_descriptions():
         "DPPL": "Difference in Positive Proportions in Predicted Labels (DPPL)",
         "DRR": "Difference in Rejection Rates (DRR)",
         "FT": "Flip Test (FT)",
-        "GE2": "Generalized Entropy Index with alpha=2. Is half of the coefficient of variation squared.",
+        "GE2": "Generalized Entropy with alpha=2 (GE2)",
         "RD": "Recall Difference (RD)",
         "SD": "Specificity Difference (SD)",
         "TE": "Treatment Equality (TE)",
