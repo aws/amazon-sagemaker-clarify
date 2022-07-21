@@ -163,7 +163,7 @@ def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None)
     if data_type == DataType.CATEGORICAL:
         return data_type, data.astype("category")
     if data_type == DataType.CONTINUOUS:
-        if values is not None:
+        if values:
             if not (isinstance(values[0], int) or isinstance(values[0], float)):
                 try:
                     values[0] = float(values[0])
