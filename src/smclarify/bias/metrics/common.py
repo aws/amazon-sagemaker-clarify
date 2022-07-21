@@ -151,22 +151,24 @@ def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> Data
     return data_type
 
 
-def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None) -> Tuple[DataType, pd.Series]:
+def ensure_series_data_type(
+    data: pd.Series, sensitive_facet_values: Optional[List[Any]] = None
+) -> Tuple[DataType, pd.Series]:
     """
     Determine the type of the given data series using set of rules, and then do necessary type conversion
     to ensure the series data type.
     :param data: data for facet/label/predicted_label columns
-    :param values: list of facet or label values provided by user
+    :param sensitive_facet_values: list of facet or label values provided by user
     :return: A tuple of DataType and the converted data series
     """
-    data_type = series_datatype(data, values)
+    data_type = series_datatype(data, sensitive_facet_values)
     if data_type == DataType.CATEGORICAL:
         return data_type, data.astype("category")
     if data_type == DataType.CONTINUOUS:
-        if values:
-            if not (isinstance(values[0], int) or isinstance(values[0], float)):
+        if sensitive_facet_values:
+            if not (isinstance(sensitive_facet_values[0], int) or isinstance(sensitive_facet_values[0], float)):
                 try:
-                    values[0] = float(values[0])
+                    sensitive_facet_values[0] = float(sensitive_facet_values[0])
                 except ValueError:
                     raise ValueError(
                         "Facet/label value provided must be a single numeric threshold for continuous data"

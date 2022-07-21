@@ -82,7 +82,6 @@ def ensure_series_data_type_test_cases():
     function_output = EnsureSeriesDataTypeOutput(data_type=DataType.CONTINUOUS, new_data=data)
     test_cases.append([function_input, function_output])
 
-
     return test_cases
 
 
