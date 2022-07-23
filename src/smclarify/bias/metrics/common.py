@@ -111,58 +111,58 @@ def CDD(
     return wtd_mean_CDD
 
 
-def series_datatype(data: pd.Series, values: Optional[List[Any]] = None) -> DataType:
+def series_datatype(series: pd.Series, values: Optional[List[Any]] = None) -> DataType:
     """
     Determine given data series is categorical or continuous using set of rules.
     WARNING: The deduced data type can be different from real data type of the data series. Please
     use the function `ensure_series_data_type` instead if you'd like ensure the series data type.
 
-    :param data: data for facet/label/predicted_label columns
+    :param series: data for facet/label/predicted_label columns
     :param values: list of facet or label values provided by user
     :return: Enum {CATEGORICAL|CONTINUOUS}
     """
     # if datatype is boolean or categorical we return data as categorical
     data_type = DataType.CATEGORICAL
-    data_uniqueness_fraction = divide(data.nunique(), data.count())
+    data_uniqueness_fraction = divide(series.nunique(), series.count())
     # Assumption: user will give single value for threshold currently
     # Todo: fix me if multiple thresholds for facet or label are supported
-    if data.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
+    if series.dtype.name == "category" or (isinstance(values, list) and len(values) > 1):
         logger.info(
-            f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
+            f"Column {series.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
             f"{data_type.name} column"
         )
         return data_type
-    if data.dtype.name in ["str", "string", "object"]:
+    if series.dtype.name in ["str", "string", "object"]:
         # cast the dtype to int, if exception is raised data is categorical
-        casted_data = data.astype("int64", copy=True, errors="ignore")
+        casted_data = series.astype("int64", copy=True, errors="ignore")
         if np.issubdtype(casted_data.dtype, np.integer) and data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
             data_type = DataType.CONTINUOUS  # type: ignore
-    elif np.issubdtype(data.dtype, np.floating):
+    elif np.issubdtype(series.dtype, np.floating):
         data_type = DataType.CONTINUOUS
-    elif np.issubdtype(data.dtype, np.integer):
+    elif np.issubdtype(series.dtype, np.integer):
         # Current rule: If data has more than 5% if unique values then it is continuous
         # Todo: Needs to be enhanced, This rule doesn't always determine the datatype correctly
         if data_uniqueness_fraction >= UNIQUENESS_THRESHOLD:
             data_type = DataType.CONTINUOUS
     logger.info(
-        f"Column {data.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
+        f"Column {series.name} with data uniqueness fraction {data_uniqueness_fraction} is classifed as a "
         f"{data_type.name} column"
     )
     return data_type
 
 
-def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None) -> Tuple[DataType, pd.Series]:
+def ensure_series_data_type(series: pd.Series, values: Optional[List[Any]] = None) -> Tuple[DataType, pd.Series]:
     """
     Determine the type of the given data series using set of rules, and then do necessary type conversion
     to ensure the series data type.
-    :param data: data for facet/label/predicted_label columns
+    :param series: data for facet/label/predicted_label columns
     :param values: list of facet or label values provided by user
     :return: A tuple of DataType and the converted data series
     """
-    data_type = series_datatype(data, values)
+    data_type = series_datatype(series, values)
     if data_type == DataType.CATEGORICAL:
-        return data_type, data.astype("category")
-    if data_type == DataType.CONTINUOUS:
+        return data_type, series.astype("category")
+    elif data_type == DataType.CONTINUOUS:
         if values:
             if not (isinstance(values[0], int) or isinstance(values[0], float)):
                 try:
@@ -171,8 +171,8 @@ def ensure_series_data_type(data: pd.Series, values: Optional[List[Any]] = None)
                     raise ValueError(
                         "Facet/label value provided must be a single numeric threshold for continuous data"
                     )
-        return data_type, pd.to_numeric(data)
-    raise ValueError("Data series is invalid or can't be classified")
+        return data_type, pd.to_numeric(series)
+    raise ValueError("Data series is invalid or can't be classified as neither categorical nor continous.")
 
 
 # Todo: Fix the function to avoid redundant calls for DCA and DCR
