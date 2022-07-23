@@ -27,7 +27,7 @@ def GaussianFilter(input_array: np.ndarray, sigma: int = 1) -> np.ndarray:
 
     def GaussianKernel(x: float, sigma: int) -> float:
 
-        return np.exp(-((x ** 2) / (2 * (sigma ** 2)))) * 1 / (np.sqrt(2 * np.pi) * sigma)
+        return np.exp(-((x**2) / (2 * (sigma**2)))) * 1 / (np.sqrt(2 * np.pi) * sigma)
 
     x = np.linspace(1, len(input_array), len(input_array))
     centered_x = x - np.mean(x)
