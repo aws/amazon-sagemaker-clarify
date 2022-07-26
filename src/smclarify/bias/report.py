@@ -44,14 +44,14 @@ class FacetContinuousColumn(Column):
 
 
 class LabelColumn(Column):
-    def __init__(self, name: str, data: pd.Series, positive_label_values: Optional[Any] = None):
+    def __init__(self, name: str, series: pd.Series, positive_label_values: Optional[Any] = None):
         """
         initialize the label column with name, data  and positive values
         :param data: data series for the label column
         :param positive_label_values: positive label values for target column
         """
         super().__init__(name)
-        self.data = data
+        self.series = series
         self.positive_label_values = positive_label_values
 
 
@@ -373,7 +373,7 @@ def bias_report(
             else fetch_metrics_to_run(smclarify.bias.metrics.POSTTRAINING_METRICS, metrics)
         )
         metrics_to_run.extend(post_training_metrics)
-        predicted_label_series = predicted_label_column.data
+        predicted_label_series = predicted_label_column.series
         if predicted_label_column.name in df.columns:
             df = df.drop(predicted_label_column.name, 1)
     else:
@@ -456,7 +456,7 @@ def _report(
     df = df.drop(facet_column.name, 1)
 
     positive_label_values = label_column.positive_label_values
-    label_data_type, label_data_series = common.ensure_series_data_type(label_column.data, positive_label_values)
+    label_data_type, label_data_series = common.ensure_series_data_type(label_column.series, positive_label_values)
     positive_label_index, _ = _positive_label_index(
         data=label_data_series, data_type=label_data_type, positive_values=positive_label_values
     )
@@ -467,7 +467,7 @@ def _report(
     if predicted_label_column:
         if stage_type == StageType.POST_TRAINING:
             predicted_label_data_type, predicted_label_data_series = common.ensure_series_data_type(
-                predicted_label_column.data, positive_label_values
+                predicted_label_column.series, positive_label_values
             )
             positive_predicted_label_index = _positive_predicted_index(
                 predicted_label_data=predicted_label_data_series,
