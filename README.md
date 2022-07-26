@@ -1,6 +1,6 @@
 ![Python package](https://github.com/aws/amazon-sagemaker-clarify/workflows/Python%20package/badge.svg)
 ![Pypi](https://img.shields.io/pypi/v/smclarify.svg?maxAge=60)
-![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg?style=flat)
+![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg?style=flat)
 
 # smclarify
 
