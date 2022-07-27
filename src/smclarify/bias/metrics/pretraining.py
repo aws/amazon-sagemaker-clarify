@@ -139,8 +139,8 @@ def LP_norm(label: pd.Series, sensitive_facet_index: pd.Series, norm_order) -> f
     (Pa, Pd) = pdfs_aligned_nonzero(xs_a, xs_d)
     if len(Pa) == 0 or len(Pd) == 0:
         raise ValueError("No instance of common facet found, dataset may be too small")
-    res = np.linalg.norm(Pa - Pd, norm_order)
-    return res  # type: ignore
+    res = float(np.linalg.norm(Pa - Pd, norm_order))
+    return res
 
 
 @registry.pretraining
