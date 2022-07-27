@@ -10,7 +10,7 @@ EXTRAS_REQUIRE = {
     "test": [
         "tox",
         "flake8",
-        "black == 20.8b1",
+        "black == 22.3.0",
         "mock",
         "pre-commit",
         "pytest",
@@ -39,6 +39,7 @@ setup(
     package_data={"smclarify": data_files},
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
+    python_requires=">=3.7",
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
     classifiers=[
@@ -46,6 +47,8 @@ setup(
         "Intended Audience :: Developers",
         "Natural Language :: English",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
 )
