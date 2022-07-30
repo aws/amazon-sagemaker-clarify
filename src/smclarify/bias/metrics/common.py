@@ -363,4 +363,4 @@ def GE(positive_label_index: pd.Series, positive_predicted_label_index: pd.Serie
     )
 
     benefit_mean_ratio = benefit / mean_benefit
-    return (benefit_mean_ratio ** alpha - 1).sum() / (N * alpha * (alpha - 1))
+    return (benefit_mean_ratio**alpha - 1).sum() / (N * alpha * (alpha - 1))

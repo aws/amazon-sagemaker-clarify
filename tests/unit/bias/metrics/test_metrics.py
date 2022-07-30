@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
 
-from smclarify.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS, SD, GE2
+from smclarify.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS, SD, GE
 from smclarify.bias.metrics import metric_one_vs_all
 from smclarify.bias.metrics.constants import INFINITY
 from pytest import approx
@@ -495,5 +495,5 @@ def test_FT_small_samples():
     assert FT(dfFT, sensitive_facet_index == 1, predicted == 1) == approx(-0.15384615384615385)
 
 
-def test_GE2():
-    assert GE2(dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(0.24556213017751485)
+def test_GE():
+    assert GE(dfB_pos_label_idx, dfB_pos_pred_label_idx) == approx(0.24556213017751485)

@@ -409,12 +409,12 @@ def FT(df: pd.DataFrame, sensitive_facet_index: pd.Series, positive_predicted_la
 
 
 @registry.posttraining
-def GE2(
+def GE(
     positive_label_index: pd.Series,
     positive_predicted_label_index: pd.Series,
 ) -> float:
     r"""
-    Generalized Entropy with alpha=2 (GE2)
+    Generalized Entropy (GE)
 
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
@@ -422,5 +422,5 @@ def GE2(
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
     :return: Difference in Rejection Rates (Also Half the Coefficient of Variation Squared)
     """
-
+    # (Generalized Entropy uses a parameter alpha which we set to 2)
     return common.GE(positive_label_index, positive_predicted_label_index, 2)
