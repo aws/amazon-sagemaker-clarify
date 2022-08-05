@@ -41,7 +41,6 @@ lint() {
 }
 
 test_with_coverage() {
-    scripts/run_examples.py
     coverage run -m pytest --pspec tests/unit
     coverage report -m --fail-under=88
 }
@@ -73,6 +72,7 @@ install_package(){
 all() {
     lint
     test_with_coverage
+    integ_tests
     build_package
     docs
 }
