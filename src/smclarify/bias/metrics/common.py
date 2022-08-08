@@ -191,6 +191,7 @@ def convert_positive_label_values(series: pd.Series, positive_label_values: List
     :param positive_label_values: list of label values provided by user
     :return: list of label values provided after the conversion (if any)
     """
+
     def _convert(items: List, _type: Callable) -> List:
         try:
             return [_type(item) for item in items]
@@ -198,8 +199,10 @@ def convert_positive_label_values(series: pd.Series, positive_label_values: List
             # int('1.0') raises a ValueError
             if "invalid literal for int() with base 10" in str(e):
                 return [float(item) for item in items]
-            raise Exception(f"'label' has not positive elements. Double-check if 'label' and 'positive_label_values'"
-                            f"have correct data-types or values.")
+            raise Exception(
+                f"'label' has not positive elements. Double-check if 'label' and 'positive_label_values'"
+                f"have correct data-types or values."
+            )
 
     if isinstance(positive_label_values[0], type(series[0])):
         return positive_label_values
@@ -208,13 +211,15 @@ def convert_positive_label_values(series: pd.Series, positive_label_values: List
     converted_values: List[Any]
     if isinstance(series[0], bool) and isinstance(positive_label_values, str) and positive_label_values[0].isalpha():
         # when values = ['True', 'False'] and series = [False, True, ...]
-        converted_values = [True if label.lower() == 'true' else False for label in positive_label_values]
+        converted_values = [True if label.lower() == "true" else False for label in positive_label_values]
         # else when values = [1, 1.0, 0, 0.0] and series = [False, True, ...], _convert(positive_label_values, bool)
         # see else below
     else:
         converted_values = _convert(positive_label_values, type(series[0]))
-    logger.warning(f"Data type of the elements in `positive_label_values` and in `label` must match. "
-                   f"Converted positive_label_values from {positive_label_values} to {converted_values}")
+    logger.warning(
+        f"Data type of the elements in `positive_label_values` and in `label` must match. "
+        f"Converted positive_label_values from {positive_label_values} to {converted_values}"
+    )
     return converted_values
 
 

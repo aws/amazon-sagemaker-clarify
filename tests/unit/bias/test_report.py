@@ -727,60 +727,47 @@ def label_values_test_cases() -> List[List[Union[LabelValueInput, List[LabelValu
     """
     test_cases = []
     output = [
-        LabelValueOutput("a", {"CDDL": -0.3,  "DPL": -0.25}),
-        LabelValueOutput("b", {"CDDL": 0.3, "DPL":  0.5}),
-        LabelValueOutput("c", {"CDDL": -0.4,  "DPL": -0.33333333333333337}),
+        LabelValueOutput("a", {"CDDL": -0.3, "DPL": -0.25}),
+        LabelValueOutput("b", {"CDDL": 0.3, "DPL": 0.5}),
+        LabelValueOutput("c", {"CDDL": -0.4, "DPL": -0.33333333333333337}),
     ]
 
-    df = pd.DataFrame([
-        ["a", None, 1, None],
-        ["b", None, 1, None],
-        ["b", None, 1, None],
-        ["c", None, 0, None],
-        ["c", None, 0, None]
-    ], columns=["x", "y", "z", "yhat"])
+    df = pd.DataFrame(
+        [["a", None, 1, None], ["b", None, 1, None], ["b", None, 1, None], ["c", None, 0, None], ["c", None, 0, None]],
+        columns=["x", "y", "z", "yhat"],
+    )
 
     # series - int, label values - int
-    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype('category')
-    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype('category')
-    function_input = LabelValueInput(
-        df=df.copy(),
-        positive_label_values=[1, 2]
-    )
+    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype("category")
+    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=[1, 2])
     test_cases.append([function_input, output[:]])
 
     # series - str, label values - int
-    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype('category')
-    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype('category')
-    function_input = LabelValueInput(
-        df=df.copy(),
-        positive_label_values=[1, 2]
-    )
+    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype("category")
+    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=[1, 2])
     test_cases.append([function_input, output[:]])
 
     # series - int, label values - str
-    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype('category')
-    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype('category')
-    function_input = LabelValueInput(
-        df=df.copy(),
-        positive_label_values=["1", "2"]
-    )
+    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype("category")
+    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=["1", "2"])
     test_cases.append([function_input, output[:]])
 
     # series - str, label values - str
-    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype('category')
-    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype('category')
-    function_input = LabelValueInput(
-        df=df.copy(),
-        positive_label_values=["1", "2"]
-    )
+    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype("category")
+    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=["1", "2"])
     test_cases.append([function_input, output[:]])
 
     return test_cases
 
 
 @pytest.mark.parametrize("function_input,function_output", label_values_test_cases())
-def test_label_values_with_different_types_for_pre_training(function_input: LabelValueInput, function_output: List[LabelValueOutput]):
+def test_label_values_with_different_types_for_pre_training(
+    function_input: LabelValueInput, function_output: List[LabelValueOutput]
+):
     df = function_input.df
     pretraining_report = bias_report(
         df,
@@ -806,13 +793,16 @@ def test_label_values_with_different_types_for_pre_training(function_input: Labe
                     "value": pytest.approx(output.metrics["DPL"]),
                 },
             ],
-        } for output in function_output
+        }
+        for output in function_output
     ]
     assert pretraining_report == expected_result_1
 
 
 @pytest.mark.parametrize("function_input,function_output", label_values_test_cases())
-def test_label_values_with_different_types_for_post_training(function_input: LabelValueInput, function_output: List[LabelValueOutput]):
+def test_label_values_with_different_types_for_post_training(
+    function_input: LabelValueInput, function_output: List[LabelValueOutput]
+):
     df = function_input.df
     pretraining_report = bias_report(
         df,
@@ -828,8 +818,7 @@ def test_label_values_with_different_types_for_post_training(function_input: Lab
             "value_or_threshold": output.value_or_threshold,
             "metrics": [
                 {
-                    "description": "Conditional Demographic Disparity in Predicted "
-                                   "Labels (CDDPL)",
+                    "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
                     "name": "CDDPL",
                     "value": pytest.approx(output.metrics["CDDL"]),
                 },
@@ -839,7 +828,8 @@ def test_label_values_with_different_types_for_post_training(function_input: Lab
                     "value": pytest.approx(output.metrics["DPL"]),
                 },
             ],
-        } for output in function_output
+        }
+        for output in function_output
     ]
     assert pretraining_report == expected_result_1
 

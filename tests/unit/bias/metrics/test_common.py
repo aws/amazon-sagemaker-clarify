@@ -2,8 +2,12 @@ from typing import NamedTuple, Optional, List, Any
 import pandas as pd
 import pytest
 
-from smclarify.bias.metrics.common import DataType, series_datatype, ensure_series_data_type, \
-    convert_positive_label_values
+from smclarify.bias.metrics.common import (
+    DataType,
+    series_datatype,
+    ensure_series_data_type,
+    convert_positive_label_values,
+)
 
 
 class EnsureSeriesDataTypeInput(NamedTuple):

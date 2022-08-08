@@ -250,11 +250,12 @@ def _categorical_data_idx(col: pd.Series, positive_values: List[Any]) -> pd.Seri
 
     If no True values found, it tries converting elements of the `positive_value`
     to the data type of the series' elements.
-    
+
     :param col: input data series
     :param positive_values: list of category values to generate boolean index
     :returns: a boolean series where data_values are present in col as True
     """
+
     def __categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
         # create indexing series with boolean OR of facet values
         index_key_series: pd.Series = col == data_values[0]
