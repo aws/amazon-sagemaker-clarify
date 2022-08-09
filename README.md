@@ -50,3 +50,5 @@ cd src/
 ```
 
 For running unit tests, do `pytest --pspec`. If you are using PyCharm, and cannot see the green run button next to the tests, open `Preferences` -> `Tools` -> `Python Integrated tools`, and set default test runner to `pytest`.
+
+For Internal contributors, run ```../devtool integ_tests``` after creating virtualenv with the above steps to run the integration tests.
