@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
 # Licensed under the Amazon Software License  http://aws.amazon.com/asl/
-from typing import NamedTuple, List, Any
+from typing import NamedTuple, List, Any, Union, Dict
 
 import pandas as pd
 import pytest
@@ -18,6 +18,16 @@ from smclarify.bias.report import (
 )
 from smclarify.bias.metrics import PRETRAINING_METRICS, POSTTRAINING_METRICS, CI, DPL, KL, KS, DPPL, DI, DCA, DCR, RD
 from smclarify.bias.metrics import common
+
+
+class LabelValueInput(NamedTuple):
+    df: pd.DataFrame
+    positive_label_values: List[Union[str, float, int, bool]]
+
+
+class LabelValueOutput(NamedTuple):
+    value_or_threshold: str
+    metrics: Dict[str, float]
 
 
 def test_invalid_input():
@@ -715,6 +725,120 @@ def test_label_values():
         },
     ]
     assert posttraining_report == expected_result_2
+
+
+def label_values_test_cases() -> List[List[Union[LabelValueInput, List[LabelValueOutput]]]]:
+    """
+    Setting the `y` and `yhat` series .astype('category'),
+    as this conversion feature is supposed to work only on categorical data.
+    """
+    test_cases = []
+    output = [
+        LabelValueOutput("a", {"CDDL": -0.3, "DPL": -0.25}),
+        LabelValueOutput("b", {"CDDL": 0.3, "DPL": 0.5}),
+        LabelValueOutput("c", {"CDDL": -0.4, "DPL": -0.33333333333333337}),
+    ]
+
+    df = pd.DataFrame(
+        [["a", None, 1, None], ["b", None, 1, None], ["b", None, 1, None], ["c", None, 0, None], ["c", None, 0, None]],
+        columns=["x", "y", "z", "yhat"],
+    )
+
+    # series - int, label values - int
+    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype("category")
+    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=[1, 2])
+    test_cases.append([function_input, output[:]])
+
+    # series - str, label values - int
+    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype("category")
+    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=[1, 2])
+    test_cases.append([function_input, output[:]])
+
+    # series - int, label values - str
+    df["y"] = pd.Series([1, 2, 0, 1, 2]).astype("category")
+    df["yhat"] = pd.Series([1, 1, 0, 1, 1]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=["1", "2"])
+    test_cases.append([function_input, output[:]])
+
+    # series - str, label values - str
+    df["y"] = pd.Series(["1", "2", "0", "1", "2"]).astype("category")
+    df["yhat"] = pd.Series(["1", "1", "0", "1", "1"]).astype("category")
+    function_input = LabelValueInput(df=df.copy(), positive_label_values=["1", "2"])
+    test_cases.append([function_input, output[:]])
+
+    return test_cases
+
+
+@pytest.mark.parametrize("function_input,function_output", label_values_test_cases())
+def test_label_values_with_different_types_for_pre_training(
+    function_input: LabelValueInput, function_output: List[LabelValueOutput]
+):
+    df = function_input.df
+    pretraining_report = bias_report(
+        df,
+        FacetColumn("x"),
+        LabelColumn("y", df["y"], function_input.positive_label_values),
+        StageType.PRE_TRAINING,
+        LabelColumn("yhat", df["yhat"]),
+        metrics=["DPL", "CDDL"],
+        group_variable=df["z"],
+    )
+    expected_result_1 = [
+        {
+            "value_or_threshold": output.value_or_threshold,
+            "metrics": [
+                {
+                    "description": "Conditional Demographic Disparity in Labels " "(CDDL)",
+                    "name": "CDDL",
+                    "value": pytest.approx(output.metrics["CDDL"]),
+                },
+                {
+                    "description": "Difference in Positive Proportions in Labels " "(DPL)",
+                    "name": "DPL",
+                    "value": pytest.approx(output.metrics["DPL"]),
+                },
+            ],
+        }
+        for output in function_output
+    ]
+    assert pretraining_report == expected_result_1
+
+
+@pytest.mark.parametrize("function_input,function_output", label_values_test_cases())
+def test_label_values_with_different_types_for_post_training(
+    function_input: LabelValueInput, function_output: List[LabelValueOutput]
+):
+    df = function_input.df
+    pretraining_report = bias_report(
+        df,
+        FacetColumn("x"),
+        LabelColumn("y", df["y"], function_input.positive_label_values),
+        StageType.POST_TRAINING,
+        LabelColumn("yhat", df["yhat"]),
+        metrics=["DPPL", "CDDPL"],
+        group_variable=df["z"],
+    )
+    expected_result_1 = [
+        {
+            "value_or_threshold": output.value_or_threshold,
+            "metrics": [
+                {
+                    "description": "Conditional Demographic Disparity in Predicted " "Labels (CDDPL)",
+                    "name": "CDDPL",
+                    "value": pytest.approx(output.metrics["CDDL"]),
+                },
+                {
+                    "description": "Difference in Positive Proportions in Predicted " "Labels (DPPL)",
+                    "name": "DPPL",
+                    "value": pytest.approx(output.metrics["DPL"]),
+                },
+            ],
+        }
+        for output in function_output
+    ]
+    assert pretraining_report == expected_result_1
 
 
 def test_fetch_metrics_to_run():

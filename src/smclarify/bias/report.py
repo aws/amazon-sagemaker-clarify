@@ -244,17 +244,31 @@ def label_value_or_threshold(label_series: pd.Series, positive_values: List[Any]
     return value_or_threshold
 
 
-def _categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
+def _categorical_data_idx(col: pd.Series, positive_values: List[Any]) -> pd.Series:
     """
+    Converts `col` series to True / False based on the `positive_values`.
+
+    If no True values found, it tries converting elements of the `positive_value`
+    to the data type of the series' elements.
+
     :param col: input data series
-    :param data_values: list of category values to generate boolean index
+    :param positive_values: list of category values to generate boolean index
     :returns: a boolean series where data_values are present in col as True
     """
-    # create indexing series with boolean OR of facet values
-    index_key_series: pd.Series = col == data_values[0]
-    for val in data_values[1:]:
-        index_key_series = index_key_series | (col == val)
-    return index_key_series
+
+    def __categorical_data_idx(col: pd.Series, data_values: List[Any]) -> pd.Series:
+        # create indexing series with boolean OR of facet values
+        index_key_series: pd.Series = col == data_values[0]
+        for val in data_values[1:]:
+            index_key_series = index_key_series | (col == val)
+        return index_key_series
+
+    index_key_series = __categorical_data_idx(col, positive_values)
+    if any(index_key_series):
+        return index_key_series
+
+    positive_values = common.convert_positive_label_values(col, positive_values)
+    return __categorical_data_idx(col, positive_values)
 
 
 def _continuous_data_idx(x: pd.Series, data_threshold_index: pd.IntervalIndex) -> pd.Series:
@@ -436,9 +450,8 @@ def _report(
     :param group_variable: data series for the group variable
     :return: list of dictionaries with metrics for different label values
     """
-    if facet_column:
-        if facet_column.name not in df.columns:
-            raise ValueError("Facet column {} is not present in the dataset".format(facet_column.name))
+    if facet_column and facet_column.name not in df.columns:
+        raise ValueError("Facet column {} is not present in the dataset".format(facet_column.name))
     if not label_column.positive_label_values:
         raise ValueError("Positive label values or thresholds are empty for Label column")
     if isinstance(predicted_label_column, LabelColumn) and predicted_label_column.positive_label_values:

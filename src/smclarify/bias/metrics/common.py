@@ -4,7 +4,7 @@
 
 import logging
 from enum import Enum
-from typing import List, Optional, Tuple, Callable, Any
+from typing import List, Optional, Tuple, Callable, Any, Union
 import pandas as pd
 import numpy as np
 from smclarify.bias.metrics.constants import INFINITY
@@ -173,6 +173,54 @@ def ensure_series_data_type(series: pd.Series, values: Optional[List[Any]] = Non
                     )
         return data_type, pd.to_numeric(series)
     raise ValueError("Data series is invalid or can't be classified as neither categorical nor continous.")
+
+
+def convert_positive_label_values(series: pd.Series, positive_label_values: List[Union[str, int, float]]) -> List:
+    """
+    Determines the type of the given data series and then do necessary type conversion to ensure the positive_lable_values
+    are of the same type as those in series.
+
+
+    Example problem when it helps:
+    The problem is that the `label_values_or_threshold` and the actual `label` values are not the same -
+    i.e. do not have the same type. This leads to customer facing errors when they pass numerical values
+    to `label_values_or_threshold` (for instance `[1, 2, 3]`) but having string values in the label column
+    of the dataset (for instance, `['1', '2', '3', '4', '5']`).
+
+    :param series: data for facet/label/predicted_label columns
+    :param positive_label_values: list of label values provided by user
+    :return: list of label values provided after the conversion (if any)
+    """
+
+    def _convert(items: List, _type: Callable) -> List:
+        try:
+            return [_type(item) for item in items]
+        except ValueError as e:
+            # int('1.0') raises a ValueError
+            if "invalid literal for int() with base 10" in str(e):
+                return [float(item) for item in items]
+            raise Exception(
+                f"'label' has not positive elements. Double-check if 'label' and 'positive_label_values'"
+                f"have correct data-types or values."
+            )
+
+    if isinstance(positive_label_values[0], type(series[0])):
+        return positive_label_values
+
+    # if the types are different, convert positive_label_values
+    converted_values: List[Any]
+    if isinstance(series[0], bool) and isinstance(positive_label_values, str) and positive_label_values[0].isalpha():
+        # when values = ['True', 'False'] and series = [False, True, ...]
+        converted_values = [True if label.lower() == "true" else False for label in positive_label_values]
+        # else when values = [1, 1.0, 0, 0.0] and series = [False, True, ...], _convert(positive_label_values, bool)
+        # see else below
+    else:
+        converted_values = _convert(positive_label_values, type(series[0]))
+    logger.warning(
+        f"Data type of the elements in `positive_label_values` and in `label` must match. "
+        f"Converted positive_label_values from {positive_label_values} to {converted_values}"
+    )
+    return converted_values
 
 
 # Todo: Fix the function to avoid redundant calls for DCA and DCR

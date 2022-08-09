@@ -2,7 +2,12 @@ from typing import NamedTuple, Optional, List, Any
 import pandas as pd
 import pytest
 
-from smclarify.bias.metrics.common import DataType, series_datatype, ensure_series_data_type
+from smclarify.bias.metrics.common import (
+    DataType,
+    series_datatype,
+    ensure_series_data_type,
+    convert_positive_label_values,
+)
 
 
 class EnsureSeriesDataTypeInput(NamedTuple):
@@ -85,6 +90,90 @@ def ensure_series_data_type_test_cases():
     return test_cases
 
 
+def convert_positive_label_values_test_case():
+    test_cases = []
+
+    # series - int, label values - int
+    data = pd.Series([1, 2, 3]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1, 2])
+    function_output = [1, 2]
+    test_cases.append([function_input, function_output])
+
+    # series - int, label values - str
+    data = pd.Series([1, 2, 3]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["1", "2"])
+    function_output = [1, 2]
+    test_cases.append([function_input, function_output])
+
+    # series - int, label values - string float
+    data = pd.Series([1, 2, 3]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["1.0", "2.0"])
+    function_output = [1, 2]
+    test_cases.append([function_input, function_output])
+
+    # series - string, label values - string
+    data = pd.Series(["1", "2", "3"]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["1", "2"])
+    function_output = ["1", "2"]
+    test_cases.append([function_input, function_output])
+
+    # series - string, label values - int
+    data = pd.Series(["1", "2", "3"]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1, 2])
+    function_output = ["1", "2"]
+    test_cases.append([function_input, function_output])
+
+    # series - string float, label values - float
+    data = pd.Series(["1.0", "2.0", "3.0"]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1.0, 2.0])
+    function_output = ["1.0", "2.0"]
+    test_cases.append([function_input, function_output])
+
+    # series - float, label values - float
+    data = pd.Series([1.0, 2.0, 3.0]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1.0, 2.0])
+    function_output = [1.0, 2.0]
+    test_cases.append([function_input, function_output])
+
+    # series - float, label values - string float
+    data = pd.Series([1.0, 2.0, 3.0]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=["1.0", "2.0"])
+    function_output = [1.0, 2.0]
+    test_cases.append([function_input, function_output])
+
+    # series - float, label values - int
+    data = pd.Series([1.0, 2.0, 3.0]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1, 2])
+    function_output = [1.0, 2.0]
+    test_cases.append([function_input, function_output])
+
+    # series - bool, label values - bool
+    data = pd.Series([True, True, False]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[True])
+    function_output = [True]
+    test_cases.append([function_input, function_output])
+
+    # series - string, label values - bool
+    data = pd.Series(["True", "True", "False"]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[True])
+    function_output = ["True"]
+    test_cases.append([function_input, function_output])
+
+    # series - bool, label values - int
+    data = pd.Series([True, True, False]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[1, 2, 0])
+    function_output = [True, True, False]
+    test_cases.append([function_input, function_output])
+
+    # series - int, label values - bool
+    data = pd.Series([1, 1, 0]).astype("category")
+    function_input = EnsureSeriesDataTypeInput(data=data, values=[True, False])
+    function_output = [1, 0]
+    test_cases.append([function_input, function_output])
+
+    return test_cases
+
+
 @pytest.mark.parametrize("function_input,function_output", ensure_series_data_type_test_cases())
 def test_ensure_series_data_type(function_input, function_output):
     # Test the series_datatype function by the way
@@ -94,3 +183,9 @@ def test_ensure_series_data_type(function_input, function_output):
     data_type, new_data = ensure_series_data_type(*function_input)
     assert data_type == function_output.data_type
     assert new_data.equals(function_output.new_data)
+
+
+@pytest.mark.parametrize("function_input,function_output", convert_positive_label_values_test_case())
+def test_convert_positive_label_values(function_input, function_output):
+    positive_label_values = convert_positive_label_values(*function_input)
+    assert positive_label_values == function_output
