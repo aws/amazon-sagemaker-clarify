@@ -163,11 +163,16 @@ def test_bias_metrics():
                     "value": pytest.approx(0.06494661921708189),
                 },
                 {"name": "FT", "description": "Flip Test (FT)", "value": pytest.approx(-0.32373271889400923)},
+                {"name": "GE", "description": "Generalized Entropy (GE)", "value": pytest.approx(0.04922014234295094)},
                 {"name": "RD", "description": "Recall Difference (RD)", "value": pytest.approx(0.049812030075187974)},
+                {
+                    "name": "SD",
+                    "description": "Specificity Difference (SD)",
+                    "value": pytest.approx(0.13076923076923075),
+                },
                 {"name": "TE", "description": "Treatment Equality (TE)", "value": pytest.approx(0.6774193548387097)},
             ],
         }
     ]
-
     assert pre_training_metrics == pre_training_expected_result
     assert post_training_metrics == post_training_expected_result
