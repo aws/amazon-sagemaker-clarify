@@ -83,7 +83,7 @@ class MetricResult:
 class MetricError(MetricResult):
     """Metric Result with name, description and computed metric value and error"""
 
-    def __init__(self, name: str, description: str, value: Optional[float] = None, error: Exception = None):
+    def __init__(self, name: str, description: str, value: Optional[float] = None, error: Exception = None):  # type: ignore
         super().__init__(name, description, value)
         self.error = str(error)
 
@@ -359,7 +359,7 @@ def bias_report(
     facet_column: FacetColumn,
     label_column: LabelColumn,
     stage_type: StageType,
-    predicted_label_column: LabelColumn = None,
+    predicted_label_column: Optional[LabelColumn] = None,
     metrics: List[Any] = ["all"],
     group_variable: Optional[pd.Series] = None,
 ) -> List[Dict]:
@@ -406,7 +406,7 @@ def bias_basic_stats(
     facet_column: FacetColumn,
     label_column: LabelColumn,
     stage_type: StageType,
-    predicted_label_column: LabelColumn = None,
+    predicted_label_column: Optional[LabelColumn] = None,
 ) -> List[Dict]:
     """Computes size and confusion matrix.
 
@@ -431,7 +431,7 @@ def _report(
     label_column: LabelColumn,
     stage_type: StageType,
     methods: List[Callable],
-    predicted_label_column: LabelColumn = None,
+    predicted_label_column: Optional[LabelColumn] = None,
     group_variable: Optional[pd.Series] = None,
 ) -> List[Dict]:
     """
