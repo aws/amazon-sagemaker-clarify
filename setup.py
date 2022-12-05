@@ -4,7 +4,7 @@
 import os
 from setuptools import find_packages, setup
 
-INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "s3fs", "numpy", "sklearn", "pyfunctional"]
+INSTALL_REQUIRES = ["boto3", "pyarrow", "pandas", "s3fs", "numpy", "scikit-learn", "pyfunctional"]
 
 EXTRAS_REQUIRE = {
     "test": [
@@ -33,7 +33,7 @@ data_files = ["COMMIT_HASH"] if os.path.exists("./src/smclarify/COMMIT_HASH") el
 
 setup(
     name="smclarify",
-    version="0.2",
+    version="0.3",
     packages=find_packages("src"),
     package_dir={"": "src"},
     package_data={"smclarify": data_files},
