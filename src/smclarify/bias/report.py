@@ -12,7 +12,7 @@ import pandas as pd
 
 import smclarify
 import smclarify.bias.metrics
-from smclarify.bias.metrics import common
+from smclarify.bias.metrics import common, basic_stats
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,26 @@ class FacetReport:
     def __init__(self, facet_value_or_threshold: str, metrics: List[MetricResult]):
         self.value_or_threshold = facet_value_or_threshold
         self.metrics = metrics
+
+    def toJson(self):
+        return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
+
+
+class ModelPerformanceReport:
+    """Model Performance Report with label name, list of MetricResult objects, confusion_matrix, binary_confusion_matrix"""
+
+    def __init__(
+        self,
+        label_name: str,
+        metrics: List[MetricResult],
+        binary_confusion_matrix: List[float],
+        confusion_matrix: Optional[Dict] = None,
+    ):
+        self.label = label_name
+        self.model_performance_metrics = metrics
+        self.binary_confusion_matrix = binary_confusion_matrix
+        if confusion_matrix:
+            self.confusion_matrix = confusion_matrix
 
     def toJson(self):
         return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
@@ -350,6 +370,94 @@ def _continuous_metric_call_wrapper(
     return MetricResult(metric.__name__, metric_description, metric_value)
 
 
+def _model_performance_metric_call_wrapper(
+    feature: pd.DataFrame, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series
+) -> List[MetricResult]:
+    """
+    Wrapper function to invoke model performance metric methods and collect results as MetricResult objects
+    :param feature: input dataframe
+    :param positive_label_index:
+    :param positive_predicted_label_index:
+    :return:
+    """
+    TP = len(feature[positive_label_index & positive_predicted_label_index])
+    TN = len(feature[~positive_label_index & ~positive_predicted_label_index])
+
+    FP = len(feature[~positive_label_index & positive_predicted_label_index])
+    FN = len(feature[positive_label_index & ~positive_predicted_label_index])
+
+    metric_functions: List[Callable] = [
+        basic_stats.accuracy,
+        basic_stats.PPL,
+        basic_stats.PNL,
+        basic_stats.recall,
+        basic_stats.specificity,
+        basic_stats.precision,
+        basic_stats.rejection_rate,
+        basic_stats.conditional_acceptance,
+        basic_stats.conditional_rejection,
+        basic_stats.f1_score,
+    ]
+
+    metric_names: List[str] = [
+        "Accuracy",
+        "Proportion of Positive Predictions in Labels",
+        "Proportion of Negative Predictions in Labels",
+        "True Positive Rate / Recall",
+        "True Negative Rate / Specificity",
+        "Acceptance Rate / Precision",
+        "Rejection Rate",
+        "Conditional Acceptance",
+        "Conditional Rejection",
+        "F1 Score",
+    ]
+
+    metrics_list = []
+    for (metric, name) in zip(metric_functions, metric_names):
+        description = common.metric_description(metric)
+        value = smclarify.bias.metrics.call_metric(metric, TP=TP, FP=FP, FN=FN, TN=TN)
+        metrics_list.append(MetricResult(name, description, value))
+    return metrics_list
+
+
+def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predicted_label_column: LabelColumn) -> Dict:
+    assert label_column.positive_label_values
+
+    positive_label_values: List[Any] = label_column.positive_label_values
+    label_data_type, label_data_series = common.ensure_series_data_type(label_column.series, positive_label_values)
+
+    positive_label_index, _ = _positive_label_index(
+        data=label_data_series, data_type=label_data_type, positive_values=positive_label_values
+    )
+    if label_column.name in df.columns:
+        df = df.drop(label_column.name, 1)
+
+    predicted_label_data_type, predicted_label_data_series = common.ensure_series_data_type(
+        predicted_label_column.series, positive_label_values
+    )
+    positive_predicted_label_index = _positive_predicted_index(
+        predicted_label_data=predicted_label_data_series,
+        predicted_label_datatype=predicted_label_data_type,
+        label_data=label_data_series,
+        label_datatype=label_data_type,
+        positive_label_values=positive_label_values,
+    )
+
+    perf_metrics: List[MetricResult] = _model_performance_metric_call_wrapper(
+        df, positive_label_index, positive_predicted_label_index
+    )
+    binary_confusion_matrix = common.binary_confusion_matrix(df, positive_label_index, positive_predicted_label_index)
+    if label_data_type == common.DataType.CATEGORICAL:
+        multicategory_confusion_matrix = basic_stats.multicategory_confusion_matrix(
+            label_data_series, predicted_label_data_series
+        )
+        return ModelPerformanceReport(
+            label_column.name, perf_metrics, binary_confusion_matrix, confusion_matrix=multicategory_confusion_matrix
+        ).toJson()
+
+    return ModelPerformanceReport(label_column.name, perf_metrics, binary_confusion_matrix).toJson()
+
+
 def _metric_name_comparator(e):
     return e.__name__
 
@@ -419,7 +527,10 @@ def bias_basic_stats(
     :param group_variable: data series for the group variable
 
     :return: list of dictionaries with stats (size and confusion matrix) for each label value."""
-    methods = [smclarify.bias.metrics.basic_stats.proportion]
+    methods = [
+        smclarify.bias.metrics.basic_stats.proportion,
+        smclarify.bias.metrics.basic_stats.observed_label_distribution,
+    ]
     if predicted_label_column and stage_type == StageType.POST_TRAINING:
         methods.append(smclarify.bias.metrics.basic_stats.confusion_matrix)
     return _report(df, facet_column, label_column, stage_type, methods, predicted_label_column)
