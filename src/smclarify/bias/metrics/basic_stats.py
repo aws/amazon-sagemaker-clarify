@@ -188,8 +188,8 @@ def multicategory_confusion_matrix(
     :return: Matrix JSON where rows refer to true labels, and columns refer to predicted labels
     """
     # Handle differing pd.Series dtypes
-    unique_label_values = set(label_series.unique())
-    unique_label_values.update(predicted_label_series.unique())
+    unique_label_values = list(label_series.unique())
+    unique_label_values.sort()
     if label_series.dtype.name != predicted_label_series.dtype.name:
         try:
             predicted_label_series = predicted_label_series.astype(label_series.dtype)

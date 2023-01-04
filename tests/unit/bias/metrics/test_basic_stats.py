@@ -88,8 +88,52 @@ def test_multicategorical_confusion_matrix():
     # Confusion matrix will be of shape (len(unique_label_values), len(unique_label_values))
     label_series = pd.Series([1])
     predicted_label_series = pd.Series([2])
-    expected_value = {
-        "1": {"1": 0, "2": 1},
-        "2": {"1": 0, "2": 0},
-    }
+    expected_value = {"1": {"1": 0.0}}
     assert basic_stats.multicategory_confusion_matrix(label_series, predicted_label_series) == expected_value
+
+    # Strings
+    df = pd.DataFrame(
+        [
+            ("a", "white", 1, "red"),
+            ("b", "white", 1, "blue"),
+            ("b", "blue", 1, "blue"),
+            ("b", "blue", 0, "red"),
+            ("a", "green", 1, "white"),
+            ("b", "white", 1, "white"),
+            ("b", "white", 1, "green"),
+            ("b", "white", 0, "white"),
+        ]
+    )
+    df.columns = ["x", "y", "z", "yhat"]
+
+    expected_value = {
+        "blue": {"blue": 1.0, "green": 0.0, "white": 0.0},
+        "green": {"blue": 0.0, "green": 0.0, "white": 1.0},
+        "white": {"blue": 1.0, "green": 1.0, "white": 2.0},
+    }
+
+    assert basic_stats.multicategory_confusion_matrix(df["y"], df["yhat"]) == expected_value
+
+    df = pd.DataFrame(
+        [
+            ("a", 1, 1, 1),
+            ("b", 1, 1, 0),
+            ("b", 0, 1, 0),
+            ("b", 0, 0, 1),
+            ("a", 2, 1, 3),
+            ("b", 3, 1, 3),
+            ("b", 3, 1, 2),
+            ("b", 1, 0, 3),
+        ]
+    )
+
+    df.columns = ["x", "y", "z", "yhat"]
+
+    expected_value = {
+        "0": {"0": 1.0, "1": 1.0, "2": 0.0, "3": 0.0},
+        "1": {"0": 1.0, "1": 1.0, "2": 0.0, "3": 1.0},
+        "2": {"0": 0.0, "1": 0.0, "2": 0.0, "3": 1.0},
+        "3": {"0": 0.0, "1": 0.0, "2": 1.0, "3": 1.0},
+    }
+
+    basic_stats.multicategory_confusion_matrix(df["y"], df["yhat"]) == expected_value

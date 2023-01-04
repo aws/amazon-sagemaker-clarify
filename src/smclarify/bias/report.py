@@ -448,9 +448,14 @@ def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predic
     )
     binary_confusion_matrix = common.binary_confusion_matrix(df, positive_label_index, positive_predicted_label_index)
     if label_data_type == common.DataType.CATEGORICAL:
-        multicategory_confusion_matrix = basic_stats.multicategory_confusion_matrix(
-            label_data_series, predicted_label_data_series
-        )
+        try:
+            multicategory_confusion_matrix = basic_stats.multicategory_confusion_matrix(
+                label_data_series, predicted_label_data_series
+            )
+        except Exception as e:
+            multicategory_confusion_matrix = {"error": str(e)}
+            logger.warning("Multicategory Confusion Matrix failed to compute due to: %s", e)
+
         return ModelPerformanceReport(
             label_column.name, perf_metrics, binary_confusion_matrix, confusion_matrix=multicategory_confusion_matrix
         ).toJson()
