@@ -453,7 +453,7 @@ def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predic
                 label_data_series, predicted_label_data_series
             )
         except Exception as e:
-            multicategory_confusion_matrix = {"error": str(e)}
+            multicategory_confusion_matrix = {"error": {str(e): 0.0}}
             logger.warning("Multicategory Confusion Matrix failed to compute due to: %s", e)
 
         return ModelPerformanceReport(
