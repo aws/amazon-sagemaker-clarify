@@ -86,7 +86,7 @@ def CDD(
     :param feature: input feature
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param label_index: boolean column indicating positive labels or predicted labels
-    :param group_variable: categorical column indicating subgroups each point beints to
+    :param group_variable: categorical column indicating subgroups each point belongs to
     :return: the weighted average of demographic disparity on all subgroups
     """
     if group_variable is None or group_variable.empty:
