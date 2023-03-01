@@ -6,7 +6,7 @@ from pandas.api.types import CategoricalDtype
 import pandas as pd
 from functional import seq
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def confusion_matrix(
@@ -22,9 +22,14 @@ def confusion_matrix(
     :param sensitive_facet_index: boolean column indicating sensitive group
     :param positive_label_index: boolean column indicating positive labels
     :param positive_predicted_label_index: boolean column indicating positive predicted labels
-    :return fractions of true positives, false positives, true negatives, false negatives
+    :return fractions of true positives, false positives, false negatives, true negatives for
+        the sensitive facet only (sensitive_facet = True)
     """
-    return binary_confusion_matrix(feature[sensitive_facet_index], positive_label_index, positive_predicted_label_index)
+    return binary_confusion_matrix(
+        feature[sensitive_facet_index],
+        positive_label_index[sensitive_facet_index],
+        positive_predicted_label_index[sensitive_facet_index],
+    )
 
 
 def proportion(sensitive_facet_index: pd.Series) -> float:
@@ -124,7 +129,7 @@ def precision(TP: int, FP: int) -> float:
     :param: FP Counts of labels which were incorrectly predicted positive
     :return: Proportion of inputs with positive predicted label that actually have a positive observed label.
     """
-    return divide(TP, FP + TP)
+    return divide(TP, TP + FP)
 
 
 def rejection_rate(TN: int, FN: int) -> float:
@@ -147,7 +152,7 @@ def conditional_acceptance(TP: int, FP: int, FN: int) -> float:
     :param: FN Counts of labels which were incorrectly predicted negative
     :return: Ratio between the positive observed labels and positive predicted labels.
     """
-    return divide(FN + TP, FP + TP)
+    return divide(TP + FN, TP + FP)
 
 
 def conditional_rejection(FP: int, TN: int, FN: int) -> float:
@@ -193,25 +198,25 @@ def multicategory_confusion_matrix(
     if label_series.dtype.name != predicted_label_series.dtype.name:
         try:
             predicted_label_series = predicted_label_series.astype(label_series.dtype)
-        except:
-            log.warning(
-                "Predicted Label Series could not be cast as Label Series type. Multicategory Confusion Matrix won't be computed"
+        except Exception as e:
+            logger.warning(
+                f"Predicted Label Series type {predicted_label_series.dtype.name} could not be cast as Label Series type {label_series.dtype.name}. "
+                f"Multicategory Confusion Matrix won't be computed due to: {e}"
             )
             return None
     # Handle CategoricalDtype difference (see test/integration/test_bias_metrics)
-    if label_series.dtype == "category" and label_series.dtype != predicted_label_series.dtype:
+    if label_series.dtype == "category":
         try:
             pred_label_category = predicted_label_series.dtype.categories.astype(label_series.dtype.categories.dtype)
             category_obj = CategoricalDtype(pred_label_category, label_series.dtype.ordered)
             predicted_label_series = predicted_label_series.astype(category_obj)
-        except:
-            log.warning(
-                "Predicted Label Series could not be cast as Label Series type. Multicategory Confusion Matrix won't be computed"
+        except Exception as e:
+            logger.warning(
+                f"Predicted Label Series could not be cast as Label Series type. "
+                f"Multicategory Confusion Matrix won't be computed due to: {e}"
             )
             return None
-    confusion_matrix_array = sklearn_confusion_matrix(
-        label_series, predicted_label_series, labels=list(unique_label_values)
-    )
+    confusion_matrix_array = sklearn_confusion_matrix(label_series, predicted_label_series, labels=unique_label_values)
     assert confusion_matrix_array.shape == (
         len(unique_label_values),
         len(unique_label_values),

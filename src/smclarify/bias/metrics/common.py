@@ -52,14 +52,21 @@ def metric_description(metric: Callable[..., float]) -> str:
 def binary_confusion_matrix(
     feature: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series
 ) -> List[int]:
+    assert len(feature) == len(positive_label_index) == len(positive_predicted_label_index)
+    TP, TN, FP, FN = calc_confusion_matrix_quadrants(feature, positive_label_index, positive_predicted_label_index)
+    n = len(feature)
+    return [divide(TP, n), divide(FP, n), divide(FN, n), divide(TN, n)]
+
+
+def calc_confusion_matrix_quadrants(
+    feature: pd.Series, positive_label_index: pd.Series, positive_predicted_label_index: pd.Series
+) -> Tuple[int, int, int, int]:
     TP = len(feature[positive_label_index & positive_predicted_label_index])
     TN = len(feature[~positive_label_index & (~positive_predicted_label_index)])
 
     FP = len(feature[(~positive_label_index) & positive_predicted_label_index])
     FN = len(feature[(positive_label_index) & (~positive_predicted_label_index)])
-
-    n = len(feature)
-    return [divide(TP, n), divide(FP, n), divide(FN, n), divide(TN, n)]
+    return TP, TN, FP, FN
 
 
 def DPL(feature: pd.Series, sensitive_facet_index: pd.Series, positive_label_index: pd.Series) -> float:

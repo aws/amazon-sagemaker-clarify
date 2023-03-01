@@ -95,27 +95,28 @@ class FacetReport:
         self.value_or_threshold = facet_value_or_threshold
         self.metrics = metrics
 
-    def toJson(self):
+    def to_json(self):
         return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
 
 
 class ModelPerformanceReport:
-    """Model Performance Report with label name, list of MetricResult objects, confusion_matrix, binary_confusion_matrix"""
+    """Model Performance Report with label name, list of MetricResult objects,
+    (multi-class) confusion_matrix, binary_confusion_matrix"""
 
     def __init__(
         self,
         label_name: str,
         metrics: List[MetricResult],
         binary_confusion_matrix: List[float],
-        confusion_matrix: Optional[Dict] = None,
+        multicategory_confusion_matrix: Optional[Dict] = None,
     ):
         self.label = label_name
         self.model_performance_metrics = metrics
         self.binary_confusion_matrix = binary_confusion_matrix
-        if confusion_matrix:
-            self.confusion_matrix = confusion_matrix
+        if multicategory_confusion_matrix:
+            self.confusion_matrix = multicategory_confusion_matrix
 
-    def toJson(self):
+    def to_json(self):
         return json.loads(json.dumps(self, default=lambda o: o.__dict__), object_hook=inf_as_str)
 
 
@@ -380,11 +381,9 @@ def _model_performance_metric_call_wrapper(
     :param positive_predicted_label_index:
     :return:
     """
-    TP = len(feature[positive_label_index & positive_predicted_label_index])
-    TN = len(feature[~positive_label_index & ~positive_predicted_label_index])
-
-    FP = len(feature[~positive_label_index & positive_predicted_label_index])
-    FN = len(feature[positive_label_index & ~positive_predicted_label_index])
+    TP, TN, FP, FN = common.calc_confusion_matrix_quadrants(
+        feature, positive_label_index, positive_predicted_label_index
+    )
 
     metric_functions: List[Callable] = [
         basic_stats.accuracy,
@@ -421,6 +420,13 @@ def _model_performance_metric_call_wrapper(
 
 
 def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predicted_label_column: LabelColumn) -> Dict:
+    """
+    Generate model performance report on a dataset.
+    :param df: Dataset as a pandas.DataFrame
+    :param label_column: description of column which has the labels.
+    :param predicted_label_column: description of column with predicted labels
+    :return: a dictionary with metrics for different label values
+    """
     assert label_column.positive_label_values
 
     positive_label_values: List[Any] = label_column.positive_label_values
@@ -457,10 +463,10 @@ def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predic
             logger.warning("Multicategory Confusion Matrix failed to compute due to: %s", e)
 
         return ModelPerformanceReport(
-            label_column.name, perf_metrics, binary_confusion_matrix, confusion_matrix=multicategory_confusion_matrix
-        ).toJson()
+            label_column.name, perf_metrics, binary_confusion_matrix, multicategory_confusion_matrix
+        ).to_json()
 
-    return ModelPerformanceReport(label_column.name, perf_metrics, binary_confusion_matrix).toJson()
+    return ModelPerformanceReport(label_column.name, perf_metrics, binary_confusion_matrix).to_json()
 
 
 def _metric_name_comparator(e):
@@ -671,7 +677,7 @@ def _do_report(
                 )
                 metrics_list.append(result)
             facet_metric = FacetReport(facet_value_or_threshold=",".join(map(str, facet_values)), metrics=metrics_list)
-            metrics_result.append(facet_metric.toJson())
+            metrics_result.append(facet_metric.to_json())
         logger.debug("metric_result: %s", str(metrics_result))
         return metrics_result
 
@@ -694,7 +700,7 @@ def _do_report(
         facet_metric = FacetReport(
             facet_value_or_threshold=",".join(map(str, facet_interval_indices)), metrics=metrics_list
         )
-        metrics_result.append(facet_metric.toJson())
+        metrics_result.append(facet_metric.to_json())
         logger.debug("metric_result:", metrics_result)
         return metrics_result
     else:

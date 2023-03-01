@@ -1125,7 +1125,7 @@ def test_bias_basic_stats():
 
 def test_model_performance_categorical():
     df_cat = pd.DataFrame(
-        [["a", "p", 1, 1, "q"], ["b", "p", 1, 0, "q"], ["b", "q", 1, 0, "q"], ["b", "q", 0, 1, "p"]],
+        [["a", "p", 1, 1, "q"], ["b", "p", 1, 0, "r"], ["b", "r", 1, 0, "q"], ["b", "q", 0, 1, "p"]],
         columns=["x", "y_cat", "z", "yhat", "yhat_cat"],
     )
     result = model_performance_report(
@@ -1186,8 +1186,9 @@ def test_model_performance_categorical():
         ],
         "binary_confusion_matrix": [pytest.approx(0.0), pytest.approx(0.25), pytest.approx(0.5), pytest.approx(0.25)],
         "confusion_matrix": {
-            "p": {"p": pytest.approx(0.0), "q": pytest.approx(2.0)},
-            "q": {"p": pytest.approx(1.0), "q": pytest.approx(1.0)},
+            "p": {"p": pytest.approx(0.0), "q": pytest.approx(1.0), "r": pytest.approx(1.0)},
+            "q": {"p": pytest.approx(1.0), "q": pytest.approx(0.0), "r": pytest.approx(0.0)},
+            "r": {"p": pytest.approx(0.0), "q": pytest.approx(1.0), "r": pytest.approx(0.0)},
         },
     }
     assert expected_result == result
