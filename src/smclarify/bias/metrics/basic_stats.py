@@ -189,7 +189,6 @@ def multicategory_confusion_matrix(
     Confusion Matrix for categorical label cases.
     :param label_series: Label Data Series
     :param predicted_label_series: Predicted Label Data Series
-    :param unique_label_values: List of unique label values computed from the set of true and predicted labels
     :return: Matrix JSON where rows refer to true labels, and columns refer to predicted labels
     """
     # Handle differing pd.Series dtypes

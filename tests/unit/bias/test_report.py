@@ -1160,7 +1160,7 @@ def test_model_performance_categorical():
             {
                 "name": "True Negative Rate / Specificity",
                 "description": "Proportion of inputs with negative observed label correctly assigned the negative predicted label.",
-                "value": pytest.approx(2 / 4.0),
+                "value": pytest.approx(1 / 2.0),
             },
             {
                 "name": "Acceptance Rate / Precision",
