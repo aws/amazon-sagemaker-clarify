@@ -9,6 +9,7 @@ from smclarify.bias.report import (
     ProblemType,
     problem_type,
     bias_basic_stats,
+    model_performance_report,
     bias_report,
     FacetColumn,
     LabelColumn,
@@ -1037,7 +1038,12 @@ def test_bias_basic_stats():
                     "name": "proportion",
                     "description": "Proportion of examples in sensitive facet.",
                     "value": pytest.approx(0.25),
-                }
+                },
+                {
+                    "name": "observed_label_distribution",
+                    "description": "Distribution of observed label outcomes for sensitive facet",
+                    "value": [pytest.approx(1.0), pytest.approx(0.0)],
+                },
             ],
         },
         {
@@ -1047,7 +1053,12 @@ def test_bias_basic_stats():
                     "name": "proportion",
                     "description": "Proportion of examples in sensitive facet.",
                     "value": pytest.approx(0.75),
-                }
+                },
+                {
+                    "name": "observed_label_distribution",
+                    "description": "Distribution of observed label outcomes for sensitive facet",
+                    "value": [pytest.approx(1 / 3.0), pytest.approx(2 / 3.0)],
+                },
             ],
         },
     ]
@@ -1072,6 +1083,11 @@ def test_bias_basic_stats():
                     "value": pytest.approx(0.25),
                 },
                 {
+                    "name": "observed_label_distribution",
+                    "description": "Distribution of observed label outcomes for sensitive facet",
+                    "value": [pytest.approx(1.0), pytest.approx(0.0)],
+                },
+                {
                     "name": "confusion_matrix",
                     "description": "Fractions of TP, FP, FN, TN.",
                     "value": [pytest.approx(1.0), pytest.approx(0.0), pytest.approx(0.0), pytest.approx(0.0)],
@@ -1087,6 +1103,11 @@ def test_bias_basic_stats():
                     "value": pytest.approx(0.75),
                 },
                 {
+                    "name": "observed_label_distribution",
+                    "description": "Distribution of observed label outcomes for sensitive facet",
+                    "value": [pytest.approx(1 / 3.0), pytest.approx(2 / 3.0)],
+                },
+                {
                     "name": "confusion_matrix",
                     "description": "Fractions of TP, FP, FN, TN.",
                     "value": [
@@ -1100,6 +1121,179 @@ def test_bias_basic_stats():
         },
     ]
     assert expected_results == results
+
+
+def test_model_performance_categorical():
+    df_cat = pd.DataFrame(
+        [["a", "p", 1, 1, "q"], ["b", "p", 1, 0, "r"], ["b", "r", 1, 0, "q"], ["b", "q", 0, 1, "p"]],
+        columns=["x", "y_cat", "z", "yhat", "yhat_cat"],
+    )
+    result = model_performance_report(
+        df=df_cat,
+        label_column=LabelColumn("y_cat", df_cat["y_cat"], ["p"]),
+        predicted_label_column=LabelColumn("yhat_cat", df_cat["yhat_cat"], ["p"]),
+    )
+
+    expected_result = {
+        "label": "y_cat",
+        "model_performance_metrics": [
+            {
+                "name": "Accuracy",
+                "description": "Proportion of inputs assigned the correct predicted label by the model.",
+                "value": pytest.approx(1 / 4.0),
+            },
+            {
+                "name": "Proportion of Positive Predictions in Labels",
+                "description": "Proportion of input assigned in positive predicted label.",
+                "value": pytest.approx(1 / 4.0),
+            },
+            {
+                "name": "Proportion of Negative Predictions in Labels",
+                "description": "Proportion of input assigned the negative predicted label.",
+                "value": pytest.approx(3 / 4.0),
+            },
+            {
+                "name": "True Positive Rate / Recall",
+                "description": "Proportion of inputs with positive observed label correctly assigned the positive predicted label.",
+                "value": pytest.approx(0.0),
+            },
+            {
+                "name": "True Negative Rate / Specificity",
+                "description": "Proportion of inputs with negative observed label correctly assigned the negative predicted label.",
+                "value": pytest.approx(1 / 2.0),
+            },
+            {
+                "name": "Acceptance Rate / Precision",
+                "description": "Proportion of inputs with positive predicted label that actually have a positive observed label.",
+                "value": pytest.approx(0.0),
+            },
+            {
+                "name": "Rejection Rate",
+                "description": "Proportion of inputs with negative predicted label that actually have a negative observed label.",
+                "value": pytest.approx(1 / 3.0),
+            },
+            {
+                "name": "Conditional Acceptance",
+                "description": "Ratio between the positive observed labels and positive predicted labels.",
+                "value": pytest.approx(2.0),
+            },
+            {
+                "name": "Conditional Rejection",
+                "description": "Ratio between the negative observed labels and negative predicted labels.",
+                "value": pytest.approx(2 / 3.0),
+            },
+            {"name": "F1 Score", "description": "Harmonic mean of precision and recall.", "value": pytest.approx(0.0)},
+        ],
+        "binary_confusion_matrix": [pytest.approx(0.0), pytest.approx(0.25), pytest.approx(0.5), pytest.approx(0.25)],
+        "confusion_matrix": {
+            "p": {"p": pytest.approx(0.0), "q": pytest.approx(1.0), "r": pytest.approx(1.0)},
+            "q": {"p": pytest.approx(1.0), "q": pytest.approx(0.0), "r": pytest.approx(0.0)},
+            "r": {"p": pytest.approx(0.0), "q": pytest.approx(1.0), "r": pytest.approx(0.0)},
+        },
+    }
+    assert expected_result == result
+
+
+def test_model_performance_continuous():
+    df_cont = pd.DataFrame(
+        [
+            [0, 0.0, 0, 0, True, 1, 1, 11],  # 11 is the highest among y and yhat
+            [3, 0.5, 0, 0, True, 0, 1, 6],
+            [3, 2, 1, 0, True, 0, 1, 6.6],
+            [0, 3, 0, 0, False, 1, 1, 0.3],
+            [4, 2.2, 0, 1, True, 0, 1, 6],
+            [0, 0.1, 1, 0, True, 1, 1, 6],
+            [3, 0, 0, 0, True, 1, 1, 6],
+            [3, 6, 0, 0, True, 1, 1, 6],
+            [0, 0, 1, 0, True, 1, 1, 6],
+            [3, 0, 1, 1, True, 1, 0, 6],
+            [4, 0, 0, 0, True, 1, 0, 6],
+            [3, 0, 1, 0, True, 1, 1, 6],
+            [3, 0, 0, 0, False, 1, 1, 0],
+            [0, 0, 0, 0, True, 1, 1, 6.2],
+            [0, 0, 1, 0, True, 0, 1, 6.6],
+            [0, 0, 1, 0, True, 1, 1, 6.6],
+            [0, 7, 0, 1, False, 0, 1, 0.1],
+            [3, 0, 0, 0, False, 1, 1, 2],
+            [0, 0, 1, 0, False, 1, 1, 8],
+            [3, 0, 0, 0, True, 1, 0, 9],
+            [3, 0, 1, 0, False, 1, 1, 0.1],
+            [0, 8, 0, 0, False, 1, 1, 2.2],
+            [3, 0, 1, 0, True, 0, 1, 10],
+            [0, 0, 0, 1, True, 1, 0, 9],
+        ],
+        columns=["x", "y", "z", "a", "b", "c", "d", "yhat"],
+    )
+
+    result = model_performance_report(
+        df=df_cont,
+        label_column=LabelColumn("y", df_cont["y"], [5]),
+        predicted_label_column=LabelColumn("yhat", df_cont["yhat"], [5]),
+    )
+    # No multicategory confusion matrix
+
+    expected_result = {
+        "label": "y",
+        "model_performance_metrics": [
+            {
+                "name": "Accuracy",
+                "description": "Proportion of inputs assigned the correct predicted label by the model.",
+                "value": pytest.approx(5 / 24),
+            },
+            {
+                "name": "Proportion of Positive Predictions in Labels",
+                "description": "Proportion of input assigned in positive predicted label.",
+                "value": pytest.approx(0.75),
+            },
+            {
+                "name": "Proportion of Negative Predictions in Labels",
+                "description": "Proportion of input assigned the negative predicted label.",
+                "value": pytest.approx(0.25),
+            },
+            {
+                "name": "True Positive Rate / Recall",
+                "description": "Proportion of inputs with positive observed label correctly assigned the positive predicted label.",
+                "value": pytest.approx(1 / 3),
+            },
+            {
+                "name": "True Negative Rate / Specificity",
+                "description": "Proportion of inputs with negative observed label correctly assigned the negative predicted label.",
+                "value": pytest.approx(4 / 21),
+            },
+            {
+                "name": "Acceptance Rate / Precision",
+                "description": "Proportion of inputs with positive predicted label that actually have a positive observed label.",
+                "value": pytest.approx(1 / 18),
+            },
+            {
+                "name": "Rejection Rate",
+                "description": "Proportion of inputs with negative predicted label that actually have a negative observed label.",
+                "value": pytest.approx(2 / 3.0),
+            },
+            {
+                "name": "Conditional Acceptance",
+                "description": "Ratio between the positive observed labels and positive predicted labels.",
+                "value": pytest.approx(1 / 6),
+            },
+            {
+                "name": "Conditional Rejection",
+                "description": "Ratio between the negative observed labels and negative predicted labels.",
+                "value": pytest.approx(3.5),
+            },
+            {
+                "name": "F1 Score",
+                "description": "Harmonic mean of precision and recall.",
+                "value": pytest.approx(2 / 21),
+            },
+        ],
+        "binary_confusion_matrix": [
+            pytest.approx(1 / 24),
+            pytest.approx(17 / 24),
+            pytest.approx(1 / 12),
+            pytest.approx(1 / 6),
+        ],
+    }
+    assert expected_result == result
 
 
 class LabelValueOrThresholdFunctionInput(NamedTuple):

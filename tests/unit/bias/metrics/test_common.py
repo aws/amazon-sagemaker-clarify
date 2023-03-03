@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional, List, Any
+from typing import Any, List, NamedTuple, Optional
 import pandas as pd
 import pytest
 
@@ -7,7 +7,9 @@ from smclarify.bias.metrics.common import (
     series_datatype,
     ensure_series_data_type,
     convert_positive_label_values,
+    calc_confusion_matrix_quadrants,
 )
+from .test_metrics import dfBinary
 
 
 class EnsureSeriesDataTypeInput(NamedTuple):
@@ -189,3 +191,59 @@ def test_ensure_series_data_type(function_input, function_output):
 def test_convert_positive_label_values(function_input, function_output):
     positive_label_values = convert_positive_label_values(*function_input)
     assert positive_label_values == function_output
+
+
+def test_calc_confusion_matrix_quadrants():
+    # binary
+    (dfB, dfB_label, dfB_pos_label_idx, dfB_pred_label, dfB_pos_pred_label_idx) = dfBinary()
+    dfB_features = dfB[0]
+
+    assert (2, 3, 4, 3) == calc_confusion_matrix_quadrants(dfB_features, dfB_pos_label_idx, dfB_pos_pred_label_idx)
+
+    dfB_sensitive_features = dfB_features == "F"
+    assert (2, 2, 2, 1) == calc_confusion_matrix_quadrants(
+        dfB_features[dfB_sensitive_features],
+        dfB_pos_label_idx[dfB_sensitive_features],
+        dfB_pos_pred_label_idx[dfB_sensitive_features],
+    )
+
+    dfB_sensitive_features = dfB_features == "M"
+    assert (0, 1, 2, 2) == calc_confusion_matrix_quadrants(
+        dfB_features[dfB_sensitive_features],
+        dfB_pos_label_idx[dfB_sensitive_features],
+        dfB_pos_pred_label_idx[dfB_sensitive_features],
+    )
+
+    # multi category
+    dfM = pd.DataFrame(
+        [
+            ("a", "white", 1, "red"),
+            ("b", "white", 1, "blue"),
+            ("b", "blue", 1, "blue"),
+            ("b", "blue", 0, "red"),
+            ("a", "green", 1, "white"),
+            ("b", "white", 1, "white"),
+            ("b", "white", 1, "green"),
+            ("b", "white", 0, "white"),
+        ]
+    )
+    dfM.columns = ["x", "y", "z", "yhat"]
+    dfM_features = dfM["x"]
+    dfM_label = dfM["y"]
+    dfM_predicted_label = dfM["yhat"]
+    dfM_pos_label_idx = dfM_label == "blue"
+    dfM_pos_pred_label_idx = dfM_predicted_label == "blue"
+
+    assert (1, 5, 1, 1) == calc_confusion_matrix_quadrants(dfM_features, dfM_pos_label_idx, dfM_pos_pred_label_idx)
+
+    dfM_sensitive_features = dfM_features == "a"
+    assert (0, 2, 0, 0) == calc_confusion_matrix_quadrants(
+        dfM_features[dfM_sensitive_features],
+        dfM_pos_label_idx[dfM_sensitive_features],
+        dfM_pos_pred_label_idx[dfM_sensitive_features],
+    )
+
+    dfM_sensitive_features = dfM_features == "b"
+    assert (1, 3, 1, 1) == calc_confusion_matrix_quadrants(
+        dfM_features, dfM_pos_label_idx, dfM_pos_pred_label_idx[dfM_sensitive_features]
+    )
