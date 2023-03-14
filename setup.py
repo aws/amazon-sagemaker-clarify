@@ -33,7 +33,7 @@ data_files = ["COMMIT_HASH"] if os.path.exists("./src/smclarify/COMMIT_HASH") el
 
 setup(
     name="smclarify",
-    version="0.3",
+    version="0.4",
     packages=find_packages("src"),
     package_dir={"": "src"},
     package_data={"smclarify": data_files},
@@ -50,5 +50,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )
