@@ -207,7 +207,7 @@ def _positive_predicted_index(
         raise ValueError("Predicted Label Column series datatype is not the same as Label Column series")
     if predicted_label_datatype == common.DataType.CONTINUOUS:
         predicted_label_data = predicted_label_data.astype(label_data.dtype)
-        data_interval_indices = _interval_index(label_data.append(predicted_label_data), positive_label_values)
+        data_interval_indices = _interval_index(pd.concat([label_data, predicted_label_data]), positive_label_values)
         positive_predicted_index = _continuous_data_idx(predicted_label_data, data_interval_indices)
     elif predicted_label_datatype == common.DataType.CATEGORICAL and positive_label_values:
         positive_predicted_index = _categorical_data_idx(predicted_label_data, positive_label_values)
@@ -436,7 +436,7 @@ def model_performance_report(df: pd.DataFrame, label_column: LabelColumn, predic
         data=label_data_series, data_type=label_data_type, positive_values=positive_label_values
     )
     if label_column.name in df.columns:
-        df = df.drop(label_column.name, 1)
+        df = df.drop(labels=label_column.name, axis=1)
 
     predicted_label_data_type, predicted_label_data_series = common.ensure_series_data_type(
         predicted_label_column.series, positive_label_values
@@ -508,7 +508,7 @@ def bias_report(
         metrics_to_run.extend(post_training_metrics)
         predicted_label_series = predicted_label_column.series
         if predicted_label_column.name in df.columns:
-            df = df.drop(predicted_label_column.name, 1)
+            df = df.drop(labels=predicted_label_column.name, axis=1)
     else:
         pre_training_metrics = (
             smclarify.bias.metrics.PRETRAINING_METRICS
@@ -588,7 +588,7 @@ def _report(
 
     sensitive_facet_values = facet_column.sensitive_values
     facet_data_type, facet_data_series = common.ensure_series_data_type(df[facet_column.name], sensitive_facet_values)
-    df = df.drop(facet_column.name, 1)
+    df = df.drop(labels=facet_column.name, axis=1)
 
     positive_label_values = label_column.positive_label_values
     label_data_type, label_data_series = common.ensure_series_data_type(label_column.series, positive_label_values)
@@ -596,7 +596,7 @@ def _report(
         data=label_data_series, data_type=label_data_type, positive_values=positive_label_values
     )
     if label_column.name in df.columns:
-        df = df.drop(label_column.name, 1)
+        df = df.drop(labels=label_column.name, axis=1)
 
     positive_predicted_label_index = [None]
     if predicted_label_column:
@@ -612,7 +612,7 @@ def _report(
                 positive_label_values=positive_label_values,
             )
         if predicted_label_column.name in df.columns:
-            df = df.drop(predicted_label_column.name, 1)
+            df = df.drop(labels=predicted_label_column.name, axis=1)
 
     # Above are validations and preprocessing, the real reporting logic is moved to a new method for clarity and
     # to avoid using wrong data by chance (e.g., label_data_series should be used, instead of label_column.data).
