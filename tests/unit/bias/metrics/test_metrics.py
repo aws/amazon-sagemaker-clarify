@@ -1,6 +1,5 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: LicenseRef-.amazon.com.-AmznSL-1.0
-# Licensed under the Amazon Software License  http://aws.amazon.com/asl/
+# SPDX-License-Identifier: Apache-2.0
 
 from smclarify.bias.metrics import AD, CDDL, CI, DAR, DCA, DCR, DI, DPL, DRR, FT, JS, KL, LP, RD, TE, KS, SD, GE
 from smclarify.bias.metrics import metric_one_vs_all
